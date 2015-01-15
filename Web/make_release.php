@@ -111,4 +111,14 @@ for($i=0;$i<count($files2);$i++)
 	file_put_contents($files2[$i],$add_str."\n".file_get_contents($files2[$i]));
 }
 
+	$str_res ="";
+    $c = 'v'.$version_number;
+	$lines = file('release/themes/bootstrap/views/layouts/main.php');    
+	    
+	foreach ($lines as $line_num => $line) {
+			
+				$b = preg_replace("/(NG-NetMS) v3.([\d])/", "$1 $c", $line);
+				$str_res.=$b;
+		}
+		file_put_contents('release/themes/bootstrap/views/layouts/main.php',$str_res);
 ?>
