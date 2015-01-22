@@ -1,3 +1,13 @@
+#
+# NextGen NMS
+#
+# NGNMS_DB.pm: database interface
+#
+# Copyright (C) 2002,2003 OptOSS LLC
+#
+# Author: M.Golov
+#
+
 package NGNMS_DB;
 use Data::Dumper;
 use strict;
@@ -32,7 +42,9 @@ $VERSION     = 0.01;
 		  &DB_getPhInterfaces &DB_dropPhInterfaces
 		  &DB_writeTopology &DB_getRouters
 		  &DB_dropLinks &DB_getSettings
-		  &DB_setHostVendor &DB_setHostState);
+		  &DB_setHostVendor &DB_setHostState
+		  &DB_getAllIntefaces &DB_isScanException
+		  &DB_replaceRouterName &DB_getInterfaceRouterId);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -143,6 +155,20 @@ sub DB_getInterfaceId($$$) {
   my $ifc_n = shift;
   local $dbh->{RaiseError};     # Ignore errors
   my $SQL = "SELECT ifc_id FROM interfaces WHERE router_id = $rt_id AND ph_int_id = $ph_int_id AND name = \'$ifc_n\'";
+  my $rref = $dbh->selectcol_arrayref($SQL);
+#  print Dumper($rref);
+  if (defined($rref)) {
+    return $rref->[0];
+  }
+  return undef;
+}
+
+# Get ifc id by rt_id and name
+sub DB_getInterfaceRouterId($) {
+  my $addr= shift;
+  
+  local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "SELECT router_id FROM interfaces WHERE ip_addr = \'$addr\'";
   my $rref = $dbh->selectcol_arrayref($SQL);
 #  print Dumper($rref);
   if (defined($rref)) {
@@ -451,6 +477,7 @@ sub DB_writeLink ($$$) {
   my ($idA,$idB,$type) = @_[0..2];
   local $dbh->{RaiseError};     # Ignore errors
 
+  
   # try to update
   # if fails, insert a new rec
   my $rref = $dbh->do(q{
@@ -465,6 +492,13 @@ sub DB_writeLink ($$$) {
     $link_h->execute($idA,$idB,$type);
   }
 }
+
+sub DB_replaceRouterName($$){
+	my($r_id,$name)=@_[0..1];
+	my $SQL = "UPDATE routers SET name = ? WHERE router_id = ?";
+	my $router_n = $dbh->prepare($SQL);
+	my $result = $router_n->execute($name,$r_id);
+	}
 
 sub DB_addLinkNoWrite($$$$) {
   my ($links,$from,$to,$type) = @_[0..3];
@@ -624,6 +658,16 @@ sub DB_isCommunity($) {
     return $rref->[0];
 }
 
+sub DB_isScanException($){
+	my $cur_subnet = $_[0];
+	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL;
+	$SQL = "select count(*) from scan_exception where addr>>='".$cur_subnet."'";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+	my $ret_val = 1- $rref->[0];
+	return $ret_val
+	}
+
 sub DB_getCriptoKey(){
 	local $dbh->{RaiseError};     # Ignore errors
 	my $SQL;
@@ -635,6 +679,19 @@ sub DB_getCriptoKey(){
     return $rref->[0];
 }
 
+sub DB_getAllIntefaces(){
+  my $SQL = "SELECT  router_id,ph_int_id,ifc_id,name,ip_addr,mask,descr FROM interfaces ORDER by ifc_id";
+  my $aref = $dbh->selectall_hashref($SQL, "ifc_id" );
+  
+  if (defined($aref)) {
+#	  print Dumper($aref);
+#       my %tmp = map { $_ => $aref->{$_} } ( keys %$aref );
+#    print Dumper(%tmp);
+#    return %tmp;
+return $aref;
+  }
+  return undef;
+	}
 # END { print "deleting NGNMS_DB\n"; }
 
 1;
