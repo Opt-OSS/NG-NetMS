@@ -1,3 +1,14 @@
+#
+# NextGen NMS
+#
+# NGNMS_Linux.pm: interfacing with Linux servers
+#
+# Copyright (C) 2002,2003 OptOSS LLC
+# Copyright (C) 2014 Opt/Net BV
+#
+# Author: T.Matselyukh, A. Jaropud
+#
+
 package NGNMS_Linux;
 
 use strict;
@@ -117,7 +128,8 @@ sub new{
 											master_opts => [ -o => "StrictHostKeyChecking=no" ]);
 		}
 		
-		$model->error and die "Unable to connect to remote host: " . $model->error;
+		$model->error and   warn "Unable to connect to remote host: " . $model->error;
+##		$model->error and die "Unable to connect to remote host: " . $model->error;
 											
 	}
 	
@@ -551,11 +563,16 @@ sub run_proccessing
 	my $linux_hardwr =  $self->linux_parse_hardwr();
 	print "$linux_softwr:$linux_compname:$linux_hardwr\n";
 	$new_rid  = DB_getRouterId($linux_compname);
+	if(!defined($new_rid))
+	{
+		$new_rid  = DB_getRouterId($self->_socket->{_host});
+	}
 					if (!defined($new_rid)) {
 						$new_rid = DB_addRouter($linux_compname,$self->_socket->{_host},'up');						
 					}
 					else
 					{
+						DB_replaceRouterName($new_rid,$linux_compname);
 						DB_setHostState($new_rid,'up');
 						}
 	DB_setHostVendor($new_rid,$linux_vendor);				
