@@ -107,7 +107,11 @@ $this->breadcrumbs=array(
         'htmlOptions'=>array('class'=>'well'),
     )); ?>
 <input type="hidden" name="tumbler" id="tumbler" value="1">
-<?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'submit', 'label'=>'Run Initial discovery','type' => 'danger')); ?>
+<input type="hidden" name="scanner" id="scanner" value="0">
+    <h5>Subnets scanner</h5>
+
+<input id="TheCheckBox" type="checkbox" class="BSswitch" name="scanner-checkbox" id="TheCheckBox" data-off-color="danger" data-on-color="success">
+<?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'submit', 'label'=>'Run Initial discovery','type' => 'danger','htmlOptions'=>array('style'=>"margin-left:35px;",))); ?>
     <?php
     $cur_disc = array_search($model1->value, Yii::app()->params['cronperiods']);
     $this->widget(
@@ -117,4 +121,16 @@ $this->breadcrumbs=array(
     ?>
 
 <?php $this->endWidget(); }?>
-
+<script>
+    $("[name='scanner-checkbox']").bootstrapSwitch('state',false);
+    $('.BSswitch').on('switchChange.bootstrapSwitch', function (event, state) {
+        if(state)
+        {
+            $('#scanner').attr('value','1');
+        }
+        else
+        {
+            $('#scanner').attr('value','0');
+        }
+    });
+</script>
