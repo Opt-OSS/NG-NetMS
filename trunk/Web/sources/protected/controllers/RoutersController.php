@@ -1726,6 +1726,10 @@ exit;*/
     {
         if (!Yii::app()->user->isGuest) {
             if (Yii::app()->user->checkAccess('editAssets')) {
+				$baseUrl = Yii::app()->baseUrl;
+                $cs = Yii::app()->clientScript;
+                $cs->registerCssFile($baseUrl.'/css/bootstrap-switch.css');
+                $cs->registerScriptFile(Yii::app()->baseUrl . '/js/libs/bootstrap-switch.js', CClientScript::POS_HEAD);
                 $model = new Routers;
                 $model1 = GeneralSettings::model()->findByAttributes(array('name'=>'perioddiscovery'));
 
@@ -1752,6 +1756,12 @@ exit;*/
 
 
                     $command1 = 'perl audit.pl';
+                    
+                    if(isset($_POST['scanner']) && $_POST['scanner'] > 0)
+                    {
+                        $command1 .= " -s";
+                    }
+                    
                     if(isset($arr_attr['host']) )
                     {
                         $command1 .= " -L ".$arr_attr['host'];
