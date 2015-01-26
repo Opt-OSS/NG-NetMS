@@ -1732,6 +1732,7 @@ exit;*/
                 $cs->registerScriptFile(Yii::app()->baseUrl . '/js/libs/bootstrap-switch.js', CClientScript::POS_HEAD);
                 $model = new Routers;
                 $model1 = GeneralSettings::model()->findByAttributes(array('name'=>'perioddiscovery'));
+                $model2 = GeneralSettings::model()->findByAttributes(array('name'=>'scanner'));
 
                 if (isset($_POST['tumbler']) && $_POST['tumbler'] > 0)
                 {
@@ -1747,7 +1748,7 @@ exit;*/
 
                     $arr_attr['username'] = Yii::app()->db->username;
                     $arr_attr['password'] = Yii::app()->db->password;
-		    chdir('/home/ngnms/NGREADY/bin/');
+					chdir('/home/ngnms/NGREADY/bin/');
                     putenv("NGNMS_HOME=/home/ngnms/NGREADY");
                     putenv('NGNMS_CONFIGS=/home/ngnms/NGREADY/configs');
                     putenv('PATH=/home/ngnms/NGREADY/bin:/usr/bin');
@@ -1858,6 +1859,7 @@ exit;*/
                 $this->render('runaudit', array(
                     'model' => $model,
                     'model1' => $model1,
+                    'model2' => $model2
                 ));
             }
             else {

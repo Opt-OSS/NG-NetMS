@@ -64,7 +64,7 @@ class GeneralSettings extends CActiveRecord
     {
         if(!empty($this->value) && $this->name !='chiave')
         {
-            if($this->name !='perioddiscovery')
+            if($this->name !='perioddiscovery' && $this->name !='scanner')
                      $this->value = Cripto::encrypt($this->value);
         }
 
@@ -77,7 +77,7 @@ class GeneralSettings extends CActiveRecord
 
     public static function valueFormated($model)
     {
-        if($model->name !='chiave' && $model->name !='perioddiscovery')
+        if($model->name !='chiave' && $model->name !='perioddiscovery' && $model->name !='scanner')
         {
             return  trim(Cripto::decrypt($model->value));
         }
@@ -107,7 +107,7 @@ class GeneralSettings extends CActiveRecord
 		$criteria->compare('id',$this->id);
 		$criteria->compare('name',$this->name,true);
 		$criteria->compare('value',$this->value,true);
-        $criteria->addNotInCondition('name',array('chiave','perioddiscovery'));
+        $criteria->addNotInCondition('name',array('chiave','perioddiscovery','scanner'));
         $criteria->order = 'order_view ASC';
 
 

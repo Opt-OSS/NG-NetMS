@@ -22,6 +22,7 @@ $this->breadcrumbs=array(
 
     <div class="modal-body">
         <form id="perioddiscovery">
+            <input type="hidden" name="scanner_t" id="scanner_t" value=""/>
             <div class="well carousel-search hidden-sm">
                 <div class="btn-group"> <a class="btn btn-default dropdown-toggle btn-select" data-toggle="dropdown" href="#"> <span class="caret"></span></a>
                     <ul class="dropdown-menu">
@@ -57,13 +58,14 @@ $this->breadcrumbs=array(
         <script>
             $("#btnSearch").click(function(){
                 var period = $('.btn-select').text();
+                var scanner_t = $(".modal-body #scanner_t").val();
                 if(period.substr(0, 5)  =='Every')
                 {
                     alert ("Select period, please");
                 }
                 else
                 {
-                    var arr_per = {label:period};
+                    var arr_per = {label:period,scanner_t:scanner_t};
                     $.ajax({
                         url     : '<?php echo Yii::app() -> createUrl('generalSettings/setperiod'); ?>',
                         type    : 'POST',
@@ -85,7 +87,7 @@ $this->breadcrumbs=array(
 
     <script>
 
-        function viewForm() {
+        function viewForm(scanner) {
                     $('.modal-body').css('height', '300px');
                     $.ajax({
                         url     : '<?php echo Yii::app() -> createUrl('generalSettings/getperiod'); ?>',
@@ -96,6 +98,7 @@ $this->breadcrumbs=array(
                             $('.btn-group').find('.dropdown-toggle').html(data.label+' <span class="caret"></span>');
                         }
                     });
+                    $(".modal-body #scanner_t").val( scanner );
                     $("#periodset").modal("show");
                 }
     </script>
@@ -107,22 +110,44 @@ $this->breadcrumbs=array(
         'htmlOptions'=>array('class'=>'well'),
     )); ?>
 <input type="hidden" name="tumbler" id="tumbler" value="1">
-<input type="hidden" name="scanner" id="scanner" value="0">
-    <h5>Subnets scanner</h5>
 
-<input id="TheCheckBox" type="checkbox" class="BSswitch" name="scanner-checkbox" id="TheCheckBox" data-off-color="danger" data-on-color="success">
-<?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'submit', 'label'=>'Run Initial discovery','type' => 'danger','htmlOptions'=>array('style'=>"margin-left:35px;",))); ?>
+    <h5>Subnets scanner</h5>
+    <?php if($model2->value > 0){?>
+        <input type="hidden" name="scanner" id="scanner" value="1">
+<?php
+    }
+    else
+    {
+?>
+    <input type="hidden" name="scanner" id="scanner" value="0">
+<?php
+    }
+?>
+    <input id="TheCheckBox" type="checkbox" class="BSswitch" name="scanner-checkbox" id="TheCheckBox" data-off-color="danger" data-on-color="success">
+
+
+    <?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'submit', 'label'=>'Run Initial discovery','type' => 'danger','htmlOptions'=>array('style'=>"margin-left:35px;",))) ?>
     <?php
     $cur_disc = array_search($model1->value, Yii::app()->params['cronperiods']);
     $this->widget(
         'bootstrap.widgets.TbButton', array('buttonType' => 'ajaxSubmit', 'label' => "Schedule periodic discovery (current: every $cur_disc)", 'type' => 'info',
-            'htmlOptions'=>array('style'=>"margin-left:35px;",'onclick' => "js: viewForm();return false;"),)
+            'htmlOptions'=>array('style'=>"margin-left:35px;",'onclick' => "js:var scan_t = $('#scanner').val(); viewForm(scan_t);return false;"),)
     );
     ?>
 
 <?php $this->endWidget(); }?>
 <script>
+    <?php if($model2->value > 0){?>
+    $("[name='scanner-checkbox']").bootstrapSwitch('state',true);
+    <?php
+    }
+    else
+    {
+?>
     $("[name='scanner-checkbox']").bootstrapSwitch('state',false);
+    <?php
+        }
+    ?>
     $('.BSswitch').on('switchChange.bootstrapSwitch', function (event, state) {
         if(state)
         {

@@ -109,6 +109,7 @@ class GeneralSettingsController extends Controller
                 $model = GeneralSettings::model()->findByAttributes(array('name'=>'perioddiscovery'));
                 $arr_crontab = Yii::app()->params['cronperiods'];
                 $ind = trim($_POST['label']);
+                $scan = $_POST['scanner_t'];
                 $model->value = $arr_crontab[$ind];
                 if($model->save())
                 {
@@ -121,7 +122,7 @@ class GeneralSettingsController extends Controller
                         $arr2 = explode("=",$val);
                         $arr_attr[$arr2[0]] = $arr2[1];
                     }
-/*
+
   chdir('/home/ngnms/NGREADY/bin/');
                     putenv("NGNMS_HOME=/home/ngnms/NGREADY");
                     putenv('NGNMS_CONFIGS=/home/ngnms/NGREADY/configs');
@@ -129,17 +130,23 @@ class GeneralSettingsController extends Controller
                     putenv('PERL5LIB=/usr/local/share/perl/5.18.2:/home/ngnms/NGREADY/bin:/home/ngnms/NGREADY/lib:/home/ngnms/NGREADY/lib/Net');
                     putenv('MIBDIRS=/home/ngnms/NGREADY/mibs');
 
- */
+ 
                     $arr_attr['username'] = Yii::app()->db->username;
                     $arr_attr['password'] = Yii::app()->db->password;
-                    chdir ('/var/www/ngnms_perl/PERL/bin/');
+            /*		chdir ('/var/www/ngnms_perl/PERL/bin/');
                     putenv("NGNMS_HOME=/var/www/ngnms_perl/PERL");
                     putenv('NGNMS_CONFIGS=/var/www/ngnms_perl/PERL/configs');
                     putenv('PATH=/var/www/ngnms_perl/PERL/bin:/usr/bin');
-                    putenv('PERL5LIB=/var/www/ngnms_perl/PERL/lib:/var/www/ngnms_perl/PERL/lib/Net');
+                    putenv('PERL5LIB=/var/www/ngnms_perl/PERL/lib:/var/www/ngnms_perl/PERL/lib/Net');*/
 
 
                     $command1 = '/usr/bin/perl scheduler.pl';
+                    
+                    if($scan > 0)
+                    {
+                        $command1 .= ' -s ';
+                    }
+                    
                     if(isset($arr_attr['host']) )
                     {
                         $command1 .= " -L ".$arr_attr['host'];
@@ -167,6 +174,9 @@ class GeneralSettingsController extends Controller
 
                     $escaped_command1 = escapeshellcmd($command1);
                     $sss=system($escaped_command1);
+                    $model0 = GeneralSettings::model()->findByAttributes(array('name'=>'scanner'));
+                    $model0->value = $scan;
+                    $model0->save();
 
 
                     $data = array("ok"=>1);
