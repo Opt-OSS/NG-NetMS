@@ -9,6 +9,7 @@
 #
 # Switches:
 #  -np       skip poll stage
+#  -s		 run subnets scanner
 #  -f fname  get topologies from files 'file_isis.txt' and 'file_ospf.txt'
 #  -t type   host type for the file
 #  -d        print debugging info to screen
@@ -77,6 +78,7 @@ my $test_topologies;
 my $test_host_type;
 my $ocx_session;
 my $prom_val;
+my $scan = 0;
 
 my $seedHosts = '';
 my $user      = '';
@@ -100,6 +102,7 @@ Usage: audit.pl [switches] host user passwd enpasswd accesstype(Telnet/SSH1/SSH2
 
 Switches:
  -np       skip poll stage
+ -s	   run subnets scanner
  -f fname  get isis topology from file
  -t type   host type for the file
  -d        print debugging info to screen
@@ -118,6 +121,9 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   
   if ($ARGV[0] eq "-np") {
     $noPoll = 1;
+  }
+  if ($ARGV[0] eq "-s") {
+    $scan = 1;
   }
   if ($ARGV[0] eq "-f") {
     shift @ARGV;
@@ -192,6 +198,7 @@ Usage: audit.pl [switches] host user passwd enpasswd accesstype(Telnet/SSH1/SSH2
 
 Switches:
  -np       skip poll stage
+ -s		   run subnets scanner
  -f fname  get isis topology from file
  -t type   host type for the file
  -d        print debugging info to screen
@@ -209,7 +216,7 @@ EOF
   
   shift @ARGV;
 }
-
+print "scan=".$scan."\n";
 #####################################################################
 
 # Redirect stdout if no debugging needed
@@ -295,7 +302,7 @@ print "Seed host(s): $seedHosts\n";
 ##print "User:         $user\n";
 # print "Password:     $passwd\n";
 # print "En. password: $enpasswd\n";
-my $cmd1 = "-d -D ".$dbname." -U ".$dbuser." -W ".$dbpasswd." -P ".$dbport." -L ".$dbhost;
+my $cmd1 = " -D ".$dbname." -U ".$dbuser." -W ".$dbpasswd." -P ".$dbport." -L ".$dbhost;
 
 # Get ISIS topology from host
 # Params:
@@ -678,6 +685,30 @@ foreach my $child (keys %hosts) {
 
 
 DB_close;
+if($scan > 0)
+{
+		&runScanner("$ENV{'NGNMS_HOME'}/bin/subnets_scanner.pl");
+}
 
+sub runScanner()
+{
+	my $cmd = shift;
+print $cmd;
+	my @cmd2=($cmd);
+	my @params = ($user, $passwd,$access);
+	
+		push @cmd2,'-L';
+		push @cmd2,$dbhost;
+		push @cmd2,'-D';
+		push @cmd2,$dbname;
+		push @cmd2,'-U';
+		push @cmd2,$dbuser;
+		push @cmd2,'-W';
+		push @cmd2,$dbpasswd;
+		push @cmd2,'-P';
+		push @cmd2,$dbport;
+		system( @cmd2, @params );
+	
+	}
 __END__
 
