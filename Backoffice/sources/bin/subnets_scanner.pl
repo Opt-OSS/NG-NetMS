@@ -126,6 +126,19 @@ EOF
 die "Usage: $0 user passwd access_type [pass_to_key]\n" unless ($#ARGV >= 0);
 my ($user, $passwd, $access,$path_to_key) = @ARGV[0..3];
 
+# Redirect stdout
+
+my $logFile = "/dev/null";
+  if (defined($ENV{"NGNMS_LOGFILE"})) {
+    $logFile = $ENV{"NGNMS_LOGFILE"};
+  }
+
+  open( STDERR, ">&STDOUT") or
+    warn "Failed to redirect stderr to stdout: $!\n";
+  open( STDOUT, "> $logFile") or
+    warn "Failed to redirect stdout to $logFile: $!\n";
+##
+
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 my $arr = DB_getAllIntefaces();
 
@@ -300,11 +313,14 @@ while (my $host = $host_list->get_next()) {
 	
     unless (!($host->addresses)[0]->addr) {
         if( $host->status eq 'up' ) {
-		   print "addr:".($host->addresses)[0]->addr()."\n";
-           $upHosts[$counter]{'addr'} =  ($host->addresses)[0]->addr();
-           $upHosts[$counter]{'high_link'} =  $id_link;
-           $counter++;
+		   if(!defined DB_getInterfaceRouterId(($host->addresses)[0]->addr()))
+				{
+					print "addr:".($host->addresses)[0]->addr()."\n";
+					$upHosts[$counter]{'addr'} =  ($host->addresses)[0]->addr();
+					$upHosts[$counter]{'high_link'} =  $id_link;
+					$counter++;
 				}
 			}
 		}
-	}	
+	}
+}	

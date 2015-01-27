@@ -1,17 +1,36 @@
 #!/usr/bin/perl -w
 
+use strict;
+use warnings;
 use Data::Dumper;
 use NGNMS_DB;
 use DateTime;
+use Config::Crontab;
+
+
 
 my $dbhost = "localhost";
 my $dbname = "";
 my $dbuser = "";
 my $dbpasswd = "";
 my $dbport = "5432";
+my $scan = 0;
+my $line;
+my $prom_val;
+my $sc;
+my $c;
+my $dd;
+my $ct;
+my $newblock;
+
 
 ##Get data from command line
 while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
+	if ($ARGV[0] eq "-s") {
+                $scan = 1;
+                shift @ARGV;
+                next;
+        }
 	if ($ARGV[0] eq "-L") {
 		shift @ARGV;
 		$dbhost = $ARGV[0] if defined($ARGV[0]);
@@ -49,14 +68,20 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   
 }
 
+
 ## Change access to DB
-	my $file = "audit_run.sh";  
+	my $file = "audit_run.sh"; 
+	if($scan > 0)
+	{
+		 $file = "audit_run_scan.sh"; 
+	}
+	
 	open (IN, $file) || die "Cannot open file ".$file." for read";       
-			@lines=<IN>;    
+			my @lines0=<IN>;    
 	close IN;  
   
 	open (OUT, ">", $file) || die "Cannot open file ".$file." for write";  
-	foreach $line (@lines)  
+	foreach $line (@lines0)  
 	{    
 		$line="HOST='$dbhost'\n" if $line =~ m/^HOST/;
 		$line="DB='$dbname'\n" if $line =~ m/^DB/;
