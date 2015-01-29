@@ -315,7 +315,7 @@ sub getLinuxConfig()
   my $cur_ipaddr = $host;
   my $ocx_session = NGNMS_Linux->new($cur_ipaddr,$user,$passwd,$enpasswd,$access,$path_to_key,$passphrase);
   $ocx_session->open($cur_ipaddr,$user,$passwd,$enpasswd);
-  $ocx_session->run_proccessing();
+  $ocx_session->run_proccessing($cur_ipaddr);
   $ocx_session->close;
   return 'ok';
 	}

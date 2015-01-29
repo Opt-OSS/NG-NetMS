@@ -3,7 +3,7 @@
 # Scan subnets which were configured in network
 #
 # Usage:
-#  subnets_scanner.pl [switches] user passwd access_type pass_to_key
+#  subnets_scanner.pl [switches] user passwd access_type community pass_to_key
 #
 # Switches:
 #  -L        DB host (default:localhost)
@@ -45,6 +45,7 @@ my $hmax;
 my $mask;
 my $hostn;
 my %arr;
+my $arr_param;
 my @nets;
 my $h;
 my $m;
@@ -57,6 +58,16 @@ my $ipaddr;
 my $idx;
 my $cur_id;
 my $ocx_session;
+my $os_name;
+my $amount;
+my $user_cur;
+my $passwd_cur;
+my $access_cur;
+my $flag;
+my $criptokey ;
+my @params = ();
+my @cmd2 = ();
+my $type_router;
 
 ## initialize default access to DB
 my $dbname = "";
@@ -109,7 +120,7 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   if ($ARGV[0] eq "-h") {
     print <<EOF ;
 Usage:
-  subnets_scanner.pl [switches] user passwd access_type(Telnet/SSH) pass_to_key(if it exist)
+  subnets_scanner.pl [switches] user passwd access_type(Telnet/SSH) community pass_to_key(if it exist)
 
   Switches:
    -L       DB host (default:localhost)
@@ -124,10 +135,10 @@ EOF
 }
 
 die "Usage: $0 user passwd access_type [pass_to_key]\n" unless ($#ARGV >= 0);
-my ($user, $passwd, $access,$path_to_key) = @ARGV[0..3];
+my ($user, $passwd, $access,$community,$path_to_key) = @ARGV[0..4];
 
 # Redirect stdout
-
+=for
 my $logFile = "/dev/null";
   if (defined($ENV{"NGNMS_LOGFILE"})) {
     $logFile = $ENV{"NGNMS_LOGFILE"};
@@ -138,7 +149,7 @@ my $logFile = "/dev/null";
   open( STDOUT, "> $logFile") or
     warn "Failed to redirect stdout to $logFile: $!\n";
 ##
-
+=cut
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 my $arr = DB_getAllIntefaces();
 
@@ -195,24 +206,121 @@ print Dumper(%blocks0);
     my @block_one = keys %blocks0;
     for my $block_idx (@block_one) {
     print 	"Scan ".$blocks0{$block_idx}{block}."\n";	
-    &scansubnet($blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
+##	if($blocks0{$block_idx}{block}->base() eq '192.168.3.0')
+##	{
+		&scansubnet($blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
+##	}
     }
 
-
+	my $p=48;
+	$criptokey = DB_getCriptoKey();
+	my $length = length $criptokey ;
+	$p -= $length; 
+	my $suffix =  ( '0' x $p );
+	$criptokey.=$suffix;
+	my $cmd = "$ENV{'NGNMS_HOME'}/bin/poll_host.pl";
 
 for $ipaddr ( @upHosts ) {
-	print "Process ".$ipaddr->{addr}."\n";
+	print "Process ".$ipaddr->{addr}.":";
 	
-	$cur_id = DB_addRouter($ipaddr->{addr},$ipaddr->{addr},'unknown');
-	DB_writeLink($ipaddr->{high_link},$cur_id,'B');
-	$ocx_session = NGNMS_Linux->new($ipaddr->{addr},$user,$passwd,$passwd,$access);
+#	$cur_id = DB_addRouter($ipaddr->{addr},$ipaddr->{addr},'unknown');
+#	DB_writeLink($ipaddr->{high_link},$cur_id,'B');
+
+	$amount = DB_isInRouterAccess($ipaddr->{addr});
+	@params=();
+	$params[0] = $ipaddr->{addr}; ##host
+	$params[0] =~ s/\s+$//; 
 	
-	if(defined($ocx_session->{socket}->{_error}) && $ocx_session->{socket}->{_error} ne '' && $ocx_session->{socket}->{_error} != 0){
-		next;
+	
+	if(!defined($amount))
+	{
+		$amount =0;
+	}
+	print $amount."\n";
+	if($amount < 1)	##if is not special access to router then it connects with default parameters
+	{
+		$params[1] = $user;
+		$params[2] = $passwd;
+		$params[3] = $passwd;
+		$params[4] = $community; 		##community
+		$params[4] =~ s/\s+$//; 
+		$params[5] = $access;			##access
+		$params[5] =~ s/\s+$//; 
+		if(defined $path_to_key)
+		{
+			$params[6] = $path_to_key;
+			$params[6] =~ s/\s+$//; 
 		}
-	$ocx_session->open($ipaddr->{addr},$user,$passwd,$passwd);
-	$ocx_session->run_proccessing();
-	$ocx_session->close;
+	}
+	else
+	{
+		my $r_id = DB_getRouterId($ipaddr->{addr});
+		$arr_param = DB_getRouterAccess($r_id);
+####
+foreach my $emp(@$arr_param)
+				{
+				    $access_cur = $access;
+					$access_cur =  $emp->[0] if defined($emp->[0]);
+					if(defined($emp->[1]))
+					{
+						$type_router = $emp->[1];
+						$type_router =~ s/\s+$//;
+					}
+					
+					$flag = lc($emp->[2]);
+	#				print $emp->[2].":".$flag."\n";
+					if($flag eq 'login')	#username
+					{
+						$params[1] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[1] =~ s/\s+$//; 
+					}
+					if($flag eq 'password')	#password
+					{
+						$params[2] = decryptAttrvalue($criptokey,$emp->[3]); 
+						$params[2] =~ s/\s+$//; 
+						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[3] =~ s/\s+$//; 
+					}
+					if($flag eq 'enpassword')	#password
+					{
+						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[3] =~ s/\s+$//; 
+					}
+
+	##			case "port"
+
+	##			case "pathphrase"
+					if($flag eq 'path_to_key')	#path to key
+					{
+						$params[6] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[6] =~ s/\s+$//; 
+					}
+					$params[4] = $community; 		##community
+					$params[4] =~ s/\s+$//; 
+					$params[5] = $access_cur;			##access
+					$params[5] =~ s/\s+$//; 
+				}
+####				
+				
+				
+				
+	}
+	
+		@cmd2=($cmd);
+		
+		push @cmd2,'-d';
+		push @cmd2,'-L';
+		push @cmd2,$dbhost;
+		push @cmd2,'-D';
+		push @cmd2,$dbname;
+		push @cmd2,'-U';
+		push @cmd2,$dbuser;
+		push @cmd2,'-W';
+		push @cmd2,$dbpasswd;
+		push @cmd2,'-P';
+		push @cmd2,$dbport;
+		
+		system( @cmd2, @params );
 	
 }
 
@@ -302,23 +410,45 @@ sub num2ip()
 sub scansubnet{
 	my ($target,$high_link) = @_;
 	my $scanner = new Nmap::Scanner;
-	$scanner->add_target($target);
-	my $results = $scanner->scan();
+	my $cur_id ;
+	my $cur_ip;
+	my $control_cur_id;
+#	$scanner->add_target($target);
+	my $results = $scanner->scan("-sn $target");
 	##print $results->as_xml();
 	my $host_list = $results->get_host_list();
-	##print Dumper($host_list);
+##	print Dumper($host_list);
+
     my $id_link = DB_getInterfaceRouterId(&num2ip($high_link));
  
-while (my $host = $host_list->get_next()) {
-	
-    unless (!($host->addresses)[0]->addr) {
-        if( $host->status eq 'up' ) {
-		   if(!defined DB_getInterfaceRouterId(($host->addresses)[0]->addr()))
+while (my $host = $host_list->get_next()) 
+	{
+		unless (!($host->addresses)[0]->addr) 
+		{
+			if( $host->status eq 'up' ) 
+			{
+				$cur_ip = ($host->addresses)[0]->addr();
+				$control_cur_id = DB_getRouterId($cur_ip);
+				if(!defined $control_cur_id)
 				{
-					print "addr:".($host->addresses)[0]->addr()."\n";
-					$upHosts[$counter]{'addr'} =  ($host->addresses)[0]->addr();
+					if(!defined DB_getInterfaceRouterId($cur_ip))
+					{
+						$cur_id = DB_addRouter($cur_ip,$cur_ip,'unknown');
+						print "addr:".$cur_ip."\n";					
+						$upHosts[$counter]{'addr'} =  $cur_ip;
+						$upHosts[$counter]{'high_link'} =  $id_link;
+						DB_writeLink($id_link,$cur_id,'B');
+						$counter++;
+					
+					}
+				}
+				else
+				{
+					$upHosts[$counter]{'addr'} =  $cur_ip;
 					$upHosts[$counter]{'high_link'} =  $id_link;
+					DB_writeLink($id_link,$control_cur_id,'B');
 					$counter++;
+					
 				}
 			}
 		}

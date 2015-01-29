@@ -190,7 +190,7 @@ sub close {
 				$self->_socket->cmd(String=>'quit', Timeout=>2) if $self->logged_in;
 				$self->_socket->close;
 				$$self{'logged_in'} = 0;
-				$self->prompt('');
+##				$self->prompt('');
 			  }
 		}
 		else
@@ -539,7 +539,8 @@ sub run_proccessing_alone
 sub run_proccessing
 {
     my $self = shift;
- ##   print Dumper($self);
+	my $cur_ip = shift;
+##    print Dumper($self);
     my $iface;
     my $line; 
     my %phifc;
@@ -558,17 +559,25 @@ sub run_proccessing
     my (%ip6, %ip, %scope6, %bcast, %mask, %hwaddr, %ipcount,%condition);
     my $iface_count = 0;
     my $linux_vendor = $self->linux_parse_vendor();
+	if(!defined $linux_vendor || $linux_vendor eq '')
+	{
+		$linux_vendor = 'Linux';
+	}
 	my $linux_softwr = $self->linux_parse_version();
 	my $linux_compname = $self->linux_parse_name();
+	if(!defined $linux_compname || $linux_compname eq '')
+	{
+		$linux_compname = $cur_ip;
+	}
 	my $linux_hardwr =  $self->linux_parse_hardwr();
 	print "$linux_softwr:$linux_compname:$linux_hardwr\n";
 	$new_rid  = DB_getRouterId($linux_compname);
 	if(!defined($new_rid))
 	{
-		$new_rid  = DB_getRouterId($self->_socket->{_host});
+		$new_rid  = DB_getRouterId($cur_ip);
 	}
 					if (!defined($new_rid)) {
-						$new_rid = DB_addRouter($linux_compname,$self->_socket->{_host},'up');						
+						$new_rid = DB_addRouter($linux_compname,$cur_ip,'up');						
 					}
 					else
 					{
@@ -600,6 +609,7 @@ sub run_proccessing
 	foreach(@linux_interfaces)
   {
 	$line = $_;
+##	print "interface:".$line."\n";
 	if ($line =~ m/^([a-z0-9:]+)\s+.*?([a-z0-9:]+)\s*$/i) { # Linux interface
 		$iface	= $1;
 		my $iface_hwaddr = $2;
@@ -712,10 +722,19 @@ sub parse_res()
 {
   my $val = shift;
   my $first_s = shift;
-  $val =~ s/^\s+//;			# no leading white
-  $val =~ s/\s+$//;			# no trailing white
-  my @arr_val = split(/ /,$val);
-  my $retval = substr $arr_val[0],$first_s;
+  my $retval;
+  if(defined $val && $val ne '' )
+  {
+	$val =~ s/^\s+//;			# no leading white
+	$val =~ s/\s+$//;			# no trailing white
+	my @arr_val = split(/ /,$val);
+	$retval = substr $arr_val[0],$first_s;
+  }
+  else
+  {
+	$retval ='';
+  }
+  
   return $retval;
 }
 sub linux_parse_intefaces()
