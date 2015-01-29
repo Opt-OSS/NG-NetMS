@@ -252,7 +252,7 @@ sub getAttrVal($)
     
     return $ret_val;
 	}
-
+print "tut:$dbname,$dbuser,$dbpasswd,$dbport,$dbhost\n";
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 
 
@@ -695,7 +695,7 @@ sub runScanner()
 	my $cmd = shift;
 print $cmd;
 	my @cmd2=($cmd);
-	my @params = ($user, $passwd,$access);
+	my @params = ($user, $passwd,$access,$community);
 	
 		push @cmd2,'-L';
 		push @cmd2,$dbhost;
