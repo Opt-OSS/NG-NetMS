@@ -19,6 +19,7 @@
 #
 
 use strict;
+use threads;
 
 use NGNMS_DB;
 use NGNMS_util;
@@ -29,44 +30,26 @@ use Nmap::Scanner;
 use Sort::Key::IPv4 qw(ipv4keysort);
 
 my $netmask;
-my $sample;
 my $addr;
 my $start;
 my $block;
-my $counter = 0;
 my $counter_int = 0;
-my @arr_ip ;
-my @arr_mask;
-my $nm;
-my $type;
 my $n;
-my $hmin;
-my $hmax;
 my $mask;
-my $hostn;
 my %arr;
 my $arr_param;
 my @nets;
-my $h;
-my $m;
 my $b;
-my $range_scan;
 my @arr_hmax;
 my %blocks0 ;
-my @upHosts = ();
+
 my $ipaddr;
 my $idx;
 my $cur_id;
 my $ocx_session;
 my $os_name;
-my $amount;
-my $user_cur;
-my $passwd_cur;
-my $access_cur;
-my $flag;
 my $criptokey ;
-my @params = ();
-my @cmd2 = ();
+
 my $type_router;
 
 ## initialize default access to DB
@@ -202,129 +185,35 @@ for my $key (@sorted_keys) {
 ##				}
 			}					
 }
-print Dumper(%blocks0);
-    my @block_one = keys %blocks0;
-    for my $block_idx (@block_one) {
-    print 	"Scan ".$blocks0{$block_idx}{block}."\n";	
-##	if($blocks0{$block_idx}{block}->base() eq '192.168.3.0')
-##	{
-		&scansubnet($blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
-##	}
-    }
 
-	my $p=48;
+my $p=48;
 	$criptokey = DB_getCriptoKey();
 	my $length = length $criptokey ;
 	$p -= $length; 
 	my $suffix =  ( '0' x $p );
 	$criptokey.=$suffix;
 	my $cmd = "$ENV{'NGNMS_HOME'}/bin/poll_host.pl";
+print Dumper(%blocks0);
+DB_close;
+    my @block_one = keys %blocks0;
+	my @threads;
+    for my $block_idx (@block_one) {
+    print 	"Scan ".$blocks0{$block_idx}{block}."\n";	
+##	if($blocks0{$block_idx}{block}->base() eq '192.168.3.0')
+##	{
+		push @threads, threads->create(\&scansubnet, $blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
+##		&scansubnet($blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
+##	}
+    }
 
-for $ipaddr ( @upHosts ) {
-	print "Process ".$ipaddr->{addr}.":";
-	
-#	$cur_id = DB_addRouter($ipaddr->{addr},$ipaddr->{addr},'unknown');
-#	DB_writeLink($ipaddr->{high_link},$cur_id,'B');
-
-	$amount = DB_isInRouterAccess($ipaddr->{addr});
-	@params=();
-	$params[0] = $ipaddr->{addr}; ##host
-	$params[0] =~ s/\s+$//; 
-	
-	
-	if(!defined($amount))
-	{
-		$amount =0;
-	}
-	print $amount."\n";
-	if($amount < 1)	##if is not special access to router then it connects with default parameters
-	{
-		$params[1] = $user;
-		$params[2] = $passwd;
-		$params[3] = $passwd;
-		$params[4] = $community; 		##community
-		$params[4] =~ s/\s+$//; 
-		$params[5] = $access;			##access
-		$params[5] =~ s/\s+$//; 
-		if(defined $path_to_key)
-		{
-			$params[6] = $path_to_key;
-			$params[6] =~ s/\s+$//; 
-		}
-	}
-	else
-	{
-		my $r_id = DB_getRouterId($ipaddr->{addr});
-		$arr_param = DB_getRouterAccess($r_id);
-####
-foreach my $emp(@$arr_param)
-				{
-				    $access_cur = $access;
-					$access_cur =  $emp->[0] if defined($emp->[0]);
-					if(defined($emp->[1]))
-					{
-						$type_router = $emp->[1];
-						$type_router =~ s/\s+$//;
-					}
-					
-					$flag = lc($emp->[2]);
-	#				print $emp->[2].":".$flag."\n";
-					if($flag eq 'login')	#username
-					{
-						$params[1] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[1] =~ s/\s+$//; 
-					}
-					if($flag eq 'password')	#password
-					{
-						$params[2] = decryptAttrvalue($criptokey,$emp->[3]); 
-						$params[2] =~ s/\s+$//; 
-						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[3] =~ s/\s+$//; 
-					}
-					if($flag eq 'enpassword')	#password
-					{
-						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[3] =~ s/\s+$//; 
-					}
-
-	##			case "port"
-
-	##			case "pathphrase"
-					if($flag eq 'path_to_key')	#path to key
-					{
-						$params[6] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[6] =~ s/\s+$//; 
-					}
-					$params[4] = $community; 		##community
-					$params[4] =~ s/\s+$//; 
-					$params[5] = $access_cur;			##access
-					$params[5] =~ s/\s+$//; 
-				}
-####				
-				
-				
-				
-	}
-	
-		@cmd2=($cmd);
-		
-		push @cmd2,'-d';
-		push @cmd2,'-L';
-		push @cmd2,$dbhost;
-		push @cmd2,'-D';
-		push @cmd2,$dbname;
-		push @cmd2,'-U';
-		push @cmd2,$dbuser;
-		push @cmd2,'-W';
-		push @cmd2,$dbpasswd;
-		push @cmd2,'-P';
-		push @cmd2,$dbport;
-		
-		system( @cmd2, @params );
-	
+	foreach my $thread (@threads) {
+    # Обратите внимание, что $thread является не объектом, а ссылкой,
+    # поэтому управление ему передано не будет.
+    $thread->join();
 }
 
-DB_close;
+
+
 
 
 
@@ -413,12 +302,13 @@ sub scansubnet{
 	my $cur_id ;
 	my $cur_ip;
 	my $control_cur_id;
-#	$scanner->add_target($target);
+	my $counter = 0;
+	my @upHosts = ();
+	my @thrs;
 	my $results = $scanner->scan("-sn $target");
-	##print $results->as_xml();
 	my $host_list = $results->get_host_list();
-##	print Dumper($host_list);
-
+	
+DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
     my $id_link = DB_getInterfaceRouterId(&num2ip($high_link));
  
 while (my $host = $host_list->get_next()) 
@@ -438,6 +328,7 @@ while (my $host = $host_list->get_next())
 						$upHosts[$counter]{'addr'} =  $cur_ip;
 						$upHosts[$counter]{'high_link'} =  $id_link;
 						DB_writeLink($id_link,$cur_id,'B');
+						push @thrs, threads->create(\&worker, $cur_ip);
 						$counter++;
 					
 					}
@@ -447,10 +338,126 @@ while (my $host = $host_list->get_next())
 					$upHosts[$counter]{'addr'} =  $cur_ip;
 					$upHosts[$counter]{'high_link'} =  $id_link;
 					DB_writeLink($id_link,$control_cur_id,'B');
+					push @thrs, threads->create(\&worker, $cur_ip);
 					$counter++;
 					
 				}
 			}
 		}
 	}
+DB_close;
+	
+	foreach my $thr (@thrs) {
+    $thr->join();
+}
+	
 }	
+sub worker
+{
+	my $ip_addr= shift;
+	my @cmd2 = ();
+	print "Process ".$ip_addr.":";
+	
+#	$cur_id = DB_addRouter($ipaddr->{addr},$ipaddr->{addr},'unknown');
+#	DB_writeLink($ipaddr->{high_link},$cur_id,'B');
+DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
+	my $amount = DB_isInRouterAccess($ip_addr);
+	my @params=();
+	$params[0] = $ip_addr; ##host
+	$params[0] =~ s/\s+$//; 
+	
+	
+	if(!defined($amount))
+	{
+		$amount =0;
+	}
+	print $amount."\n";
+	if($amount < 1)	##if is not special access to router then it connects with default parameters
+	{
+		$params[1] = $user;
+		$params[2] = $passwd;
+		$params[3] = $passwd;
+		$params[4] = $community; 		##community
+		$params[4] =~ s/\s+$//; 
+		$params[5] = $access;			##access
+		$params[5] =~ s/\s+$//; 
+		if(defined $path_to_key)
+		{
+			$params[6] = $path_to_key;
+			$params[6] =~ s/\s+$//; 
+		}
+	}
+	else
+	{
+		
+		my $r_id = DB_getRouterId($ip_addr);
+		my $arr_param = DB_getRouterAccess($r_id);
+
+####
+foreach my $emp(@$arr_param)
+				{
+				    my $access_cur = $access;
+					$access_cur =  $emp->[0] if defined($emp->[0]);
+					if(defined($emp->[1]))
+					{
+						my $type_router = $emp->[1];
+						$type_router =~ s/\s+$//;
+					}
+					
+					my $flag = lc($emp->[2]);
+	#				print $emp->[2].":".$flag."\n";
+					if($flag eq 'login')	#username
+					{
+						$params[1] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[1] =~ s/\s+$//; 
+					}
+					if($flag eq 'password')	#password
+					{
+						$params[2] = decryptAttrvalue($criptokey,$emp->[3]); 
+						$params[2] =~ s/\s+$//; 
+						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[3] =~ s/\s+$//; 
+					}
+					if($flag eq 'enpassword')	#password
+					{
+						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[3] =~ s/\s+$//; 
+					}
+
+	##			case "port"
+
+	##			case "pathphrase"
+					if($flag eq 'path_to_key')	#path to key
+					{
+						$params[6] = decryptAttrvalue($criptokey,$emp->[3]);
+						$params[6] =~ s/\s+$//; 
+					}
+					$params[4] = $community; 		##community
+					$params[4] =~ s/\s+$//; 
+					$params[5] = $access_cur;			##access
+					$params[5] =~ s/\s+$//; 
+				}
+####				
+				
+				
+				
+	}
+DB_close;	
+		@cmd2=($cmd);
+		
+		push @cmd2,'-d';
+		push @cmd2,'-L';
+		push @cmd2,$dbhost;
+		push @cmd2,'-D';
+		push @cmd2,$dbname;
+		push @cmd2,'-U';
+		push @cmd2,$dbuser;
+		push @cmd2,'-W';
+		push @cmd2,$dbpasswd;
+		push @cmd2,'-P';
+		push @cmd2,$dbport;
+		
+		system( @cmd2, @params );
+}	
+	
+

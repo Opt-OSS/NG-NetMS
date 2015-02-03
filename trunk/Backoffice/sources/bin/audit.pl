@@ -36,6 +36,7 @@
 #
 
 use strict;
+use threads;
 
 use NGNMS_DB;
 use NGNMS_util;
@@ -687,13 +688,14 @@ foreach my $child (keys %hosts) {
 DB_close;
 if($scan > 0)
 {
+
 		&runScanner("$ENV{'NGNMS_HOME'}/bin/subnets_scanner.pl");
 }
 
 sub runScanner()
 {
 	my $cmd = shift;
-print $cmd;
+
 	my @cmd2=($cmd);
 	my @params = ($user, $passwd,$access,$community);
 	
