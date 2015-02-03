@@ -697,7 +697,7 @@ sub runScanner()
 	my $cmd = shift;
 
 	my @cmd2=($cmd);
-	my @params = ($user, $passwd,$access,$community);
+	my @params = ($user, $passwd,$enpasswd,$access,$community);
 	
 		push @cmd2,'-L';
 		push @cmd2,$dbhost;
