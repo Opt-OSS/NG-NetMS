@@ -3,7 +3,7 @@
 # Scan subnets which were configured in network
 #
 # Usage:
-#  subnets_scanner.pl [switches] user passwd access_type community pass_to_key
+#  subnets_scanner.pl [switches] user passwd enpasswd access_type community pass_to_key
 #
 # Switches:
 #  -L        DB host (default:localhost)
@@ -27,7 +27,7 @@ use NGNMS_Linux;
 use Data::Dumper;
 use Net::Netmask;
 use Nmap::Scanner;
-use Sort::Key::IPv4 qw(ipv4keysort);
+use Sort::Key::IPv4 qw(ripv4keysort);
 
 my $netmask;
 my $addr;
@@ -49,7 +49,7 @@ my $cur_id;
 my $ocx_session;
 my $os_name;
 my $criptokey ;
-
+my $nb_process = 5;
 my $type_router;
 
 ## initialize default access to DB
@@ -103,7 +103,7 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   if ($ARGV[0] eq "-h") {
     print <<EOF ;
 Usage:
-  subnets_scanner.pl [switches] user passwd access_type(Telnet/SSH) community pass_to_key(if it exist)
+  subnets_scanner.pl [switches] user passwd access_type(Telnet/SSH) enpasswd community pass_to_key(if it exist)
 
   Switches:
    -L       DB host (default:localhost)
@@ -118,7 +118,7 @@ EOF
 }
 
 die "Usage: $0 user passwd access_type [pass_to_key]\n" unless ($#ARGV >= 0);
-my ($user, $passwd, $access,$community,$path_to_key) = @ARGV[0..4];
+my ($user, $passwd, $enpasswd, $access,$community,$path_to_key) = @ARGV[0..5];
 
 # Redirect stdout
 =for
@@ -139,21 +139,17 @@ my $arr = DB_getAllIntefaces();
 
 
 
-         my @sorted_keys = ipv4keysort { $arr->{$_}->{ip_addr} } keys %$arr;
+         my @sorted_keys = ripv4keysort { $arr->{$_}->{ip_addr} } keys %$arr;
 my $old_block=new Net::Netmask ('0.0.0.0' , '255.0.0.0');
-my $high_link = 0;
+my $high_link = 4294967295;
 
 for my $key (@sorted_keys) {
-#    print qq{$key\t}, $arr->{$key}{ip_addr}, qq{\t\t},
-#            $arr->{$key}{router_id}, qq{\n};
             $addr = $arr->{$key}{ip_addr};
 		    $netmask = $arr->{$key}{mask};
 		    $block = new Net::Netmask ($addr , $netmask);
 			my @nets = split /\./, $addr;
-			if($block->bits() <32)
-			{
-##				if(getClassNet($block->bits(),$nets[0]) < 1  )
-##				{
+			if($block->bits() <30)
+				{
 					
 					if(DB_isScanException($block))
 					{
@@ -167,23 +163,15 @@ for my $key (@sorted_keys) {
 						}
 						else
 						{
-							if(&ip2num($addr) > $high_link)
+							if(&ip2num($addr) < $high_link)
 							{
 								$idx = $counter_int -1;
 								$blocks0{$idx}{high_link}=&ip2num($addr);
 								$high_link = &ip2num($addr);
 							}
 						}
-					}
-					
-=for
-					$range_scan = &bintodq($hmin)."-";
-					@arr_hmax = split /\./, &bintodq($hmax);
-					$range_scan .= $arr_hmax[3];
-					print $range_scan.":".$hostn."\n";
-=cut
-##				}
-			}					
+					}					
+				}	
 }
 
 my $p=48;
@@ -193,27 +181,51 @@ my $p=48;
 	my $suffix =  ( '0' x $p );
 	$criptokey.=$suffix;
 	my $cmd = "$ENV{'NGNMS_HOME'}/bin/poll_host.pl";
-print Dumper(%blocks0);
+##print Dumper(%blocks0);
 DB_close;
     my @block_one = keys %blocks0;
+	for my $block_idx (@block_one) {
+		print $block_idx.':'.$blocks0{$block_idx}{block}."\n";
+	}
 	my @threads;
+=for	
     for my $block_idx (@block_one) {
     print 	"Scan ".$blocks0{$block_idx}{block}."\n";	
-##	if($blocks0{$block_idx}{block}->base() eq '192.168.3.0')
-##	{
 		push @threads, threads->create(\&scansubnet, $blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
-##		&scansubnet($blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
-##	}
     }
 
 	foreach my $thread (@threads) {
-    # Обратите внимание, что $thread является не объектом, а ссылкой,
-    # поэтому управление ему передано не будет.
-    $thread->join();
+		$thread->join();
+	}
+=cut	
+my @running = ();
+my $block_idx ;
+my $old_st = -1;
+my $st = 0 ;
+my $counter_join = 0;
+while( $counter_join < $#block_one){
+	@running = threads->list(threads::running);
+	$old_st ++;
+	if (scalar @running < $nb_process) {
+		$block_idx = $block_one[$st];
+		
+ 		print 	"Scan ".$blocks0{$block_idx}{block}."\n" if($old_st == $st);	
+		push @threads, threads->create(\&scansubnet, $blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
+		if ($st < $#block_one)
+		{
+			$old_st = $st;
+			$st++;
+		}
+	}
+	foreach my $thread (@threads) {
+		if ($thread->is_running()) {
+		}
+		elsif ($thread->is_joinable()) {
+			$thread->join();
+			$counter_join++;
+		}
+	}
 }
-
-
-
 
 
 
@@ -376,7 +388,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 	{
 		$params[1] = $user;
 		$params[2] = $passwd;
-		$params[3] = $passwd;
+		$params[3] = $enpasswd;
 		$params[4] = $community; 		##community
 		$params[4] =~ s/\s+$//; 
 		$params[5] = $access;			##access
