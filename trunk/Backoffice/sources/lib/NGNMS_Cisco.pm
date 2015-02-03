@@ -1,3 +1,13 @@
+#
+# NextGen NMS
+#
+# NGNMS_Cisco.pm: interfacing with Cisco routers
+#
+# Copyright (C) 2002,2003 OptOSS LLC
+#
+# Author: M.Golov
+#
+
 package NGNMS_Cisco;
 
 use strict;
@@ -332,6 +342,15 @@ sub cisco_parse_version {
     my @t_arr = split(/:/,$ht);
 	my $ind = $#t_arr;
 	my $last_el = $t_arr[$ind];
+	print "last_el=".$last_el."\n";
+	if(!defined $last_el || $last_el eq '')
+	{
+		my $ht1 = `snmpget -v 1 -m ALL -c $community $host sysObjectID.0`;
+		my @t_arr1 = split(/:/,$ht1);
+		my $ind1 = $#t_arr1;
+		$last_el = $t_arr1[$ind1];
+		print "last_el1=".$last_el."\n";
+	}
 		
   DB_writeHostModel($rt_id,$last_el);
   return "ok";
