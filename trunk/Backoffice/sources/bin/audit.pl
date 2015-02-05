@@ -44,6 +44,7 @@ use NGNMS_util;
 use NGNMS_Cisco;
 use NGNMS_JuniperJav;
 use NGNMS_Linux;
+use NGNMS_Extreme;
 
 use Data::Dumper;
 
@@ -88,8 +89,6 @@ my $enpasswd  = '';
 my $access    = 'Telnet';
 my $community = 'public';
 
-##my $path_to_key = "/home/ngnms/.ssh/id_rsa" ;
-##my $passphrase = "colonel";
 
  my $path_to_key = "" ;
  my $passphrase = "";
@@ -316,8 +315,9 @@ sub getTopologies {
   my $hostType = shift;
   $hostType eq "Cisco" and return &NGNMS_Cisco::cisco_get_topologies;
   $hostType eq "Juniper" and return &NGNMS_JuniperJav::juniper_get_topologies;
-  $hostType eq "OCX" and return &NGNMS_Linux::linux_get_topologies;
   $hostType eq "Linux" and return &NGNMS_Linux::linux_get_topologies;
+  $hostType eq "HP" and return &NGNMS_HP::hp_get_topologies;
+  $hostType eq "Extreme" and return &NGNMS_Extreme::extreme_get_topologies;
 }
 
 
@@ -376,7 +376,7 @@ foreach $seedHost (@seedHostList) {
 		  next;
 		}
 		
-		if($hostType ne 'OCX' && $hostType ne 'Linux')
+		if($hostType ne 'OCX' && $hostType ne 'Linux' && $hostType ne 'HP' && $hostType ne 'Extreme')
 		{	if (defined($ENV{"NGNMS_CONFIGS"})) {
 				$isis_file = $ENV{"NGNMS_CONFIGS"}."/"."${seedHost}_isis.txt";
 				$ospf_file = $ENV{"NGNMS_CONFIGS"}."/"."${seedHost}_ospf.txt";
@@ -387,10 +387,6 @@ foreach $seedHost (@seedHostList) {
 				$ospf_file = "${seedHost}_ospf.txt";
 			}
 			
-		}
-		elsif($hostType eq 'OCX')
-		{
-			$isis_file = "ocx3.json"
 		}
   } else {
      if (defined($ENV{"NGNMS_CONFIGS"})) {

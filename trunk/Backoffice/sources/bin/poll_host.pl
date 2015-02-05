@@ -34,6 +34,7 @@ use strict;
 use NGNMS_Cisco;
 use NGNMS_JuniperJav;
 use NGNMS_Linux;
+use NGNMS_Extreme;
 
 use NGNMS_util;
 use NGNMS_DB;
@@ -221,6 +222,10 @@ sub getConfigs {
   {
 	  return &NGNMS_Linux::linux_get_configs;
   }
+  if($hostType eq "Extreme")
+  {
+	  return &NGNMS_Extreme::extreme_get_configs;
+  }
   return "host type ${hostType} not supported yet";
 }
 #########################################################
@@ -276,6 +281,12 @@ sub parseConfigs {
 		
 	}
   
+  if($hostType eq "Extreme")
+	{
+		my $version_file=$configPath."_version.txt";
+		$ret =
+      &NGNMS_Extreme::extreme_parse_version ($rt_id,$host,$version_file);
+	}
   return $ret;
 }
 ###########################################################
