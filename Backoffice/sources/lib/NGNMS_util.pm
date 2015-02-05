@@ -1,3 +1,13 @@
+#
+# NextGen NMS
+#
+# NGNMS_util: miscellaneous utility functions
+#
+# Copyright (C) 2002,2003 OptOSS LLC
+#
+# Author: M.Golov
+#
+
 package NGNMS_util;
 
 use strict;
@@ -76,6 +86,8 @@ sub getHostType($$) {
   $hostt = "Juniper" if $mib =~ /1\.3\.6\.1\.4\.1\.2636\..*/;
   $hostt = "Cisco" if $mib =~ /1\.3\.6\.1\.4\.1\.9\..*/;
   $hostt = "Linux" if $mib =~ /1\.3\.6\.1\.4\.1\.8072\..*/;
+  $hostt = "HP" if $mib =~ /1\.3\.6\.1\.4\.1\.11\..*/;
+  $hostt = "Extreme" if $mib =~ /1\.3\.6\.1\.4\.1\.1916\..*/;
 
   return ($hostt,'');
 }
