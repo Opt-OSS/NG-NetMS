@@ -28,6 +28,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $data);
 $VERSION     = 0.01;
 
 @EXPORT      = qw(&extreme_parse_version
+			&extreme_parse_hardwr
 		  &extreme_parse_config
 		  &extreme_parse_interfaces
 		  &extreme_get_topologies
@@ -47,6 +48,8 @@ $data = "my data";
 
 my $session;
 my $Error;
+my $model_switch;
+my $name_switch;
 
 sub extreme_create_session {
   my ($host, $username) = @_[0..1];
@@ -59,10 +62,9 @@ sub extreme_create_session {
   {
 	$access = "Telnet";
   }
-  print "Extreme:access:".$access.";host:".$host."username=".$username.";passwd0=".$passwds[0].";passwd1=".$passwds[1]."\n";
+##print "Extreme:access:".$access.";host:".$host."username=".$username.";passwd0=".$passwds[0].";passwd1=".$passwds[1]."\n";
   $session = Net::Extreme->new($access,$host, $username, @passwds,$path_to_key);
  
-
   if(defined($session->_socket))
   {
 	$session->open($access,$host, $username, @passwds);
@@ -72,7 +74,9 @@ sub extreme_create_session {
 	  $session->_set_error("Conection with $host via $access was not established")
 	  }
   
-
+#	print "--Extreme Session:";
+# print Dumper($session);
+# print "--END Extreme Session\n";
   if($session->{'error'} || !$session->{'logged_in'}) {
     $Error = $session->errmsg;
   }
@@ -82,22 +86,48 @@ sub extreme_create_session {
 }
 sub extreme_get_file($$) {
   my ($cmd, $fname) = @_[0..1];
+#  print "TUT EXTREME:$cmd\n";
   $Error = undef;
-  my @data = $session->cmd($cmd);
+  my $tm =5;
+  my @data = $session->cmd($cmd,$tm);
   if (! @data) {
     $session->close;
     $Error = "extreme: " . $session->errmsg();
     return undef;
   }
-  #    print @data;
+
+#      print @data;
   if (!open(F_DATA, ">$fname")) {
     $session->close;
     $Error = "Cannot open file $fname for writing: $!";
     return undef;
   }
-  print F_DATA @data;
+  
+  for my $line (@data) {
+	print F_DATA "$line\n";
+	}
+##  print F_DATA @data;
   close (F_DATA);
   1;
+}
+
+sub extreme_get_model($){
+my $cmd =$_[0];
+ 
+my $tm =5;
+			
+  $session->_socket->print($cmd);
+  my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
+  my @data = split(/\n/,$prematch);
+  if (! @data) {
+    $session->close;
+    $Error = "extreme: " . $session->errmsg();
+    return undef;
+  }
+# print "model Extreme:\n";
+#  print Dumper(@data);
+# print "end model Extreme:\n"; 
+  return @data;
 }
 
 sub extreme_get_configs {
@@ -115,7 +145,19 @@ sub extreme_get_configs {
   #
   my $file_vers = $configPath."_version.txt";
   my $file_hard = $configPath."_hardware.txt";
-  
+=for  
+  my @models = extreme_get_model('sh switch');
+
+	foreach my $line(@models){
+		$line =~ s/[\n]//g;
+		if ($line =~ m/System Type:      (.*)$/i) { # Model of switch
+			$model_switch = $1;
+		}
+		if($line =~ m/SysName:          (.*)$/i) { # Name of switch
+			$name_switch = $1;
+		}
+	}
+=cut	
   extreme_get_file('sh ver detail', $configPath."_version.txt") or
     return $Error;
 
@@ -176,22 +218,25 @@ sub extreme_parse_version {
   my ($rt_id,$host,$version_file) = @_[0..2];
   my @word;
   my $img_vers;
-  
-  open(F_VERSF,"<$version_file") or
+  open my $info, $version_file or
     return "error - version file $version_file: $!\n";
 
-  DB_startSwInfo($rt_id);
+  
 
-  while (<F_VERSF>) {
-    chomp;			# no newline
-    s/^\s+//;			# no leading white
-    s/\s+$//;			# no trailing white
-=for
-    if (/^Model:\s*(\S+)$/) {
-      DB_writeHostModel($rt_id,$1);
+  DB_startSwInfo($rt_id);
+  
+  if (defined $model_switch) {
+      DB_writeHostModel($rt_id,$model_switch);
     }
-=cut
-    if(m/BootROM:\s(.*)    IMG:\s(.*)\s$/i)
+=for	
+	if (defined $name_switch) {
+	print "bbb: name\n";
+		DB_replaceRouterName($rt_id,$name_switch);
+    } 
+=cut  
+  while( my $line = <$info>)  {   
+   print "line:$line\n"; 
+    if($line =~ m/BootROM:\s(.*)    IMG:\s(.*)\s$/i)
 		{
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'BootROM', $1 );
@@ -201,7 +246,7 @@ sub extreme_parse_version {
 		    DB_writeSwInfo($rt_id, \%sw_info);
             
 		}
-		elsif(m/Image   :\s(.*) version\s(.*)$/i)
+		elsif($line =~ m/Image   :\s(.*) version\s(.*)$/i)
 		{
 			$img_vers = $2;
 			@word = (split /\s/, $img_vers);
@@ -210,36 +255,14 @@ sub extreme_parse_version {
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( $1, $img_vers );
 			DB_writeSwInfo($rt_id, \%sw_info);
 		}
-		elsif(m/Diagnostics\s:\s(.*)$/i)
+		elsif($line =~ m/Diagnostics\s:\s(.*)$/i)
 		{
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'Diagnostics', $1 );
 			DB_writeSwInfo($rt_id, \%sw_info);
 		}
-  }
-
-  close(F_VERSF);
-
-
-  return "ok";
-
-}
-
-sub extreme_parse_hardwr {
-
-  my ($rt_id,$hardwr_file) = @_[0..1];
-
-  open(F_HARDWR,"<$hardwr_file") or
-    return "error - hardware file $hardwr_file: $!\n";
-
-  DB_startHwInfo($rt_id);
-
-  while (<F_HARDWR>) {
-    chomp;			# no newline
-    s/^\s+//;			# no leading white
-    s/\s+$//;			# no trailing white
-
-if (m/Switch      :\s(.*)\sRev/i) { # Name of switch
+		
+		if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			%hw_info = (
 			"hw_item" => 'Switch',
 			"hw_name" => $1,
@@ -247,7 +270,7 @@ if (m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			"hw_amount" => '' );
 			DB_writeHwInfo($rt_id, \%hw_info);
 			}
-		elsif(m/PSU-1       :\s(.*)$/i)
+		elsif($line =~ m/PSU-1       :\s(.*)$/i)
 		{
 			%hw_info = (	"hw_item" => 'PSU-1',
 			"hw_name" => $1,
@@ -255,7 +278,7 @@ if (m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			"hw_amount" => '' );
 			DB_writeHwInfo($rt_id, \%hw_info);
 		}
-		elsif(m/PSU-2       :\s(.*)$/i)
+		elsif($line =~ m/PSU-2       :\s(.*)$/i)
 		{
 			%hw_info = (	"hw_item" => 'PSU-1',
 			"hw_name" => $1,
@@ -263,7 +286,7 @@ if (m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			"hw_amount" => '' );
 			DB_writeHwInfo($rt_id, \%hw_info);
 		}
-		elsif(m/Switch        (.*)$/i)
+		elsif($line =~ m/Switch        (.*)$/i)
 		{
 			%hw_info = (	"hw_item" => 'Switch',
 			"hw_name" => $1,
@@ -271,7 +294,7 @@ if (m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			"hw_amount" => '' );
 			DB_writeHwInfo($rt_id, \%hw_info);
 		}
-		elsif(m/Subsystem     (.*)$/i)
+		elsif($line =~ m/Subsystem     (.*)$/i)
 		{
 			%hw_info = (	"hw_item" => 'Subsystem',
 			"hw_name" => $1,
@@ -281,7 +304,71 @@ if (m/Switch      :\s(.*)\sRev/i) { # Name of switch
 		}
   }
 
-  close(F_HARDWR);
+  close $info;
+
+
+  return "ok";
+
+}
+
+
+sub extreme_parse_hardwr {
+    
+  my ($rt_id,$hardwr_file) = @_[0..1];
+
+  
+    open my $info, $$hardwr_file or
+    return "error - hardware file $hardwr_file: $!\n";
+print STDERR "hard=".$hardwr_file."\n";
+  DB_startHwInfo($rt_id);
+
+  while( my $line = <$info>)  {   
+   $line =~ s/[\n]//g;
+   print STDERR "line:$line\n"; 
+
+if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
+			%hw_info = (
+			"hw_item" => 'Switch',
+			"hw_name" => $1,
+			"hw_ver"  =>'',
+			"hw_amount" => '' );
+			DB_writeHwInfo($rt_id, \%hw_info);
+			}
+		elsif($line =~ m/PSU-1       :\s(.*)$/i)
+		{
+			%hw_info = (	"hw_item" => 'PSU-1',
+			"hw_name" => $1,
+			"hw_ver"  =>'',
+			"hw_amount" => '' );
+			DB_writeHwInfo($rt_id, \%hw_info);
+		}
+		elsif($line =~ m/PSU-2       :\s(.*)$/i)
+		{
+			%hw_info = (	"hw_item" => 'PSU-1',
+			"hw_name" => $1,
+			"hw_ver"  =>'',
+			"hw_amount" => '' );
+			DB_writeHwInfo($rt_id, \%hw_info);
+		}
+		elsif($line =~ m/Switch        (.*)$/i)
+		{
+			%hw_info = (	"hw_item" => 'Switch',
+			"hw_name" => $1,
+			"hw_ver"  =>'',
+			"hw_amount" => '' );
+			DB_writeHwInfo($rt_id, \%hw_info);
+		}
+		elsif($line =~ m/Subsystem     (.*)$/i)
+		{
+			%hw_info = (	"hw_item" => 'Subsystem',
+			"hw_name" => $1,
+			"hw_ver"  =>'',
+			"hw_amount" => '' );
+			DB_writeHwInfo($rt_id, \%hw_info);
+		}
+  }
+
+  close $info;
 
   return "ok";
 }

@@ -284,8 +284,11 @@ sub parseConfigs {
   if($hostType eq "Extreme")
 	{
 		my $version_file=$configPath."_version.txt";
+		my $hardwr_file=$configPath."_hardware.txt";
 		$ret =
       &NGNMS_Extreme::extreme_parse_version ($rt_id,$host,$version_file);
+##	  ($ret eq "ok") and
+##      $ret = &NGNMS_Extreme::extreme_parse_hardwr ($rt_id,$hardwr_file);
 	}
   return $ret;
 }

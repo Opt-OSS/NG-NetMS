@@ -26,6 +26,7 @@ $Error		= '';
 if(!defined($debug)) {
     $debug = 0;
 }
+$debug = 1;
 ##print "debug=".$debug;
 
 sub host		{
@@ -152,9 +153,9 @@ sub open {
 	{
 		$self->_socket->open(Host => $host, Port => 'telnet', Timeout => $TIMEOUT)
 		or return $self->_set_error($self->_socket->errmsg);
-
+        print "Extreme command 1";
 		print STDERR "logging in\n" if $debug gt 0;
-
+		print "Extreme command 2";
 		my ($intro, $match);
 		for (;;) {
 		($intro, $match) = $self->_socket->waitfor(Timeout => 5,
@@ -168,7 +169,7 @@ sub open {
 			print STDERR "Trying username ".$username."\n" if $debug > 0;
 			$self->_socket->print($username);
 		}
-		elsif ($match =~ /^Password\s*:\s*$/i && @passwords) {
+		elsif ($match =~ /^password\s*:\s*$/i && @passwords) {
 			if (@passwords) {
 			my $password = shift @passwords;
 			print STDERR "Trying password \"$password\"\n" if $debug > 0;
@@ -184,10 +185,7 @@ sub open {
 			print STDERR "Login succeeded\n" if $debug > 0;
 			$self->prompt($match);
 			$self->{'logged_in'} = 1;
-
-			print STDERR "Sending 'term len 0'\n" if $debug > 0;
-			$self->cmd('set cli screen-width 0', 3);
-			$self->cmd('set cli screen-length 0', 3);
+#			$self->_socket->print('disable clipaging');
 			#if(defined($Error)) { return undef if length($Error); }
 
 			$self->_set_error(undef);
@@ -207,7 +205,7 @@ sub open {
 #
 # PUBLIC CLOSE
 #
-#	$Juniper->close
+#	$Extreme->close
 #
 # Logout from the remote Juniper.
 #
@@ -272,6 +270,11 @@ sub cmd {
 	}
     if($self->_access eq 'Telnet')
 	{
+	       if($debug)
+		   {
+				print STDERR Dumper($self->_socket);
+		   }
+=for		   
 	       my $ok = $self->_socket->cmd(
 		    String => $cmd,
 		    Output => \@output,
@@ -280,7 +283,15 @@ sub cmd {
 			if (!$ok) {
 			$self->_set_error($self->_socket->errmsg);
 			return ();
-	}
+		}
+=cut
+			$self->_socket->print("sh ver detail");
+			my ($prematch, $match) = $self->_socket->waitfor( '/> /' );
+			@output = split(/\n/,$prematch);
+			if($debug)
+		   {
+				print STDERR Dumper(@output);
+		   }
 	}
     else
 	{

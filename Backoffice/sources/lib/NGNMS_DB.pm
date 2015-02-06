@@ -101,7 +101,7 @@ sub DB_startSwInfo ($) {
 sub DB_writeSwInfo($*) {
   my $rt_id = shift;
   my $sw_info = shift;
-  #print Dumper(%$sw_info);
+  print Dumper(%$sw_info);
   my $SQL = "INSERT INTO inv_sw (router_id,sw_item,sw_name,sw_version) VALUES (?,?,?,?)";
   my $sw_h = $dbh->prepare($SQL);
 
