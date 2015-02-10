@@ -75,6 +75,7 @@ my %nopress = (
 sub hp_create_session {
   my ($host, $username) = @_[0..1];
   my @passwds = @_[2..3];
+  my $configPath = $_[4];
   my $access =@_[6..6];
   my $path_to_key =$_[7];
 
@@ -88,7 +89,17 @@ sub hp_create_session {
   $session = Net::HPProcurve->new($access,$host, $username, @passwds,$path_to_key);
   if(defined($session->_socket))
   {
+		my $file_vers = $configPath."_version.txt";
+		my $interfaces_file=$configPath."_interfaces.txt";
+		if (!open(F_DATA, ">$file_vers")) {
+			$session->_socket->close;
+			$Error = "Cannot open file $file_vers for writing: $!";
+			return undef;
+		}
+		
 		my ($prematch, $match) = $session->_socket->waitfor('/ProCurve.*?Switch.*\n/');
+		print F_DATA "$match\n";
+=for
 		my $model = $match;
 		my $part_n = $match;
 	    $part_n =~ s/ProCurve //i;
@@ -104,66 +115,40 @@ sub hp_create_session {
 		$model =~ s/\s*J\d+[AB]\s*//i;
 		$model =~ s/\s*Switch\s*//i;
 		$model_switch = $model;
-		
+=cut		
 		($prematch, $match) = 
         $session->_socket->waitfor('/(Firmware|Software) revision.*\n/');
+		print F_DATA "$match\n";
+		close (F_DATA);
 		$match =~ m/(Software|Firmware) revision (.*)/i;
 		my $version = $2 || "";
 		$version =~ s/[\r\n]//g;
-		print $version."\n";
+=for		
 		$sw_info{'sw_item'} = 'Software';
 		($sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'Revision', $version );
 		push(@swarray,%sw_info);
+=cut		
 		# Some versions of the firmware don't have this prompt.
 		if (!$nopress{$version}) {
         $session->_socket->waitfor('/Press any key to continue/');
         $session->_socket->print("");
-		}
+		}		
 		$session->_socket->waitfor('/Password: /');
 		$session->_socket->print($passwds[0]);
 		$session->_socket->waitfor('/> /');
-=for		
-		$session->_socket->print("show system-information");
-		($prematch, $match) = $session->_socket->waitfor( '/IP Mgmt/' );
-		my @output = split(/\r/,$prematch);
-		foreach my $line(@output)
-		{
-			$line =~ s/[\n]//g;
-			if ($line =~ m/ System Name        :\s(.*)$/i) { # Name of switch
-				$name_switch	= $1;
-				}
-			elsif($line =~ m/ System Location    :\s(.*)$/i){ #Location of switch
-				$location_switch = $1;
-				$location_switch =~ s/\s+$//;
-			}	
-			elsif($line =~ m/  ROM Version        :\s(.*)$/i){
-				my $rom_vers = $1;
-				@word = ($rom_vers =~ /(\w+)/g);
-				@word = (split /\s/, $rom_vers)[0];
-				$rom_vers = $word[0];
-				$sw_info{'sw_item'} = 'Firmware';
-			   ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'ROM', $rom_vers );
-			   push(@swarray,%sw_info);
-			}
-			if ($line =~ m/ Serial Number      :\s(.*)$/i) { # Serial number of switch
-				my $serial_number	= $1;
-				$serial_number =~ s/\s+$//;
-				%hw_info = (	"hw_item" => 'Chassis ',
-				"hw_name" => '',
-				"hw_ver"  => $serial_number,
-				"hw_amount" => '' );
-				push(@hwarray,%hw_info);
-			}		
+		if (!open(F_DATA1, ">$interfaces_file")) {
+			$session->_socket->close;
+			$Error = "Cannot open file $interfaces_file for writing: $!";
+			return undef;
 		}
-=cut		
+		my $titlef = 'Interfaces:';
+		print F_DATA1 "$titlef\n";
+		close (F_DATA1);
 	}
 	else
 	{
 		$session->_set_error("Conection with $host via $access was not established")
 	}	
-
-print Dumper(@swarray);
-print Dumper(@hwarray);
 
   if($session->{'error'}) {
     $Error = $session->errmsg;
@@ -188,8 +173,8 @@ sub hp_get_file($$$) {
     return undef;
   }
 	 
-  if (!open(F_DATA, ">$fname")) {
-    $session->close;
+  if (!open(F_DATA, ">>$fname")) {
+    $session->_socket->close;
     $Error = "Cannot open file $fname for writing: $!";
     return undef;
   }
@@ -203,24 +188,6 @@ sub hp_get_file($$$) {
   1;
 }
 
-sub hp_get_model($){
-my $cmd =$_[0];
- 
-my $tm =5;
-			
-  $session->_socket->print($cmd);
-  my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
-  my @data = split(/\n/,$prematch);
-  if (! @data) {
-    $session->close;
-    $Error = "extreme: " . $session->errmsg();
-    return undef;
-  }
-# print "model Extreme:\n";
-#  print Dumper(@data);
-# print "end model Extreme:\n"; 
-  return @data;
-}
 
 sub hp_get_configs {
   my ($host, $username) = @_[0..1];
@@ -228,8 +195,8 @@ sub hp_get_configs {
   my $configPath = $_[4];
   my $acc = $_[6];
   print "Getting configs from $host\n";
-  my @params = ($_[0],$_[1],$_[2],$_[3],'','',$_[6]);
-##  juniper_create_session(@_);
+  my @params = ($_[0],$_[1],$_[2],$_[3],$_[4],'',$_[6]);
+
   hp_create_session(@params);
   return $Error if $Error;
 
@@ -237,14 +204,14 @@ sub hp_get_configs {
   #
   my $file_vers = $configPath."_version.txt";
   my $file_hard = $configPath."_hardware.txt";
+  
 
   hp_get_file('show system-information', $configPath."_version.txt",'IP Mgmt') or
     return $Error;
 
   # hardware inventory
   #
-#  extreme_get_file('show chass hardw', $configPath."_hardware.txt") or
-#    return $Error;
+
 	copy $file_vers,$file_hard or return $Error;
 
   # Running config
@@ -254,9 +221,14 @@ sub hp_get_configs {
 
   # Interfaces
   #
-#  extreme_get_file('show interface extensive', $configPath."_interfaces.txt") or
-#    return $Error;
-
+  $session->_socket->print(' show ip');
+  my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
+  hp_get_file(' show ip', $configPath."_interfaces.txt",'> ') or
+    return $Error;
+  $session->_socket->print(' show interfaces brief');
+  ($prematch, $match) = $session->_socket->waitfor( '/> /' );
+  hp_get_file(' show interfaces brief', $configPath."_interfaces.txt",'> ') or
+    return $Error;
 #  $session->close;
 
   return "ok";
@@ -296,87 +268,44 @@ sub hp_parse_version {
 
   DB_startSwInfo($rt_id);
   
-  if (defined $model_switch) {
-      DB_writeHostModel($rt_id,$model_switch);
-    }
-=for	
-	if (defined $name_switch) {
-	print "bbb: name\n";
-		DB_replaceRouterName($rt_id,$name_switch);
-    } 
-=cut  
+  
   while( my $line = <$info>)  {   
-   print "line:$line\n"; 
-    if($line =~ m/BootROM:\s(.*)    IMG:\s(.*)\s$/i)
-		{
-			$sw_info{'sw_item'} = 'Firmware';
-           ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'BootROM', $1 );
-			DB_writeSwInfo($rt_id, \%sw_info);
-			$sw_info{'sw_item'} = 'Firmware';
-           ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'IMG', $2 );
-		    DB_writeSwInfo($rt_id, \%sw_info);
-            
-		}
-		elsif($line =~ m/Image   :\s(.*) version\s(.*)$/i)
-		{
-			$img_vers = $2;
-			@word = (split /\s/, $img_vers);
-			$img_vers = $word[0];
-			$sw_info{'sw_item'} = 'Firmware';
-           ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( $1, $img_vers );
-			DB_writeSwInfo($rt_id, \%sw_info);
-		}
-		elsif($line =~ m/Diagnostics\s:\s(.*)$/i)
-		{
-			$sw_info{'sw_item'} = 'Firmware';
-           ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'Diagnostics', $1 );
-			DB_writeSwInfo($rt_id, \%sw_info);
-		}
-		
-		if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
-			%hw_info = (
-			"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
+   $line =~ s/[\n]//g;
+		    if($line =~ m/^ProCurve\s(.*)$/i) {
+				my $model = $1;
+				$model =~ s/\s*J\d+[AB]\s*//i;
+				$model =~ s/\s*Switch\s*//i;
+				DB_writeHostModel($rt_id,$model_switch);
 			}
-		elsif($line =~ m/PSU-1       :\s(.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'PSU-1',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-		elsif($line =~ m/PSU-2       :\s(.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'PSU-1',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-		elsif($line =~ m/Switch        (.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-		elsif($line =~ m/Subsystem     (.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'Subsystem',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
+			elsif ($line =~ m/ System Name        :\s(.*)$/i) { # Name of switch
+				$name_switch	= $1;
+				DB_replaceRouterName($rt_id,$name_switch);
+				}
+			elsif($line =~ m/ System Location    :\s(.*)$/i){ #Location of switch
+				$location_switch = $1;
+				$location_switch =~ s/\s+$//;
+				DB_writeHostLocation($rt_id, $location_switch);
+			}	
+			elsif($line =~ m/  ROM Version        :\s(.*)$/i){
+				my $rom_vers = $1;
+				@word = ($rom_vers =~ /(\w+)/g);
+				@word = (split /\s/, $rom_vers)[0];
+				$rom_vers = $word[0];
+				$sw_info{'sw_item'} = 'Firmware';
+			   ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'ROM', $rom_vers );
+			   DB_writeSwInfo($rt_id, \%sw_info);
+			}
+			elsif($line =~ m/(Software|Firmware) revision  :\s(.*)          Base MAC Addr/i){
+				my $version = $2 || "";
+				$version =~ s/[\r\n]//g;
+				$sw_info{'sw_item'} = 'Software';
+				($sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'Revision', $version );
+				DB_writeSwInfo($rt_id, \%sw_info);
+			}
+			
   }
 
   close $info;
-
 
   return "ok";
 
@@ -388,59 +317,37 @@ sub hp_parse_hardwr {
   my ($rt_id,$hardwr_file) = @_[0..1];
 
   
-    open my $info, $$hardwr_file or
+    open my $info, $hardwr_file or
     return "error - hardware file $hardwr_file: $!\n";
-print STDERR "hard=".$hardwr_file."\n";
-  DB_startHwInfo($rt_id);
+
+
 
   while( my $line = <$info>)  {   
    $line =~ s/[\n]//g;
    print STDERR "line:$line\n"; 
 
-if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
-			%hw_info = (
-			"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
+			if ($line =~ m/ Serial Number      :\s(.*)$/i) { # Serial number of switch
+				my $serial_number	= $1;
+				$serial_number =~ s/\s+$//;
+				%hw_info = (	"hw_item" => 'Chassis ',
+				"hw_name" => '',
+				"hw_ver"  => $serial_number,
+				"hw_amount" => '' );
+				DB_writeHwInfo($rt_id, \%hw_info);
 			}
-		elsif($line =~ m/PSU-1       :\s(.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'PSU-1',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-		elsif($line =~ m/PSU-2       :\s(.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'PSU-1',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-		elsif($line =~ m/Switch        (.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-		elsif($line =~ m/Subsystem     (.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'Subsystem',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
+			elsif($line =~ m/^ProCurve\s(.*)$/i){
+				my $part_n =  $1;
+				@word = ($part_n =~ /(\w+)/g);
+				$part_n = $word[0];
+				%hw_info = (	"hw_item" => 'Part number',
+						"hw_name" => '',
+						"hw_ver"  => $part_n,
+						"hw_amount" => '' );
+					DB_writeHwInfo($rt_id, \%hw_info);
+			}
   }
 
   close $info;
-
   return "ok";
 }
 
