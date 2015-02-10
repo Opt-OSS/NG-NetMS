@@ -45,6 +45,7 @@ use NGNMS_Cisco;
 use NGNMS_JuniperJav;
 use NGNMS_Linux;
 use NGNMS_Extreme;
+use NGNMS_HP;
 
 use Data::Dumper;
 
