@@ -40,7 +40,7 @@ use NGNMS_HP;
 use NGNMS_util;
 use NGNMS_DB;
 
-# use Data::Dumper;
+ use Data::Dumper;
 
 use passwds;
 
@@ -303,9 +303,11 @@ sub parseConfigs {
 		$ret =
       &NGNMS_HP::hp_parse_version ($rt_id,$host,$version_file);
 	  ($ret eq "ok") and
-      $ret = &NGNMS_HP::hp_parse_hardwr ($rt_id,$hardwr_file);
-##	  ($ret eq "ok") and
-##      $ret = &NGNMS_HP::hp_parse_interfaces ($rt_id,$interfaces_file);
+      my $ret2 = &NGNMS_HP::hp_parse_hardwr ($rt_id,$hardwr_file);
+	  ($ret2->{'ok'} eq "ok") and
+      $ret = &NGNMS_HP::hp_parse_interfaces ($rt_id,$interfaces_file,$ret2->{'part_n'});
+	  ($ret eq "ok") and
+      $ret = &NGNMS_HP::hp_parse_config ($rt_id,$config_file);
 	}	
   return $ret;
 }

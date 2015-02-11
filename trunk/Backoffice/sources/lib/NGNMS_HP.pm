@@ -46,6 +46,7 @@ $VERSION     = 0.01;
 
 $data = "my data";
 my @word;
+my @rword;
 # Preloaded methods
 
 my $session;
@@ -69,7 +70,112 @@ my %nopress = (
     "K.14.47" => 1,
     "W.14.49" => 1,
 );
-
+my %MODEL_MAP = (
+    'J8131A' => 'WAP-420-WW',
+    'J8130A' => 'WAP-420-NA',
+    'J8133A' => 'AP520WL',
+    'J8680A' => '9408sl',
+    'J9091A' => '8212zl',
+    'J9475A' => '8206zl',
+    'J9265A' => '6600ml-24XG',
+    'J9264A' => '6600ml-24G-4XG',
+    'J9263A' => '6600ml-24G',
+    'J9452A' => '6600-48G-4XG',
+    'J9451A' => '6600-48G',
+    'J8474A' => '6410cl-6XG',
+    'J8433A' => '6400cl-6XG',
+    'J8992A' => '6200yl-24G',
+    'J4902A' => '6108',
+    'J8698A' => '5412zl',
+    'J8719A' => '5408yl',
+    'J8697A' => '5406zl',
+    'J8718A' => '5404yl',
+    'J4819A' => '5308XL',
+    'J4850A' => '5304XL',
+    'J8773A' => '4208vl',
+    'J8770A' => '4204vl',
+    'J8772A' => '4202vl-72',
+    'J9032A' => '4202vl-68G',
+    'J9031A' => '4202vl-68',
+    'J8771A' => '4202vl-48G',
+    'J4865A' => '4108GL',
+    'J4887A' => '4104GL',
+    'J9588A' => '3800-48G-PoE+-4XG',
+    'J9574A' => '3800-48G-PoE+-4SFP+',
+    'J9586A' => '3800-48G-4XG',
+    'J9576A' => '3800-48G-4SFP+',
+    'J9584A' => '3800-24SFP-2SFP+',
+    'J9587A' => '3800-24G-PoE+-2XG',
+    'J9573A' => '3800-24G-PoE+-2SFP+',
+    'J9585A' => '3800-24G-2XG',
+    'J9575A' => '3800-24G-2SFP+',
+    'J8693A' => '3500yl-48G-PWR',
+    'J8692A' => '3500yl-24G-PWR',
+    'J9473A' => '3500-48-PoE',
+    'J9472A' => '3500-48',
+    'J9471A' => '3500-24-PoE',
+    'J9470A' => '3500-24',
+    'J4906A' => '3400cl-48G',
+    'J4905A' => '3400cl-24G',
+    'J4815A' => '3324XL',
+    'J4851A' => '3124',
+    'J9562A' => '2915-8G-PoE',
+    'J9148A' => '2910al-48G-PoE+',
+    'J9147A' => '2910al-48G',
+    'J9146A' => '2910al-24G-PoE+',
+    'J9145A' => '2910al-24G',
+    'J9050A' => '2900-48G',
+    'J9049A' => '2900-24G',
+    'J4904A' => '2848',
+    'J4903A' => '2824',
+    'J9022A' => '2810-48G',
+    'J9021A' => '2810-24G',
+    'J8165A' => '2650-PWR',
+    'J4899B' => '2650-CR',
+    'J4899C' => '2650C',
+    'J4899A' => '2650',
+    'J8164A' => '2626-PWR',
+    'J4900B' => '2626-CR',
+    'J4900C' => '2626C',
+    'J4900A' => '2626',
+    'J9627A' => '2620-48-PoE+',
+    'J9626A' => '2620-48',
+    'J9624A' => '2620-24-PPoE+',
+    'J9625A' => '2620-24-PoE+',
+    'J9623A' => '2620-24',
+    'J9565A' => '2615-8-PoE',
+    'J9089A' => '2610-48-PWR',
+    'J9088A' => '2610-48',
+    'J9087A' => '2610-24-PWR',
+    'J9086A' => '2610-24/12PWR',
+    'J9085A' => '2610-24',
+    'J8762A' => '2600-8-PWR',
+    'J4813A' => '2524',
+    'J9298A' => '2520G-8-PoE',
+    'J9299A' => '2520G-24-PoE',
+    'J9137A' => '2520-8-PoE',
+    'J9138A' => '2520-24-PoE',
+    'J4812A' => '2512',
+    'J9280A' => '2510G-48',
+    'J9279A' => '2510G-24',
+    'J9020A' => '2510-48A',
+    'J9019B' => '2510-24B',
+    'J9019A' => '2510-24A',
+    'J4818A' => '2324',
+    'J4817A' => '2312',
+    'J9449A' => '1810G-8',
+    'J9450A' => '1810G-24',
+    'J9029A' => '1800-8G',
+    'J9028A' => '1800-24G',
+	'J0000A' => 'unknown'
+ );
+ 
+ my %SPEED_MAP =(
+	'J9279A' => 48000000,
+	'J9280A' => 96000000,
+	'J9020A' => 17600000,
+	'J0000A' => 'unknown'
+			);
 
 
 sub hp_create_session {
@@ -90,7 +196,8 @@ sub hp_create_session {
   if(defined($session->_socket))
   {
 		my $file_vers = $configPath."_version.txt";
-		my $interfaces_file=$configPath."_interfaces.txt";
+		my $interfaces_file = $configPath."_interfaces.txt";
+		my $config_file = $configPath."_config.txt";
 		if (!open(F_DATA, ">$file_vers")) {
 			$session->_socket->close;
 			$Error = "Cannot open file $file_vers for writing: $!";
@@ -99,23 +206,7 @@ sub hp_create_session {
 		
 		my ($prematch, $match) = $session->_socket->waitfor('/ProCurve.*?Switch.*\n/');
 		print F_DATA "$match\n";
-=for
-		my $model = $match;
-		my $part_n = $match;
-	    $part_n =~ s/ProCurve //i;
-		@word = ($part_n =~ /(\w+)/g);
-		$part_n = $word[0];
-		%hw_info = (	"hw_item" => 'Part number',
-			"hw_name" => '',
-			"hw_ver"  => $part_n,
-			"hw_amount" => '' );
-	    push(@hwarray,%hw_info);
-		$model =~ s/[\r\n]//g;
-		$model =~ s/ProCurve //i;
-		$model =~ s/\s*J\d+[AB]\s*//i;
-		$model =~ s/\s*Switch\s*//i;
-		$model_switch = $model;
-=cut		
+
 		($prematch, $match) = 
         $session->_socket->waitfor('/(Firmware|Software) revision.*\n/');
 		print F_DATA "$match\n";
@@ -144,6 +235,15 @@ sub hp_create_session {
 		my $titlef = 'Interfaces:';
 		print F_DATA1 "$titlef\n";
 		close (F_DATA1);
+		
+		if (!open(F_DATA2, ">$config_file")) {
+			$session->_socket->close;
+			$Error = "Cannot open file $config_file for writing: $!";
+			return undef;
+		}
+		$titlef = '';
+		print F_DATA2 $titlef;
+		close (F_DATA2);
 	}
 	else
 	{
@@ -216,19 +316,38 @@ sub hp_get_configs {
 
   # Running config
   #
-#  extreme_get_file('show config', $configPath."_config.txt") or
-#    return $Error;
+	$session->_socket->print(" enable");
+	$session->_socket->waitfor('/Password: /');
+    $session->_socket->print('cisco');
+	my ($ok) = $session->_socket->waitfor(Match => '/# /', Errmode=>'return', Timeout => 4);
+	if($ok)
+	{
+		print "ok\n";
+		$session->_socket->print(' terminal length 1000');
+		$session->_socket->waitfor('/# /');
+		hp_get_file('show config', $configPath."_config.txt",'/# /') or
+		return $Error;
+		hp_get_file(' show ip', $configPath."_interfaces.txt",'/# /') or
+		return $Error;
+		hp_get_file(' show interfaces brief', $configPath."_interfaces.txt",'/# /') or
+		return $Error;
+	}	
+	else
+	{
+		$session->_socket->print(' show ip');
+		my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
+		hp_get_file(' show ip', $configPath."_interfaces.txt",'> ') or
+		return $Error;
+		$session->_socket->print(' show interfaces brief');
+		($prematch, $match) = $session->_socket->waitfor( '/> /' );
+		hp_get_file(' show interfaces brief', $configPath."_interfaces.txt",'> ') or
+		return $Error;
+	}
+  
 
   # Interfaces
   #
-  $session->_socket->print(' show ip');
-  my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
-  hp_get_file(' show ip', $configPath."_interfaces.txt",'> ') or
-    return $Error;
-  $session->_socket->print(' show interfaces brief');
-  ($prematch, $match) = $session->_socket->waitfor( '/> /' );
-  hp_get_file(' show interfaces brief', $configPath."_interfaces.txt",'> ') or
-    return $Error;
+  
 #  $session->close;
 
   return "ok";
@@ -238,16 +357,6 @@ sub hp_get_topologies ($$$$$) {
 
   return "ok";
 }
-
-
-
-
-
-
-
-
-
-
 
 #
 # parse 'show version' output
@@ -271,11 +380,12 @@ sub hp_parse_version {
   
   while( my $line = <$info>)  {   
    $line =~ s/[\n]//g;
+   print STDERR "line hard :$line\n"; 
 		    if($line =~ m/^ProCurve\s(.*)$/i) {
 				my $model = $1;
 				$model =~ s/\s*J\d+[AB]\s*//i;
 				$model =~ s/\s*Switch\s*//i;
-				DB_writeHostModel($rt_id,$model_switch);
+				DB_writeHostModel($rt_id,$model);
 			}
 			elsif ($line =~ m/ System Name        :\s(.*)$/i) { # Name of switch
 				$name_switch	= $1;
@@ -315,16 +425,15 @@ sub hp_parse_version {
 sub hp_parse_hardwr {
     
   my ($rt_id,$hardwr_file) = @_[0..1];
-
-  
+  my %ret_arr;
+  $ret_arr{ok} ='ok';
     open my $info, $hardwr_file or
     return "error - hardware file $hardwr_file: $!\n";
 
 
-
+DB_startHwInfo($rt_id);
   while( my $line = <$info>)  {   
    $line =~ s/[\n]//g;
-   print STDERR "line:$line\n"; 
 
 			if ($line =~ m/ Serial Number      :\s(.*)$/i) { # Serial number of switch
 				my $serial_number	= $1;
@@ -339,6 +448,13 @@ sub hp_parse_hardwr {
 				my $part_n =  $1;
 				@word = ($part_n =~ /(\w+)/g);
 				$part_n = $word[0];
+				if(defined $part_n){
+					$ret_arr{'part_n'} = $part_n;
+				}
+				else
+				{
+					$ret_arr{part_n} = 'J0000A';
+				}
 				%hw_info = (	"hw_item" => 'Part number',
 						"hw_name" => '',
 						"hw_ver"  => $part_n,
@@ -348,7 +464,7 @@ sub hp_parse_hardwr {
   }
 
   close $info;
-  return "ok";
+  return \%ret_arr;
 }
 
 #
@@ -364,7 +480,7 @@ sub hp_parse_config {
 
   open(F_RCF,"<$config_file") or
     return "error - config file $config_file: $!\n";
-
+=for
   while (<F_RCF>) {
     chomp;			# no newline
     s/^\s+//;			# no leading white
@@ -375,7 +491,9 @@ sub hp_parse_config {
       next;
     }
   }
+=cut
   close(F_RCF);
+  DB_addConfigFile($rt_id,$config_file) ;
   return "ok";
 }
 
@@ -387,165 +505,94 @@ sub hp_parse_config {
 #  interfaces file
 
 sub hp_parse_interfaces {
-  my ($rt_id,$ifc_file) = @_[0..1];
+  my ($rt_id,$ifc_file,$part_n) = @_[0..2];
+  print STDERR "Part number :$part_n\n"; 
   print "Parsing $ifc_file\n";
 
-  open(F_RCF,"<$ifc_file") or 
+   open my $info, $ifc_file or
     return "error - interfaces file $ifc_file: $!\n";
 
-  my @old_ph_ifcs = @{DB_getPhInterfaces($rt_id)};
   my @old_ifcs = @{DB_getInterfaces($rt_id)};
+  my @old_ph_ifcs = @{DB_getPhInterfaces($rt_id)};
 
   my %phifc;
   my $ph_int_id = '';
-
+  my $phint;
   my $phInterface = "";
   my $logInterface = "";
   my $protocol = "";
- 
-
-  while (<F_RCF>) {
-    chomp;			# no newline
-    s/\s+$//;			# no trailing white
-    
-    #print "$_\n";
-
-    if(/^Physical interface:\s+([^,]+),\s+([^,]+),\sPhysical link is\s(\S+)$/) {
-      print "Ph. interface $1, state $2, link $3\n";
-      my ($newPhInt, $newState, $newCond) = ($1, $2, $3);
-      $newState = 'enabled' if $newState =~ /Enabled/;
-      $newState = 'disabled' if $newState =~ /Disabled/;
-      $newState = 'adm down' if $newState =~ /Administratively down/;
-      $newCond = 'up' if $newCond =~ /Up/;
-      $newCond = 'down' if $newCond =~ /Down/;
-      if (($phInterface ne "") && !($phInterface =~ /^\.local\./)) {
-	DB_writePhInterface($rt_id, \%phifc);
-	@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
-      }
-      if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0' && $ifc{"ip address"} ne '127.0.0.1')) {
-	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-      }
-      $phInterface = $newPhInt;
-      $logInterface = "";
-      @ifc{("interface","ip address","mask","description")} =
-	('','0.0.0.0','255.255.255.255','');
-      @phifc{("interface","state","condition","speed","description")} =
-	($phInterface,$newState,$newCond,'','');
-      $protocol = "";
-      next;
-    }
-
-    # skip local phys interfaces
-    if ($phInterface =~ /^\.local\./) {
-      next;
-    }
-
-    if (/^  Description:\s+(.*)$/) {
-      $phifc{"description"} = $1;
-    }
-
-    if (/^  (\S+\s+)*Speed:\s+([^,]*)[,]*.*$/) {
-      my $speed = $2;
-      $phifc{"speed"} = $speed;
-      if ($speed =~ /^(\d+)m$/) {
-	$phifc{"speed"} = $1."000000";
-      }
-      if ($speed =~ /^(\d+)mbps$/) {
-	$phifc{"speed"} = $1."000000";
-      }
-      if ($speed =~ /^OC3$/) {
-	$phifc{"speed"} = "155000000";
-      }
-      if ($speed =~ /^OC12$/) {
-	$phifc{"speed"} = "622000000";
-      }
-      if ($speed =~ /^OC48$/) {
-	$phifc{"speed"} = "2488000000";
-      }
-      if ($speed =~ /^OC192$/) {
-	$phifc{"speed"} = "9952000000";
-      }
-      print "Speed: $phifc{'speed'}\n";
-    }
-
-    # Logical interface so-6/0/0.0 (Index 25) (SNMP ifIndex 20) (Generation 27)
-    if (/^  Logical interface\s+(\S+)\s+\(Index\s+(\d+)\)\s+\(SNMP ifIndex\s+(\d+)\)/) {
-      print "Log. interface $1, index $2, snmp idx $3\n";
-      if ($logInterface eq "") {
-	DB_writePhInterface($rt_id, \%phifc);
-	@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
-	$ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
-      } 
-      if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0')) {
-	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-      }
-      $logInterface = $1;
-      @ifc{("interface","ip address","mask","description")} =
-	($1,'0.0.0.0','255.255.255.255','');
-      $protocol = "";
-      next;
-    }
-
-    # rest is for log interfaces only
-    if ($logInterface eq "") {
-      next;
-    }
- 
-	 if (/\sDescription:\s+(.*)$/) {
-      $ifc{"description"} = $1;
-    }
-	
-    # Protocol inet, MTU: Unlimited, Generation: 7, Route table: 0
-    if (/^    Protocol\s+inet,/) {
-      print "Protocol: inet\n";
-      $protocol = "inet";
-      next;
-    }
-
-    if (/^    Protocol\s+([^,]+),/) {
-      print "Protocol: other\n";
-      $protocol = $1;
-      next;
-    }
-
-    if ($protocol eq "inet") {
-    #        Destination: 172.26.27/24, Local: 172.26.27.20,
-      if (/^        Destination:\s+(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+|\d+\.\d+|\d+)\/(\d+),\s+Local:\s+(\d+\.\d+\.\d+\.\d+)\D*/) {
-	print "Dest: $1, bits: $2, local: $3\n";
-	$ifc{ 'ip address' } = $3;
-	$ifc{ 'mask' } = bits2mask($2);
-	print "mask: $ifc{ 'mask' }\n";
-	next;
-      }
-
-      # handle this for local interfaces only
-      if (/^        Destination:\s+(\w+),\s+Local:\s+(\d+\.\d+\.\d+\.\d+)\D*/) {
-	$ifc{ 'ip address' } = $2;
-	if ($phInterface =~ /^lo\d+/) {
-	  print "Local interface, ip $ifc{ 'ip address' }\n";
-	  $ifc{ 'mask' } = '255.255.255.255';
+  my $speed;
+  my $newInt;
+  my $newState;
+  my $newCond;
+  $ifc{ 'ip address' } = '';
+  my $counter = 0 ;
+  
+  while( my $line1 = <$info>)  {   
+   $line1 =~ s/[\n]//g;
+   print STDERR "line:$line1\n"; 
+   $counter++;
+#####################
+	if($line1 =~ / Internet (IP) Service/)
+	{
+		$counter = 0;
 	}
-	#print "Dest: $1, local: $2\n";
-	next;
-      }
-    }
-  }
-
-  if (($phInterface ne "") && !($phInterface =~ /^\.local\./)) {
-    DB_writePhInterface($rt_id, \%phifc);
-    @old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
-  }
-  if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0' && $ifc{"ip address"} ne '127.0.0.1')) {
-    DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-    @old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-  }
+	if ($counter >= 8 && $line1 =~ /\d+\.\d+\.\d+\.\d+\s+\d+\.\d+\.\d+\.\d+/)
+		{
+			print STDERR "line vlan:$line1\n"; 
+			$phint = $line1;
+			$phint =~ s/\s+$//;
+			@word = split(/\s/, $phint);
+			$logInterface = $word[2];
+			$phInterface = $logInterface;
+			print STDERR $word[2].":".$word[9].":".$word[12]."\n";
+			@ifc{("interface","ip address","mask","description")} =
+			($logInterface,$word[9],$word[12],'');
+			@phifc{("interface","state","condition","speed","description")} =
+			($phInterface,'enabled','up',$SPEED_MAP{$part_n},'');
+			if ($phInterface ne "") {
+					DB_writePhInterface($rt_id, \%phifc);
+					@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
+					  } else {
+					$phInterface = $logInterface;
+					for ($phInterface) {  s/\.\d+$//; }
+					  }
+					  if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
+					my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
+					DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+					@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
+					  }
+		}
+	
+	if ($line1 =~ /\d{1,2}\s/ && $line1 =~ /100/) { 
+			@word = ($line1 =~ /(\w+)/g);
+			@rword = reverse(@word);
+			if ($rword[3] =~ /(\d+)(FDx|HDx)/) {
+			$speed = $1;
+			};
+			$newInt = $rword[9];
+			$newState = $rword[5];
+			$newCond = $rword[4];
+			$newState = 'enabled' if $newState =~ /Yes/;
+			$newState = 'disabled' if $newState =~ /No/;
+			$newCond = 'up' if $newCond =~ /Up/;
+			$newCond = 'down' if $newCond =~ /Down/;
+			$phInterface = "Port ".$newInt;
+			@phifc{("interface","state","condition","speed","description")} =
+	       ($phInterface,$newState,$newCond,$speed,'');
+			print STDERR  $rword[9].":".$rword[5].":".$rword[4].":".$speed."\n";
+			if ($phInterface ne "") {
+				DB_writePhInterface($rt_id, \%phifc);
+				@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
+			  } 
+			}
+			
+#####################   
+ }  
 
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
-
-  close(F_RCF);
+  close $info;
   return "ok";
 }
 
