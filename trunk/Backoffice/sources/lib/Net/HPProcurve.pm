@@ -112,12 +112,19 @@ sub new {
 		}
 		else
 		{
-			$model =  Net::OpenSSH->new($host,
+			my $ssh  =  Net::OpenSSH->new($host,
 											user => $username, 
 											password => $passwords[0],
 											strict_mode => 0, 
 											timeout     => $TIMEOUT,
-											master_opts => [ -o => "StrictHostKeyChecking=no" ]);	
+											master_opts => [ -o => "StrictHostKeyChecking=no" ]);
+			my ($pty, $pid) = $ssh->open2pty({stderr_to_stdout => 1})
+				or next;
+			$model = Net::Telnet->new(
+				-fhopen => $pty,
+				-telnetmode => 0,
+				-prompt => '/'.$host.'.*?# /',
+				-cmd_remove_mode => 1);
         }																		
 	}
 	

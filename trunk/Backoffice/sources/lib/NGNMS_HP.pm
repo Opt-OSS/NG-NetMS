@@ -223,9 +223,13 @@ sub hp_create_session {
 		if (!$nopress{$version}) {
         $session->_socket->waitfor('/Press any key to continue/');
         $session->_socket->print("");
+		}
+        if($access eq "Telnet")
+		{
+			$session->_socket->waitfor('/Password: /');
+		    $session->_socket->print($passwds[0]);
 		}		
-		$session->_socket->waitfor('/Password: /');
-		$session->_socket->print($passwds[0]);
+		
 		$session->_socket->waitfor('/> /');
 		if (!open(F_DATA1, ">$interfaces_file")) {
 			$session->_socket->close;
@@ -269,7 +273,7 @@ sub hp_get_file($$$) {
 
   if (! $prematch) {
 ##    $session->close;
-    $Error = "HP: " . $session->errmsg();
+    $Error = "HP: " . $session->_socket->errmsg();
     return undef;
   }
 	 
@@ -288,6 +292,33 @@ sub hp_get_file($$$) {
   1;
 }
 
+sub hp_write_to_file($$)
+{
+	my @data = @{$_[0]};
+	my $fname = $_[1];
+	my @data1=();
+	
+	if (!open(F_DATA, ">>$fname")) {
+    $session->_socket->close;
+    $Error = "Cannot open file $fname for writing: $!";
+    return undef;
+	}
+	for my $line (@data) {
+		@data1 =  split(/\n/,$line);
+	}
+	my $i = 0;
+	for  my $line1 (@data1) {
+	        if($i > 0 && $i < $#data1 )
+			{
+				$line1 =~ s/^[\n]//g;
+				print F_DATA "$line1\n";
+			}			
+		$i++;
+	}
+	close (F_DATA);
+	1;
+	
+}
 
 sub hp_get_configs {
   my ($host, $username) = @_[0..1];
@@ -304,10 +335,11 @@ sub hp_get_configs {
   #
   my $file_vers = $configPath."_version.txt";
   my $file_hard = $configPath."_hardware.txt";
-  
+  my $file_conf = $configPath."_config.txt";
+  my $file_interf = $configPath."_interfaces.txt";
 
   hp_get_file('show system-information', $configPath."_version.txt",'IP Mgmt') or
-    return $Error;
+    return $Error; 
 
   # hardware inventory
   #
@@ -322,14 +354,23 @@ sub hp_get_configs {
 	my ($ok) = $session->_socket->waitfor(Match => '/# /', Errmode=>'return', Timeout => 4);
 	if($ok)
 	{
-		print "ok\n";
+		print "Enable Mode\n";
 		$session->_socket->print(' terminal length 1000');
 		$session->_socket->waitfor('/# /');
-		hp_get_file('show config', $configPath."_config.txt",'/# /') or
+		$session->_socket->print(" show config");
+		my ($prematch, $match) = $session->_socket->waitfor( '/# /' );
+		my @output = split(/\r\n/,$prematch);
+		hp_write_to_file(\@output,$file_conf) or
 		return $Error;
-		hp_get_file(' show ip', $configPath."_interfaces.txt",'/# /') or
+        $session->_socket->print(" show ip");
+		($prematch, $match) = $session->_socket->waitfor( '/# /' );
+		@output = split(/\r\n/,$prematch);
+		hp_write_to_file(\@output,$file_interf) or
 		return $Error;
-		hp_get_file(' show interfaces brief', $configPath."_interfaces.txt",'/# /') or
+		$session->_socket->print(" show interfaces brief");
+		($prematch, $match) = $session->_socket->waitfor( '/# /' );
+		@output = split(/\r\n/,$prematch);
+		hp_write_to_file(\@output,$file_interf) or
 		return $Error;
 	}	
 	else
@@ -348,7 +389,7 @@ sub hp_get_configs {
   # Interfaces
   #
   
-#  $session->close;
+  $session->_socket->close;
 
   return "ok";
 }
@@ -380,7 +421,6 @@ sub hp_parse_version {
   
   while( my $line = <$info>)  {   
    $line =~ s/[\n]//g;
-   print STDERR "line hard :$line\n"; 
 		    if($line =~ m/^ProCurve\s(.*)$/i) {
 				my $model = $1;
 				$model =~ s/\s*J\d+[AB]\s*//i;
@@ -476,8 +516,8 @@ DB_startHwInfo($rt_id);
 
 sub hp_parse_config {
 
-  my ($rt_id,$config_file) = @_[0..1];
-
+  my ($rt,$config_file) = @_[0..1];
+print STDERR "router=".$rt."\n";
   open(F_RCF,"<$config_file") or
     return "error - config file $config_file: $!\n";
 =for
@@ -493,7 +533,7 @@ sub hp_parse_config {
   }
 =cut
   close(F_RCF);
-  DB_addConfigFile($rt_id,$config_file) ;
+  DB_addConfigFile($rt,$config_file) ;
   return "ok";
 }
 
@@ -506,7 +546,7 @@ sub hp_parse_config {
 
 sub hp_parse_interfaces {
   my ($rt_id,$ifc_file,$part_n) = @_[0..2];
-  print STDERR "Part number :$part_n\n"; 
+  print STDERR "Part number :$part_n:$rt_id\n"; 
   print "Parsing $ifc_file\n";
 
    open my $info, $ifc_file or
@@ -529,8 +569,8 @@ sub hp_parse_interfaces {
   my $counter = 0 ;
   
   while( my $line1 = <$info>)  {   
-   $line1 =~ s/[\n]//g;
-   print STDERR "line:$line1\n"; 
+   $line1 =~ s/[\n]//g; 
+   
    $counter++;
 #####################
 	if($line1 =~ / Internet (IP) Service/)
@@ -539,15 +579,14 @@ sub hp_parse_interfaces {
 	}
 	if ($counter >= 8 && $line1 =~ /\d+\.\d+\.\d+\.\d+\s+\d+\.\d+\.\d+\.\d+/)
 		{
-			print STDERR "line vlan:$line1\n"; 
 			$phint = $line1;
+			$phint =~ s/^\s+//;
 			$phint =~ s/\s+$//;
 			@word = split(/\s/, $phint);
-			$logInterface = $word[2];
+			$logInterface = $word[0];
 			$phInterface = $logInterface;
-			print STDERR $word[2].":".$word[9].":".$word[12]."\n";
 			@ifc{("interface","ip address","mask","description")} =
-			($logInterface,$word[9],$word[12],'');
+			($logInterface,$word[7],$word[10],'');
 			@phifc{("interface","state","condition","speed","description")} =
 			($phInterface,'enabled','up',$SPEED_MAP{$part_n},'');
 			if ($phInterface ne "") {
@@ -580,7 +619,6 @@ sub hp_parse_interfaces {
 			$phInterface = "Port ".$newInt;
 			@phifc{("interface","state","condition","speed","description")} =
 	       ($phInterface,$newState,$newCond,$speed,'');
-			print STDERR  $rword[9].":".$rword[5].":".$rword[4].":".$speed."\n";
 			if ($phInterface ne "") {
 				DB_writePhInterface($rt_id, \%phifc);
 				@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
