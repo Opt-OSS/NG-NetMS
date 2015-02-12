@@ -297,9 +297,10 @@ sub parseConfigs {
 	}
   if($hostType eq "HP")
 	{
-		my $version_file=$configPath."_version.txt";
-		my $hardwr_file=$configPath."_hardware.txt";
-		my $interfaces_file=$configPath."_interfaces.txt";
+		my $version_file = $configPath."_version.txt";
+		my $hardwr_file = $configPath."_hardware.txt";
+		my $interfaces_file = $configPath."_interfaces.txt";
+		my $config_file = $configPath."_config.txt";
 		$ret =
       &NGNMS_HP::hp_parse_version ($rt_id,$host,$version_file);
 	  ($ret eq "ok") and
@@ -307,7 +308,7 @@ sub parseConfigs {
 	  ($ret2->{'ok'} eq "ok") and
       $ret = &NGNMS_HP::hp_parse_interfaces ($rt_id,$interfaces_file,$ret2->{'part_n'});
 	  ($ret eq "ok") and
-      $ret = &NGNMS_HP::hp_parse_config ($rt_id,$config_file);
+      $ret = &NGNMS_HP::hp_parse_config ($host,$config_file);
 	}	
   return $ret;
 }
