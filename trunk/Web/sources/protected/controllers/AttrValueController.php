@@ -144,6 +144,11 @@ class AttrValueController extends Controller
 
                 if($pks>0)
                 {
+                    if (preg_match("/\*\*\*/i",$_POST['AttrValue'][$i]['value']))
+                    {
+                        $model_av = $this->loadModel($pks);
+                        $_POST['AttrValue'][$i]['value'] = trim(Cripto::decrypt($model_av->attributes['value'])) ;
+                    }
                     AttrValue::model()->updateByPk($pks,  array('value'=>Cripto::encrypt($_POST['AttrValue'][$i]['value'])));
                 }
                 else
@@ -171,8 +176,14 @@ class AttrValueController extends Controller
                 else
                 {
                     $arr_attrs[$i]['value'] = trim(Cripto::decrypt($arr_attrs[$i]['value']));
+
+                   if (preg_match("/password/i",$arr_attrs[$i]['name']))
+                    {
+                        $arr_attrs[$i]['value'] = Cripto::hidedata($arr_attrs[$i]['value']);
+                    }
                 }
             }
+
             $model->search();
             $this->render('update',array(
                 'model'=>$model,
@@ -217,6 +228,10 @@ class AttrValueController extends Controller
                 $arr_ing[$k1]['id'] = $k1+1;
                 $arr_ing[$k1]['name'] = $arr_r[$k1]['name'];
                 $arr_ing[$k1]['value'] = Cripto::decrypt($arr_r[$k1]['value']);
+                if (preg_match("/password/i",$arr_r[$k1]['name']))
+                {
+                    $arr_ing[$k1]['value'] = Cripto::hidedata($arr_ing[$k1]['value']);
+                }
             }
         }
 

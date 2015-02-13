@@ -79,7 +79,14 @@ class GeneralSettings extends CActiveRecord
     {
         if($model->name !='chiave' && $model->name !='perioddiscovery' && $model->name !='scanner')
         {
-            return  trim(Cripto::decrypt($model->value));
+            if (preg_match("/password/i",$model->name) || preg_match("/community/i",$model->name))
+            {
+                return trim(Cripto::hidedata($model->value));
+            }
+            else
+            {
+                return  trim(Cripto::decrypt($model->value));
+            }
         }
         else
         {

@@ -22,8 +22,8 @@ $this->widget('bootstrap.widgets.TbGridView', array(
     'template'=>"{items}{pager}",
     'columns'         => array(
         array('name'=>'id', 'header'=>'ID'),
-        array('name'=>'community_ro', 'value'=> 'Cripto::decrypt($data->community_ro)', 'header'=>'Community RO'),
-        array('name'=>'community_rw', 'value'=> 'Cripto::decrypt($data->community_rw)', 'header'=>'Community RW'),
+        array('name'=>'community_ro', 'value'=> 'Cripto::hidedata($data->community_ro)', 'header'=>'Community RO'),
+        array('name'=>'community_rw', 'value'=> 'Cripto::hidedata($data->community_rw)', 'header'=>'Community RW'),
         array(
             'class'=>'bootstrap.widgets.TbButtonColumn',
             'template'=>'{update}{delete}',

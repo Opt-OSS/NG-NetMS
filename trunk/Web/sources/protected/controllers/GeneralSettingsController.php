@@ -86,11 +86,14 @@ class GeneralSettingsController extends Controller
     {
         $model = $this->loadModel($id);
 
-// Uncomment the following line if AJAX validation is needed
-// $this->performAjaxValidation($model);
-
         if (isset($_POST['GeneralSettings'])) {
+            $model = $this->loadModelUp($id);
+            if (preg_match("/\*\*\*/i",$_POST['GeneralSettings']['value']))
+            {
+                $_POST['GeneralSettings']['value']= trim($model->attributes['value']) ;
+            }
             $model->attributes = $_POST['GeneralSettings'];
+
             if ($model->save())
                 $this->redirect(array('admin', 'id' => $model->id));
         }
@@ -130,23 +133,18 @@ class GeneralSettingsController extends Controller
                     putenv('PERL5LIB=/usr/local/share/perl/5.18.2:/home/ngnms/NGREADY/bin:/home/ngnms/NGREADY/lib:/home/ngnms/NGREADY/lib/Net');
                     putenv('MIBDIRS=/home/ngnms/NGREADY/mibs');
 
- 
+
                     $arr_attr['username'] = Yii::app()->db->username;
                     $arr_attr['password'] = Yii::app()->db->password;
-            /*		chdir ('/var/www/ngnms_perl/PERL/bin/');
-                    putenv("NGNMS_HOME=/var/www/ngnms_perl/PERL");
-                    putenv('NGNMS_CONFIGS=/var/www/ngnms_perl/PERL/configs');
-                    putenv('PATH=/var/www/ngnms_perl/PERL/bin:/usr/bin');
-                    putenv('PERL5LIB=/var/www/ngnms_perl/PERL/lib:/var/www/ngnms_perl/PERL/lib/Net');*/
+
 
 
                     $command1 = '/usr/bin/perl scheduler.pl';
-                    
                     if($scan > 0)
                     {
                         $command1 .= ' -s ';
                     }
-                    
+
                     if(isset($arr_attr['host']) )
                     {
                         $command1 .= " -L ".$arr_attr['host'];
@@ -177,7 +175,6 @@ class GeneralSettingsController extends Controller
                     $model0 = GeneralSettings::model()->findByAttributes(array('name'=>'scanner'));
                     $model0->value = $scan;
                     $model0->save();
-
 
                     $data = array("ok"=>1);
                 }
@@ -267,10 +264,28 @@ class GeneralSettingsController extends Controller
         $model = GeneralSettings::model()->findByPk($id);
         if ($model === null)
             throw new CHttpException(404, 'The requested page does not exist.');
-        if($model->name !='chiave' && $model->name !='perioddiscovery')
+        if($model->name !='chiave' && $model->name !='perioddiscovery' &&  $model->name !='scanner')
         {
+            if (preg_match("/password/i",$model->name) || preg_match("/community/i",$model->name))
+            {
+                $model->value = trim(Cripto::hidedata($model->value));
+            }
+            else
+            {
+                $model->value = trim(Cripto::decrypt($model->value));
+            }
+        }
+        return $model;
+    }
 
-            $model->value = trim(Cripto::decrypt($model->value));
+    public function loadModelUp($id)
+    {
+        $model = GeneralSettings::model()->findByPk($id);
+        if ($model === null)
+            throw new CHttpException(404, 'The requested page does not exist.');
+        if($model->name !='chiave' && $model->name !='perioddiscovery' &&  $model->name !='scanner')
+        {
+                $model->value = trim(Cripto::decrypt($model->value));
         }
         return $model;
     }
