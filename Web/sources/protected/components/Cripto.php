@@ -68,4 +68,20 @@ class Cripto extends CApplicationComponent
 
         return $key;
     }
+
+    /**
+     * update symbols  in password to *
+     *
+     */
+    public static function hidedata($str)
+    {
+
+        $str_length = strlen($str);
+        for($i =0; $i < $str_length; $i++)
+        {
+            $str[$i] = '*';
+        }
+
+        return $str;
+    }
 }

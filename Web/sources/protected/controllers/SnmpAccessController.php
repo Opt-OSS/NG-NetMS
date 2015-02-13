@@ -92,17 +92,23 @@ class SnmpAccessController extends Controller
     {
         $model = $this->loadModel($id);
 
-// Uncomment the following line if AJAX validation is needed
-// $this->performAjaxValidation($model);
-
         if (isset($_POST['SnmpAccess'])) {
+            if (preg_match("/\*\*\*/i",$_POST['SnmpAccess']['community_ro']))
+            {
+                 $_POST['SnmpAccess']['community_ro']= trim(Cripto::decrypt($model->attributes['community_ro'])) ;
+            }
+            if (preg_match("/\*\*\*/i",$_POST['SnmpAccess']['community_rw']))
+            {
+                $_POST['SnmpAccess']['community_rw'] = trim(Cripto::decrypt($model->attributes['community_rw'])) ;
+            }
             $model->attributes = $_POST['SnmpAccess'];
+
             if ($model->save())
                 $this->redirect(array('index'));
         }
 
-        $model->community_ro = trim(Cripto::decrypt($model->community_ro));
-        $model->community_rw = trim(Cripto::decrypt($model->community_rw));
+        $model->community_ro = trim(Cripto::hidedata(Cripto::decrypt($model->community_ro)));
+        $model->community_rw = trim(Cripto::hidedata(Cripto::decrypt($model->community_rw)));
         $this->render('update', array(
             'model' => $model,
         ));
