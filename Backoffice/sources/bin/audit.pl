@@ -287,6 +287,14 @@ $passwd    = shift @ARGV if $#ARGV >=0;
 $enpasswd  = shift @ARGV if $#ARGV >=0;
 $access    = shift @ARGV if $#ARGV >=0;
 $community = shift @ARGV if $#ARGV >=0;
+if($access =~ m/SSH/i)
+{
+	$access = 'SSH';
+}
+
+	$access    = 'Telnet' unless ($access eq 'SSH' || $access eq 'Telnet');
+
+
 =for
 print $seedHosts."\n";
 print $user."\n";

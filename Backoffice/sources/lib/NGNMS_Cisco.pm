@@ -12,10 +12,10 @@ package NGNMS_Cisco;
 
 use strict;
 
-# use Data::Dumper;
+use Data::Dumper;
 use NGNMS_DB;
 use NGNMS_util;
-use Net::Telnet::Cisco;
+use Net::Appliance::Session;
 
 require Exporter;
 
@@ -55,42 +55,40 @@ my $session;
 
 sub cisco_connect {
 
-  my ($host, $username, $password, $enablepw) = @_[0..3];
+  my ($host, $username, $password, $enablepw,$access) = @_[0..4];
 
-  $session = Net::Telnet::Cisco->new( Host => $host,
-					 #Input_Log => $host . "_input.log",
-					 #Output_log => $host . "_output.log",
-					 #Dump_log => $host . "_dump.log",
-					 Timeout => $timeout,
-					 Errmode => "return"
-				       );
+  $session = Net::Appliance::Session->new({
+     personality => 'ios',
+     transport => $access,
+      connect_options => { host => $host},
 
-  return "cisco: failed to connect to host" unless $session;
-  $session->prompt('/(?m:^[\w.\@-]+\s?(?:\(config[^\)]*\))?\s?[\$#>]\s?(?:\(enable\))?\s*$)/');
+ });
 
-  my $ok = $session->login($username, $password);
-  #printf "cisco login returned", $ok, "\n";
-
-  if( !$ok ) {
-    $session->close;
-    return "cisco: login failed";
-  }
-
-  $session->enable($enablepw);
-
-  my @output = $session->cmd('show privilege');
-  $output[0]=~s/\n//g;
-  if ($output[0] ne "Current privilege level is 15") {
-    $session->close;
-    return "cisco: enable failed";
-  }
-
-  $session->cmd("terminal length 0");
-
-  my $MB = 1024 * 1024;
-  $session->max_buffer_length(10 * $MB);
-
-  return "ok";
+	try {
+		# try to login to the ios device, ignoring host check
+    $session->connect(username => $username, password => $password, SHKC => 0);
+	
+    
+    # drop in to enable mode
+    $session->begin_privileged({ password => $enablepw });
+	
+    
+    # enter config mode
+    my @output1 = $session->cmd('show privilege');
+    $output1[0]=~s/\n//g;
+	
+	if ($output1[0] ne "Current privilege level is 15") {
+		$session->close;
+		return "cisco: enable failed";
+	}    
+    
+	$session->cmd("terminal length 0");
+	return "ok";
+	}
+	catch {
+	warn $_;
+	return 0;
+	}
 }
 
 my $Error;
@@ -129,12 +127,14 @@ sub cisco_get_file($$) {
 #  "ok" or error text
 #
 
-sub cisco_get_topologies ($$$$) {
+sub cisco_get_topologies ($$$$$) {
   return $getTopReturn if defined($getTopReturn);
 
   my ($host, $username, $password, $enablepw) = @_[0..3];
+   my $access = @_[4..4];
   my $filename1 = $host."_isis.txt";
   my $filename2 = $host."_ospf.txt";
+  print Dumper(@_);
   my $er = cisco_connect(@_);
   return $er if( $er !~ m/ok/ );
 
