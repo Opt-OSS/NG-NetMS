@@ -50,6 +50,10 @@ sub opened		{
 				 }
 sub errmsg		{ $_[0]->{'error'} }
 
+sub _version  {$_[0]->{'version'}}
+sub _model  {$_[0]->{'model'}}
+sub _strver  {$_[0]->{'strver'}}
+
 sub prompt {
     my $self = shift;
     my $old  = $self->{'prompt'};
@@ -79,11 +83,16 @@ sub _set_error {
 
 sub new {
     my $type = shift;
-    my ($access,$host, $username, @passwords,$path_to_key) = @_;
+    my ($access,$configPath,$host, $username, @passwords,$path_to_key) = @_;
+	
+	print "Path1 : $configPath\n";
 	
 	my $model;
 	my $flag = 0;
-
+    my $version = '';
+	my $swmodel = '';
+	my $str_ver = '';
+	
     $Error = '';
 	if($access eq 'Telnet')
 	{
@@ -97,21 +106,8 @@ sub new {
                                   );
 	}
 	else
-	{
-		if(defined($path_to_key) && $path_to_key ne "" )
-		{
-			$model = Net::OpenSSH->new(
-			$host,
-			user =>$username,
-			strict_mode => 0,
-##			passphrase => $passphrase,
-			key_path   => $path_to_key,
-			timeout     => $timeout,
-			master_opts => [ -o => "StrictHostKeyChecking=no" ]
-			);
-		}
-		else
-		{
+	{		
+			my $file_vers = $configPath."_version.txt";
 			my $ssh  =  Net::OpenSSH->new($host,
 											user => $username, 
 											password => $passwords[0],
@@ -119,25 +115,44 @@ sub new {
 											timeout     => $TIMEOUT,
 											master_opts => [ -o => "StrictHostKeyChecking=no" ]);
 			my ($pty, $pid) = $ssh->open2pty({stderr_to_stdout => 1})
-				or next;
+				or die "unable to start remote shell: " . $ssh->error;
+				
 			$model = Net::Telnet->new(
 				-fhopen => $pty,
 				-telnetmode => 0,
 				-prompt => '/'.$host.'.*?# /',
 				-cmd_remove_mode => 1);
-        }																		
+				
+			my ($prematch, $match) = $model->waitfor(Match => '/ProCurve.*?Switch.*\n/', Errmode=>'return', Timeout => 4);
+		
+			if($match)
+			{
+				$swmodel = $match;
+			}
+			
+			($prematch, $match) = $model->waitfor(Match => '/(Firmware|Software) revision.*\n/', Errmode=>'return');
+		    if($match)
+			{
+				$str_ver = $match;
+			}
+			$match =~ m/(Software|Firmware) revision (.*)/i;
+			$version = $2 || "";
+			$version =~ s/[\r\n]//g;
 	}
 	
     my $self = {
-	'socket'	=> $model,
+	'socket'		=> $model,
 	'logged_in'	=> 0,
 	'prompt'	=> '',
 	'error'		=> '',
 	'last_command'	=> '',
-	't_access' => $access
+	't_access' => $access,
+	'version' => $version,
+	'model' => $swmodel,
+	'strver'=>$str_ver
     };
     bless $self, $type;
-
+print Dumper($self);
  return $self;
 }
 
@@ -162,20 +177,43 @@ sub close {
 			if ($self->opened) {
 				$self->_socket->cmd(String=>'quit', Timeout=>2) if $self->logged_in;
 				$self->_socket->close;
-				$$self{'logged_in'} = 0;
+				$self{'logged_in'} = 0;
 				$self->prompt('');
 			  }
-		}
-		else
-		{
-			$self->_socket->system("exit");
-			$$self{'logged_in'} = 0;
 		}
 	}
 	
     return $self;
 }
 
+
+sub cmd {
+    my $self = shift;
+    my $cmd =  shift;
+    my @output=();
+
+    $self->_set_error(undef);
+    if ($cmd =~ /^\s*(lo|logo|logou|logout|q|qu|qui|quit)\s*$/) {
+	$self->close;
+	$self->_set_error("Connection closed by foreign host.\n");
+	return ($Error);
+    }
+    else {
+    
+	       my $ok = $self->_socket->cmd(
+		    String => $cmd,
+		    Output => \@output,
+		    Prompt => '/\S+[#>] $/',
+		    Timeout => $timeout);
+			if (!$ok) {
+			$self->_set_error($self->_socket->errmsg);
+			return ();
+		}
+	
+	
+	return @output;
+    }
+}
 
 
 1;

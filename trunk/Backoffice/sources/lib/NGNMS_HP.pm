@@ -185,6 +185,10 @@ sub hp_create_session {
   my $access =@_[6..6];
   my $path_to_key =$_[7];
 
+  
+  print "Path : $configPath\n";
+  my $version ='';
+  
   $Error = undef;
   if(!defined($access))
   {
@@ -192,7 +196,7 @@ sub hp_create_session {
   }
 
   
-  $session = Net::HPProcurve->new($access,$host, $username, @passwds,$path_to_key);
+  $session = Net::HPProcurve->new($access,$configPath,$host, $username, @passwds,$path_to_key);
   if(defined($session->_socket))
   {
 		my $file_vers = $configPath."_version.txt";
@@ -204,33 +208,53 @@ sub hp_create_session {
 			return undef;
 		}
 		
-		my ($prematch, $match) = $session->_socket->waitfor('/ProCurve.*?Switch.*\n/');
-		print F_DATA "$match\n";
 
-		($prematch, $match) = 
-        $session->_socket->waitfor('/(Firmware|Software) revision.*\n/');
-		print F_DATA "$match\n";
-		close (F_DATA);
-		$match =~ m/(Software|Firmware) revision (.*)/i;
-		my $version = $2 || "";
-		$version =~ s/[\r\n]//g;
-=for		
-		$sw_info{'sw_item'} = 'Software';
-		($sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'Revision', $version );
-		push(@swarray,%sw_info);
-=cut		
-		# Some versions of the firmware don't have this prompt.
-		if (!$nopress{$version}) {
-        $session->_socket->waitfor('/Press any key to continue/');
-        $session->_socket->print("");
+        if($access eq "Telnet")
+		{
+			my ($prematch, $match) = $session->_socket->waitfor(Match => '/ProCurve.*?Switch.*\n/', Errmode=>'return', Timeout => 4);
+			
+			if($match)
+			{
+				print F_DATA "$match\n";
+			}
+			
+			($prematch, $match) = $session->_socket->waitfor(Match => '/(Firmware|Software) revision.*\n/', Errmode=>'return');
+			if($match)
+			{
+				print F_DATA "$match\n";
+			}
+			
+			close (F_DATA);
+			
+			$match =~ m/(Software|Firmware) revision (.*)/i;
+			$version = $2 || "";
+			$version =~ s/[\r\n]//g;
 		}
+		else
+		{
+		    my $str =$session->_model();
+		    print F_DATA "$str\n";	
+			my $strversion = $session->_strver();
+			 print F_DATA "$strversion\n";	
+			 close (F_DATA);
+			$version = $session->_version(); 
+			
+		}	
+		# Some versions of the firmware don't have this prompt.
+		if (!$nopress{$version}) 
+		{
+			$session->_socket->waitfor(Match => '/Press any key to continue/',Errmode=>'return');
+			$session->_socket->print("");
+		}
+		
         if($access eq "Telnet")
 		{
 			$session->_socket->waitfor('/Password: /');
 		    $session->_socket->print($passwds[0]);
 		}		
 		
-		$session->_socket->waitfor('/> /');
+		
+		$session->_socket->waitfor(Match => '/> /',Errmode=>'return');
 		if (!open(F_DATA1, ">$interfaces_file")) {
 			$session->_socket->close;
 			$Error = "Cannot open file $interfaces_file for writing: $!";
@@ -267,28 +291,33 @@ sub hp_get_file($$$) {
   my ($cmd, $fname,$stop) = @_[0..2];
   my @data; 
   $Error = undef;
-  
-   $session->_socket->print($cmd);
-  my ($prematch, $match) = $session->_socket->waitfor( '/'.$stop.'/' );
+ 
+  my $cl = '/'.$stop.'/';
+ 
+   $session->_socket->print($cmd) ;  
+  my ($prematch, $match) = $session->_socket->waitfor(Match => $cl,Errmode=>'return' );
 
   if (! $prematch) {
-##    $session->close;
+    $session->_socket->close;
     $Error = "HP: " . $session->_socket->errmsg();
+	print STDERR $Error."\n";
     return undef;
   }
-	 
+
   if (!open(F_DATA, ">>$fname")) {
     $session->_socket->close;
     $Error = "Cannot open file $fname for writing: $!";
     return undef;
   }
+  
   @data = split(/\r/,$prematch);
-#      print @data;
+      print STDERR @data;
   for my $line (@data) {
 	print F_DATA "$line\n";
 	}
 ##  print F_DATA @data;
   close (F_DATA);
+
   1;
 }
 
@@ -297,12 +326,13 @@ sub hp_write_to_file($$)
 	my @data = @{$_[0]};
 	my $fname = $_[1];
 	my @data1=();
-	
+	 print STDERR "Etap 4: $fname\n";
 	if (!open(F_DATA, ">>$fname")) {
     $session->_socket->close;
     $Error = "Cannot open file $fname for writing: $!";
     return undef;
 	}
+	print STDERR "Etap 5\n";
 	for my $line (@data) {
 		@data1 =  split(/\n/,$line);
 	}
@@ -337,7 +367,7 @@ sub hp_get_configs {
   my $file_hard = $configPath."_hardware.txt";
   my $file_conf = $configPath."_config.txt";
   my $file_interf = $configPath."_interfaces.txt";
-
+print "Path2:$file_vers\n";
   hp_get_file('show system-information', $configPath."_version.txt",'IP Mgmt') or
     return $Error; 
 
@@ -349,26 +379,26 @@ sub hp_get_configs {
   # Running config
   #
 	$session->_socket->print(" enable");
-	$session->_socket->waitfor('/Password: /');
+	$session->_socket->waitfor(Match => '/Password: /' , Errmode=>'return',);
     $session->_socket->print('cisco');
 	my ($ok) = $session->_socket->waitfor(Match => '/# /', Errmode=>'return', Timeout => 4);
 	if($ok)
 	{
 		print "Enable Mode\n";
 		$session->_socket->print(' terminal length 1000');
-		$session->_socket->waitfor('/# /');
+		$session->_socket->waitfor(Match => '/# /', Errmode=>'return');
 		$session->_socket->print(" show config");
-		my ($prematch, $match) = $session->_socket->waitfor( '/# /' );
+		my ($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
 		my @output = split(/\r\n/,$prematch);
 		hp_write_to_file(\@output,$file_conf) or
 		return $Error;
         $session->_socket->print(" show ip");
-		($prematch, $match) = $session->_socket->waitfor( '/# /' );
+		($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
 		@output = split(/\r\n/,$prematch);
 		hp_write_to_file(\@output,$file_interf) or
 		return $Error;
 		$session->_socket->print(" show interfaces brief");
-		($prematch, $match) = $session->_socket->waitfor( '/# /' );
+		($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
 		@output = split(/\r\n/,$prematch);
 		hp_write_to_file(\@output,$file_interf) or
 		return $Error;
