@@ -55,8 +55,8 @@ my $session;
 
 sub cisco_connect {
 
-  my ($host, $username, $password, $enablepw,$access) = @_[0..4];
-
+  my ($host, $username, $password, $enablepw) = @_[0..3];
+  my $access = $_[6];
   $session = Net::Appliance::Session->new({
      personality => 'ios',
      transport => $access,
@@ -95,6 +95,11 @@ my $Error;
 
 sub cisco_get_file($$) {
   my ($cmd, $fname) = @_[0..1];
+
+print STDERR "cmd=$cmd.\n";
+print STDERR "fname=$fname.\n";
+
+
   $Error = undef;
   my @data = $session->cmd($cmd);
   if (! @data) {
@@ -169,7 +174,6 @@ sub cisco_get_configs {
   my ($host, $user, $password, $enablepw, $configPath) = @_[0..4];
   $community = $_[5];
   print "Getting configs from $host\n";
-
   my $er = cisco_connect(@_);
   return $er if( $er !~ m/ok/ );
 
