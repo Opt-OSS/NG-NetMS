@@ -53,6 +53,10 @@ sub errmsg		{ $_[0]->{'error'} }
 sub _version  {$_[0]->{'version'}}
 sub _model  {$_[0]->{'model'}}
 sub _strver  {$_[0]->{'strver'}}
+sub _phint  {$_[0]->{'phint'}}
+sub _logint  {$_[0]->{'logint'}}
+sub _sysinfo  {$_[0]->{'sysinfo'}}
+sub _config  {$_[0]->{'config'}}
 
 sub prompt {
     my $self = shift;
@@ -88,15 +92,27 @@ sub new {
 	print "Path1 : $configPath\n";
 	
 	my $model;
-	my $flag = 0;
+	my $flag = 1;
     my $version = '';
 	my $swmodel = '';
 	my $str_ver = '';
+	my @sysinfo = '';
+	my @phint = '';
+	my @logint = '';
+	my @config = '';
+	my $sys_info = '';
+	my $ph_int = '';
+	my $log_int = '';
+	my $config_f = '';
+	my %nopress = (
+    "K.14.47" => 1,
+    "W.14.49" => 1,
+	);
+    my $flag_log = 0;
 	
     $Error = '';
 	if($access eq 'Telnet')
 	{
-		$flag = 1;
 		$model =  new Net::Telnet(errmode => 'return',
 								  host=>$host,
 								  Timeout    => 5,
@@ -104,25 +120,39 @@ sub new {
                                   Prompt     => '/'.$host.'.*?# /',
                                   Dump_log   => "/tmp/procurve.txt",  # Debug log.
                                   );
+		$flag_log = 1;
 	}
 	else
 	{		
 			my $file_vers = $configPath."_version.txt";
-			my $ssh  =  Net::OpenSSH->new($host,
+		
+			my $ssh =  Net::OpenSSH->new($host,
+											user => $username, 
+											password => $passwords[1],
+											strict_mode => 0, 
+											timeout     => 5,
+											master_opts => [ -o => "StrictHostKeyChecking=no" ]);	
+
+			if($ssh->error) 
+			{
+			$ssh =  Net::OpenSSH->new($host,
 											user => $username, 
 											password => $passwords[0],
 											strict_mode => 0, 
-											timeout     => $TIMEOUT,
-											master_opts => [ -o => "StrictHostKeyChecking=no" ]);
-			my ($pty, $pid) = $ssh->open2pty({stderr_to_stdout => 1})
-				or die "unable to start remote shell: " . $ssh->error;
-				
-			$model = Net::Telnet->new(
-				-fhopen => $pty,
-				-telnetmode => 0,
-				-prompt => '/'.$host.'.*?# /',
-				-cmd_remove_mode => 1);
-				
+											timeout     => 5,
+											master_opts => [ -o => "StrictHostKeyChecking=no" ]);	
+											$ssh->error and die "Unable to connect to remote host: " . $ssh->error;	
+			$flag = 0;											
+			}										
+		
+			my ($fh, $pid) = $ssh->open2pty({stderr_to_stdout => 1});
+			my $model = Net::Telnet->new(
+			  -fhopen => $fh,
+			  -telnetmode => 0,
+			  -prompt => '/'.$host.'.*?# /',
+			  -cmd_remove_mode => 1
+          );
+		
 			my ($prematch, $match) = $model->waitfor(Match => '/ProCurve.*?Switch.*\n/', Errmode=>'return', Timeout => 4);
 		
 			if($match)
@@ -134,30 +164,131 @@ sub new {
 		    if($match)
 			{
 				$str_ver = $match;
+				$str_ver =~ s/[\r\n]//g;
 			}
 			$match =~ m/(Software|Firmware) revision (.*)/i;
 			$version = $2 || "";
 			$version =~ s/[\r\n]//g;
+			if (!$nopress{$version}) 
+			{
+				$model->waitfor(Match => '/Press any key to continue/',Errmode=>'return');
+				$model->print("");
+			}
+			
+			$model->waitfor('/[#>] /');
+			$model->print("show system-information");
+			($prematch, $match) = $model->waitfor( '/IP Mgmt/' );
+			@sysinfo = split(/\r/,$prematch);
+			
+			for(my $i=0; $i < scalar(@sysinfo); $i++)
+			{
+			   $sysinfo[$i] =~ s/[\n]//g;
+				chomp($sysinfo[$i]);
+			}
+			@sysinfo = grep{$_} @sysinfo;
+			$sys_info = join ('~~~~',@sysinfo);
+	
+			($prematch, $match) = $model->waitfor( '/[#>] /' );
+			if($flag)
+			{
+			$model->print(' terminal length 1000');
+			$model->waitfor(Match => '/[#>] /', Errmode=>'return');
+			$model->print(" show config");
+			($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return' );
+			$model->print(" show config");
+			($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return' );
+			@config = split(/\r/,$prematch);
+			
+			$config_f =  arr2str(@config);
+			}
+		
+		
+		
+        $model->print(" show ip");
+		($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return',Timeout    => 2 );
+		if($flag < 1)
+		{
+			@logint = split(/\r/,$prematch);
+			$log_int =  arr2str(@logint);
+		}	
+		($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return',Timeout    => 2 );
+		
+
+		$model->print("show interfaces brief");
+		($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return', Timeout    => 2);
+		$model->print("show interfaces brief");
+		($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return', Timeout    => 2 );
+		
+		if($flag)
+		{
+			@logint = split(/\r/,$prematch);
+			$log_int = arr2str(@logint);
+			($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return', Timeout    => 5 );
+			$model->print("exit");
+			($prematch, $match) = $model->waitfor( Match => '/[#>] /', Errmode=>'return', Timeout    => 5 );
+			@phint = split(/\r/,$prematch);
+			$ph_int = arr2str(@phint);
+		}
+		else
+		{
+			@phint = split(/\r/,$prematch);
+			$ph_int = arr2str(@phint);
+		}
+		
+		$flag_log =1;		
 	}
 	
     my $self = {
 	'socket'		=> $model,
-	'logged_in'	=> 0,
+	'logged_in'	=> $flag_log,
 	'prompt'	=> '',
 	'error'		=> '',
 	'last_command'	=> '',
 	't_access' => $access,
 	'version' => $version,
 	'model' => $swmodel,
-	'strver'=>$str_ver
+	'strver' => $str_ver,
+	'phint' => $ph_int,
+	'logint' => $log_int,
+	'sysinfo' => $sys_info,
+	'config' => $config_f
     };
     bless $self, $type;
-print Dumper($self);
+
  return $self;
 }
 
 
-
+sub arr2str(@)
+{
+	my @in_arr = @_;
+	
+	
+	my @arr_new;
+	my $j;
+	my $i;
+	my $sdvig = 1;
+	my $first_el = $sdvig;
+	for( $i=$first_el; $i < $#in_arr; $i++)
+			{
+			   $j = $i-$sdvig;
+			   $in_arr[$i] =~ s/[\n]//g;
+				chomp($in_arr[$i]);
+			   if($in_arr[$i] =~/^\s*$/)
+			   {
+					$sdvig++;
+			   }
+			   else
+			   {
+					$arr_new[$j] =  $in_arr[$i];
+			   }
+			}
+	@arr_new = grep{$_} @arr_new;
+	my $ret_str = join ('~~~~',@arr_new);
+	
+	return $ret_str;
+	
+}
 
 
 #
