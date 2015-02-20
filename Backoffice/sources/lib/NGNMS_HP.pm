@@ -54,6 +54,10 @@ my $Error;
 my $model_switch;
 my $name_switch;
 my $location_switch;
+my $log_interfaces;
+my $ph_interfaces;
+my $sys_info;
+my $configuration;
 my @swarray = ();
 my @hwarray = ();	
 my %sw_info = (	"sw_item" => undef,
@@ -197,7 +201,9 @@ sub hp_create_session {
 
   
   $session = Net::HPProcurve->new($access,$configPath,$host, $username, @passwds,$path_to_key);
-  if(defined($session->_socket))
+  
+  
+  if(defined($session->logged_in))
   {
 		my $file_vers = $configPath."_version.txt";
 		my $interfaces_file = $configPath."_interfaces.txt";
@@ -238,25 +244,28 @@ sub hp_create_session {
 			 print F_DATA "$strversion\n";	
 			 close (F_DATA);
 			$version = $session->_version(); 
+			$log_interfaces = $session->_logint();
+			$ph_interfaces = $session->_phint();
+			$sys_info = $session->_sysinfo();
+			$configuration = $session->_config();
 			
 		}	
 		# Some versions of the firmware don't have this prompt.
-		if (!$nopress{$version}) 
-		{
-			$session->_socket->waitfor(Match => '/Press any key to continue/',Errmode=>'return');
-			$session->_socket->print("");
-		}
 		
         if($access eq "Telnet")
 		{
+			if (!$nopress{$version}) 
+			{
+			$session->_socket->waitfor(Match => '/Press any key to continue/',Errmode=>'return');
+			$session->_socket->print("");
+			}
 			$session->_socket->waitfor('/Password: /');
 		    $session->_socket->print($passwds[0]);
+			$session->_socket->waitfor(Match => '/> /',Errmode=>'return');
 		}		
 		
-		
-		$session->_socket->waitfor(Match => '/> /',Errmode=>'return');
 		if (!open(F_DATA1, ">$interfaces_file")) {
-			$session->_socket->close;
+		    if($access eq "Telnet"){$session->_socket->close;}		
 			$Error = "Cannot open file $interfaces_file for writing: $!";
 			return undef;
 		}
@@ -265,7 +274,7 @@ sub hp_create_session {
 		close (F_DATA1);
 		
 		if (!open(F_DATA2, ">$config_file")) {
-			$session->_socket->close;
+			if($access eq "Telnet"){$session->_socket->close;}		
 			$Error = "Cannot open file $config_file for writing: $!";
 			return undef;
 		}
@@ -350,11 +359,33 @@ sub hp_write_to_file($$)
 	
 }
 
+sub  hp_ssh_write_to_file($$)
+{
+	my @data = @{$_[0]};
+	my $fname = $_[1];
+	
+	 print STDERR "Etap 6: $fname\n";
+	if (!open(F_DATA, ">>$fname")) {
+
+    $Error = "Cannot open file $fname for writing: $!";
+    return undef;
+	}
+	print STDERR "Etap 7\n";
+	for  my $line1 (@data) {
+	        
+				$line1 =~ s/^[\n]//g;
+				print F_DATA "$line1\n";			
+	}
+	close (F_DATA);
+	1;
+}
+
 sub hp_get_configs {
   my ($host, $username) = @_[0..1];
   my @passwds = @_[2..3];
   my $configPath = $_[4];
   my $acc = $_[6];
+  my @output;
   print "Getting configs from $host\n";
   my @params = ($_[0],$_[1],$_[2],$_[3],$_[4],'',$_[6]);
 
@@ -367,59 +398,94 @@ sub hp_get_configs {
   my $file_hard = $configPath."_hardware.txt";
   my $file_conf = $configPath."_config.txt";
   my $file_interf = $configPath."_interfaces.txt";
-print "Path2:$file_vers\n";
-  hp_get_file('show system-information', $configPath."_version.txt",'IP Mgmt') or
-    return $Error; 
+  if($acc eq 'Telnet')
+  {
+		hp_get_file('show system-information', $configPath."_version.txt",'IP Mgmt') or
+		return $Error; 
 
-  # hardware inventory
-  #
+	  # hardware inventory
+	  #
 
-	copy $file_vers,$file_hard or return $Error;
+		copy $file_vers,$file_hard or return $Error;
+		
 
-  # Running config
-  #
-	$session->_socket->print(" enable");
-	$session->_socket->waitfor(Match => '/Password: /' , Errmode=>'return',);
-    $session->_socket->print('cisco');
-	my ($ok) = $session->_socket->waitfor(Match => '/# /', Errmode=>'return', Timeout => 4);
-	if($ok)
+	  # Running config
+	  #
+		$session->_socket->print(" enable");
+		$session->_socket->waitfor(Match => '/Password: /' , Errmode=>'return',);
+		$session->_socket->print($passwds[1]);
+		my ($ok) = $session->_socket->waitfor(Match => '/# /', Errmode=>'return', Timeout => 4);
+		if($ok)
+		{
+			print "Enable Mode\n";
+			$session->_socket->print(' terminal length 1000');
+			$session->_socket->waitfor(Match => '/# /', Errmode=>'return');
+			$session->_socket->print(" show config");
+			my ($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
+			my @output = split(/\r\n/,$prematch);
+			hp_write_to_file(\@output,$file_conf) or
+			return $Error;
+			$session->_socket->print(" show ip");
+			($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
+			@output = split(/\r\n/,$prematch);
+			hp_write_to_file(\@output,$file_interf) or
+			return $Error;
+			$session->_socket->print(" show interfaces brief");
+			($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
+			@output = split(/\r\n/,$prematch);
+			hp_write_to_file(\@output,$file_interf) or
+			return $Error;
+		}	
+		else
+		{
+			$session->_socket->print(' show ip');
+			my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
+			hp_get_file(' show ip', $configPath."_interfaces.txt",'> ') or
+			return $Error;
+			$session->_socket->print(' show interfaces brief');
+			($prematch, $match) = $session->_socket->waitfor( '/> /' );
+			hp_get_file(' show interfaces brief', $configPath."_interfaces.txt",'> ') or
+			return $Error;
+		}
+	  
+
+	  # Interfaces
+	  #
+	  
+	  $session->_socket->close;
+  }
+  else
+  {
+  print "SYS:".$sys_info."\n";
+	if(defined $sys_info)
 	{
-		print "Enable Mode\n";
-		$session->_socket->print(' terminal length 1000');
-		$session->_socket->waitfor(Match => '/# /', Errmode=>'return');
-		$session->_socket->print(" show config");
-		my ($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
-		my @output = split(/\r\n/,$prematch);
-		hp_write_to_file(\@output,$file_conf) or
-		return $Error;
-        $session->_socket->print(" show ip");
-		($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
-		@output = split(/\r\n/,$prematch);
-		hp_write_to_file(\@output,$file_interf) or
-		return $Error;
-		$session->_socket->print(" show interfaces brief");
-		($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
-		@output = split(/\r\n/,$prematch);
-		hp_write_to_file(\@output,$file_interf) or
-		return $Error;
-	}	
-	else
-	{
-		$session->_socket->print(' show ip');
-		my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
-		hp_get_file(' show ip', $configPath."_interfaces.txt",'> ') or
-		return $Error;
-		$session->_socket->print(' show interfaces brief');
-		($prematch, $match) = $session->_socket->waitfor( '/> /' );
-		hp_get_file(' show interfaces brief', $configPath."_interfaces.txt",'> ') or
-		return $Error;
+		 @output = split(/~~~~/,$sys_info);
+		 print Dumper(@output);
+			hp_ssh_write_to_file(\@output,$file_vers) or
+			return $Error;
 	}
+	
+	copy $file_vers,$file_hard or return $Error;
+	if(defined $configuration)
+	{
+		 @output = split("~~~~",$configuration);
+			hp_ssh_write_to_file(\@output,$file_conf) or
+			return $Error;
+	}
+	if(defined $log_interfaces)
+	{
+		 @output = split("~~~~",$log_interfaces);
+			hp_ssh_write_to_file(\@output,$file_interf) or
+			return $Error;
+	}
+	if(defined $ph_interfaces)
+	{
+		 @output = split("~~~~",$ph_interfaces);
+			hp_ssh_write_to_file(\@output,$file_interf) or
+			return $Error;
+	}
+  }
   
-
-  # Interfaces
-  #
-  
-  $session->_socket->close;
 
   return "ok";
 }
