@@ -422,8 +422,28 @@ sub hp_get_configs {
 			$session->_socket->waitfor(Match => '/# /', Errmode=>'return');
 			$session->_socket->print(" show config");
 			my ($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
-			my @output = split(/\r\n/,$prematch);
-			hp_write_to_file(\@output,$file_conf) or
+			my @in_arr  = split(/\r/,$prematch);
+			my $j;
+			my $i;
+			my $sdvig = 1;
+			my $first_el = $sdvig;
+			for( $i=$first_el; $i < $#in_arr; $i++)
+			{
+			   $j = $i-$sdvig;
+			   $in_arr[$i] =~ s/[\n]//g;
+				chomp($in_arr[$i]);
+			   if($in_arr[$i] =~/^\s*$/)
+			   {
+					$sdvig++;
+			   }
+			   else
+			   {
+					$output[$j] =  $in_arr[$i];
+			   }
+			}
+			@output = grep{$_} @output;
+
+			hp_ssh_write_to_file(\@output,$file_conf) or
 			return $Error;
 			$session->_socket->print(" show ip");
 			($prematch, $match) = $session->_socket->waitfor( Match => '/# /', Errmode=>'return' );
