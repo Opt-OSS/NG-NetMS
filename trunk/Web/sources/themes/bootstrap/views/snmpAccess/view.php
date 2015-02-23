@@ -11,8 +11,8 @@ $this->breadcrumbs=array(
 
 <?php
 
-$gridColumns = array( array('name'=>'community_ro','value'=> 'Cripto::decrypt($data->community_ro)', 'header'=>'Community RO'),
-                     array('name'=>'community_rw', 'value'=> 'Cripto::decrypt($data->community_rw)','header'=>'Community RW'),
+$gridColumns = array( array('name'=>'community_ro','value'=> 'Cripto::hidedata(Cripto::decrypt($data->community_ro))', 'header'=>'Community RO'),
+                     array('name'=>'community_rw', 'value'=> 'Cripto::hidedata(Cripto::decrypt($data->community_rw))','header'=>'Community RW'),
     array(
     'class'=>'bootstrap.widgets.TbButtonColumn',
     'template'=>'{update}',
