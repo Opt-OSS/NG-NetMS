@@ -335,13 +335,12 @@ sub hp_write_to_file($$)
 	my @data = @{$_[0]};
 	my $fname = $_[1];
 	my @data1=();
-	 print STDERR "Etap 4: $fname\n";
+	
 	if (!open(F_DATA, ">>$fname")) {
     $session->_socket->close;
     $Error = "Cannot open file $fname for writing: $!";
     return undef;
 	}
-	print STDERR "Etap 5\n";
 	for my $line (@data) {
 		@data1 =  split(/\n/,$line);
 	}
@@ -364,13 +363,12 @@ sub  hp_ssh_write_to_file($$)
 	my @data = @{$_[0]};
 	my $fname = $_[1];
 	
-	 print STDERR "Etap 6: $fname\n";
 	if (!open(F_DATA, ">>$fname")) {
 
     $Error = "Cannot open file $fname for writing: $!";
     return undef;
 	}
-	print STDERR "Etap 7\n";
+	
 	for  my $line1 (@data) {
 	        
 				$line1 =~ s/^[\n]//g;
@@ -476,11 +474,9 @@ sub hp_get_configs {
   }
   else
   {
-  print "SYS:".$sys_info."\n";
 	if(defined $sys_info)
 	{
 		 @output = split(/~~~~/,$sys_info);
-		 print Dumper(@output);
 			hp_ssh_write_to_file(\@output,$file_vers) or
 			return $Error;
 	}
@@ -633,21 +629,9 @@ DB_startHwInfo($rt_id);
 sub hp_parse_config {
 
   my ($rt,$config_file) = @_[0..1];
-print STDERR "router=".$rt."\n";
+
   open(F_RCF,"<$config_file") or
     return "error - config file $config_file: $!\n";
-=for
-  while (<F_RCF>) {
-    chomp;			# no newline
-    s/^\s+//;			# no leading white
-    s/\s+$//;			# no trailing white
-
-    if( /^location \"([^\"]+)\";/ ) {
-      DB_writeHostLocation($rt_id, $1);
-      next;
-    }
-  }
-=cut
   close(F_RCF);
   DB_addConfigFile($rt,$config_file) ;
   return "ok";
