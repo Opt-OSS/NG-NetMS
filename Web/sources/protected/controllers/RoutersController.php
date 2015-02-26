@@ -79,20 +79,20 @@ class RoutersController extends Controller {
                             $cur_state = 'UNKNOWN';
                         }
                         $rt_state = RouterStates::model()->findByAttributes(array('name'=>$cur_state));
-                        $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name);
+                        $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name,$router->layer);
                         if($amount < 1)
                         {
                             if(!isset($vendor_name) || empty($vendor_name) )
                             {
                                 $vendor_name = "DEFAULT";
                             }
-                            else if(preg_match("/ubuntu/i", $vendor_name))
+                            else if(preg_match("/nix/i", $vendor_name) || preg_match("/ubuntu/i", $vendor_name))
                             {
                                 $vendor_name = "Linux";
                             }
                         }
 
-                        $cur_icons = RouterIcons::model()->findByAttributes(array('vendor_name'=>$vendor_name,'router_state'=>$rt_state->id));
+                        $cur_icons = RouterIcons::model()->findByAttributes(array('vendor_name'=>$vendor_name,'router_state'=>$rt_state->id,'layer'=>$router->layer));
                         $arr_nodes[$k1]['data']['image'] = Yii::app()->baseUrl . '/images' .$cur_icons->img_path;
                         $arr_nodes[$k1]['data']['image_w'] = $cur_icons->size_w;
                         $arr_nodes[$k1]['data']['image_h'] = $cur_icons->size_h;
@@ -517,20 +517,20 @@ exit;*/
                         $cur_state = 'UNKNOWN';
                     }
                     $rt_state = RouterStates::model()->findByAttributes(array('name'=>$cur_state));
-                    $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name);
+                    $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name,$router->layer);
                     if($amount < 1)
                     {
                         if(!isset($vendor_name) || empty($vendor_name) )
                         {
                             $vendor_name = "DEFAULT";
                         }
-                        else if(preg_match("/ubuntu/i", $vendor_name))
+                        else if(preg_match("/unix/i", $vendor_name) || preg_match("/ubuntu/i", $vendor_name))
                         {
                             $vendor_name = "Linux";
                         }
                     }
 
-                    $cur_icons = RouterIcons::model()->findByAttributes(array('vendor_name'=>$vendor_name,'router_state'=>$rt_state->id));
+                    $cur_icons = RouterIcons::model()->findByAttributes(array('vendor_name'=>$vendor_name,'router_state'=>$rt_state->id,'layer'=>$router->layer));
 /*                    echo $vendor_name."<br>";
                     print_r($cur_icons);
                     echo "<br>";*/
@@ -625,20 +625,20 @@ exit;*/
                         $cur_state = 'UNKNOWN';
                     }
                     $rt_state = RouterStates::model()->findByAttributes(array('name'=>$cur_state));
-                    $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name);
+                    $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name,$router->layer);
                     if($amount < 1)
                     {
                         if(!isset($vendor_name) || empty($vendor_name) )
                         {
                             $vendor_name = "DEFAULT";
                         }
-                        else if(preg_match("/ubuntu/i", $vendor_name))
+                        else if(preg_match("/nix/i", $vendor_name) || preg_match("/ubuntu/i", $vendor_name))
                         {
                             $vendor_name = "Linux";
                         }
                     }
 
-                    $cur_icons = RouterIcons::model()->findByAttributes(array('vendor_name'=>$vendor_name,'router_state'=>$rt_state->id));
+                    $cur_icons = RouterIcons::model()->findByAttributes(array('vendor_name'=>$vendor_name,'router_state'=>$rt_state->id,'layer'=>$router->layer));
                     $arr_nodes[$i]['data']['image'] = Yii::app()->baseUrl . '/images' .$cur_icons->img_path;
                     $arr_nodes[$i]['data']['image_w'] = $cur_icons->size_w;
                     $arr_nodes[$i]['data']['image_h'] = $cur_icons->size_h;
@@ -1726,7 +1726,7 @@ exit;*/
     {
         if (!Yii::app()->user->isGuest) {
             if (Yii::app()->user->checkAccess('editAssets')) {
-				$baseUrl = Yii::app()->baseUrl;
+                $baseUrl = Yii::app()->baseUrl;
                 $cs = Yii::app()->clientScript;
                 $cs->registerCssFile($baseUrl.'/css/bootstrap-switch.css');
                 $cs->registerScriptFile(Yii::app()->baseUrl . '/js/libs/bootstrap-switch.js', CClientScript::POS_HEAD);
@@ -1748,21 +1748,27 @@ exit;*/
 
                     $arr_attr['username'] = Yii::app()->db->username;
                     $arr_attr['password'] = Yii::app()->db->password;
-					chdir('/home/ngnms/NGREADY/bin/');
+                    chdir('/home/ngnms/NGREADY/bin/');
                     putenv("NGNMS_HOME=/home/ngnms/NGREADY");
                     putenv('NGNMS_CONFIGS=/home/ngnms/NGREADY/configs');
                     putenv('PATH=/home/ngnms/NGREADY/bin:/usr/bin');
                     putenv('PERL5LIB=/usr/local/share/perl/5.18.2:/home/ngnms/NGREADY/bin:/home/ngnms/NGREADY/lib:/home/ngnms/NGREADY/lib/Net');
-                    putenv('MIBDIRS=/home/ngnms/NGREADY/mibs');
+
+  /*                  chdir ('/var/www/ngnms_perl/PERL/bin/');
+                    putenv("NGNMS_HOME=/var/www/ngnms_perl/PERL");
+                    putenv('NGNMS_CONFIGS=/var/www/ngnms_perl/PERL/configs');
+                    putenv('PATH=/var/www/ngnms_perl/PERL/bin:/usr/bin');
+                    putenv('PERL5LIB=/var/www/ngnms_perl/PERL/lib:/var/www/ngnms_perl/PERL/lib/Net');
+                    putenv('LD_LIBRARY_PATH=/var/www/ngnms_perl/PERL/lib');
+                    putenv('MIBDIRS=/home/ngnms/NGREADY/mibs');*/
 
 
                     $command1 = 'perl audit.pl';
-                    
                     if(isset($_POST['scanner']) && $_POST['scanner'] > 0)
                     {
                         $command1 .= " -s";
                     }
-                    
+
                     if(isset($arr_attr['host']) )
                     {
                         $command1 .= " -L ".$arr_attr['host'];
@@ -1846,7 +1852,6 @@ exit;*/
                     }
 */
 
-
                     $escaped_command1 = escapeshellcmd($command1);
                     $sss=passthru($escaped_command1);
 
@@ -1868,5 +1873,20 @@ exit;*/
         } else {
             $this->redirect('index.php?r=site/login');
         }
+    }
+
+    /**
+     *
+     */
+    public function actionPercentage() {
+        /*$status =1;
+        if (Yii::app()->request->isAjaxRequest) {
+            $item = DiscoveryStatus::model()->findByAttributes(array('ended'=>$status)); //obtain instance of object containing your function
+            echo $item->percent; //to return value in ajax, simply echo it
+            echo $status;
+        }*/
+        echo mt_rand(1, 100);
+        exit;
+
     }
 }
