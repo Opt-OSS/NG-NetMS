@@ -37,7 +37,7 @@ class RouterIcons extends CActiveRecord
 			array('img_path', 'length', 'max'=>255),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('id, vendor_name, router_state, img_path, size_w, size_h', 'safe', 'on'=>'search'),
+			array('id, vendor_name, router_state, img_path, size_w, size_h,layer ', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -65,6 +65,7 @@ class RouterIcons extends CActiveRecord
 			'img_path' => 'Img Path',
 			'size_w' => 'Size W',
 			'size_h' => 'Size H',
+            'layer' => 'Layer'
 		);
 	}
 
@@ -92,6 +93,7 @@ class RouterIcons extends CActiveRecord
 		$criteria->compare('img_path',$this->img_path,true);
 		$criteria->compare('size_w',$this->size_w);
 		$criteria->compare('size_h',$this->size_h);
+        $criteria->compare('layer',$this->layer);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
@@ -116,12 +118,12 @@ class RouterIcons extends CActiveRecord
      * @param $vendor_name
      * @return mixed
      */
-    public function isImg($r_state,$vendor_name)
+    public function isImg($r_state,$vendor_name,$layer)
     {
         $arr_data  = Yii::app()->db->createCommand()
             ->select('count(*) ')
             ->from(' router_icons')
-            ->where("vendor_name='".$vendor_name."' AND router_state='".$r_state."'")
+            ->where("vendor_name='".$vendor_name."' AND router_state='".$r_state."' AND layer='".$layer."'")
             ->queryScalar();
 
         return $arr_data;

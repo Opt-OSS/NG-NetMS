@@ -48,7 +48,7 @@ class Routers extends CActiveRecord
 			array('ip_addr', 'safe'),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('router_id, name, ip_addr, eq_type, eq_vendor, location, status, icon_color', 'safe', 'on'=>'search'),
+			array('router_id, name, ip_addr, eq_type, eq_vendor, location, status, icon_color, layer', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -84,6 +84,7 @@ class Routers extends CActiveRecord
 			'location' => 'Location',
 			'status' => 'Status',
 			'icon_color' => 'Icon Color',
+            'layer' => 'Layer'
 		);
 	}
 
@@ -112,6 +113,7 @@ class Routers extends CActiveRecord
 		$criteria->compare('location',$this->location,true);
 		$criteria->compare('status',$this->status,true);
 		$criteria->compare('icon_color',$this->icon_color,true);
+        $criteria->compare('layer',$this->layer,true);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
