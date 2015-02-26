@@ -665,8 +665,10 @@ sub hp_parse_interfaces {
   my $newInt;
   my $newState;
   my $newCond;
+  my $hp_layer = 2;
   $ifc{ 'ip address' } = '';
   my $counter = 0 ;
+  my $count_logint =0 ;
   
   while( my $line1 = <$info>)  {   
    $line1 =~ s/[\n]//g; 
@@ -699,6 +701,7 @@ sub hp_parse_interfaces {
 					  if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
 					my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
 					DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+					$count_logint++;
 					@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
 					  }
 		}
@@ -726,8 +729,12 @@ sub hp_parse_interfaces {
 			}
 			
 #####################   
- }  
-
+ }
+  if($count_logint > 1)
+  {
+	$hp_layer = 3;
+  }
+  DB_setHostLayer($rt_id,$hp_layer);
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
   close $info;

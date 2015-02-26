@@ -44,7 +44,8 @@ $VERSION     = 0.01;
 		  &DB_dropLinks &DB_getSettings
 		  &DB_setHostVendor &DB_setHostState
 		  &DB_getAllIntefaces &DB_isScanException
-		  &DB_replaceRouterName &DB_getInterfaceRouterId);
+		  &DB_replaceRouterName &DB_getInterfaceRouterId
+		  &DB_setHostLayer);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -466,6 +467,16 @@ sub DB_writeHostLocation($$) {
   my $SQL = "UPDATE routers SET location = ? WHERE router_id = ?";
   my $if_h = $dbh->prepare($SQL);
   my $result = $if_h->execute($loc,$rtId);
+}
+
+sub DB_setHostLayer($$)
+{
+	my $rtId = shift;
+	my $layer = shift;
+
+  my $SQL = "UPDATE routers SET layer = ? WHERE router_id = ?";
+  my $if_h = $dbh->prepare($SQL);
+  my $result = $if_h->execute($layer,$rtId);
 }
 
 ###############################################################
