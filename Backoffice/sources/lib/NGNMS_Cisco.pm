@@ -47,7 +47,8 @@ if (defined($ENV{"NGNMS_TIMEOUT"})) {
 # Preloaded methods
 
 my $community = 'public';
-
+my $cisco_logcounter = 0;
+my $cisco_layer = 2;
 ###################################################
 # getting stuff from routers
 
@@ -432,11 +433,16 @@ sub cisco_parse_run_config {
     if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
       my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
       DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+	  $cisco_logcounter++;
     }
   }
 
   close(F_RCF);
-
+  if($cisco_logcounter > 1)
+  {
+	$cisco_layer = 3;
+  }
+  DB_setHostLayer($rt_id,$cisco_layer);
   return "ok";
 }
 
@@ -708,6 +714,7 @@ sub cisco_parse_interfaces {
       if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
 	my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
 	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+	$cisco_logcounter++;
 	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
       }
 
@@ -760,9 +767,14 @@ sub cisco_parse_interfaces {
   if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
     my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
     DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+	$cisco_logcounter++;
     @old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
   }
-
+  if($cisco_logcounter > 1)
+  {
+	$cisco_layer = 3;
+  }
+  DB_setHostLayer($rt_id,$cisco_layer);
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
 

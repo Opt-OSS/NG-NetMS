@@ -547,6 +547,7 @@ sub run_proccessing
     my %ifc;
     my $speede;
     my $new_rid;
+	my $linux_layer = 5;
     my %sw_info = (	"sw_item" => undef,
 		"sw_name" => undef,
 		"sw_ver"  => undef );
@@ -585,7 +586,7 @@ sub run_proccessing
 						DB_setHostState($new_rid,'up');
 						}
 	DB_setHostVendor($new_rid,$linux_vendor);				
-	
+	DB_setHostLayer($new_rid,$linux_layer);
 	%hw_info = (	"hw_item" => "processor",
 			"hw_name" => "$linux_hardwr",
 			"hw_ver"  => "",
