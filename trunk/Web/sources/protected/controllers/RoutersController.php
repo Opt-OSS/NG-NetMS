@@ -1733,133 +1733,153 @@ exit;*/
                 $model = new Routers;
                 $model1 = GeneralSettings::model()->findByAttributes(array('name'=>'perioddiscovery'));
                 $model2 = GeneralSettings::model()->findByAttributes(array('name'=>'scanner'));
-
-                if (isset($_POST['tumbler']) && $_POST['tumbler'] > 0)
-                {
-                    $arr_attr=array();
-                    $str_1 = substr(Yii::app()->db->connectionString,6);
-                    $arr1 = explode(";",$str_1);
-
-                    foreach($arr1 as $key=>$val)
+                if (Yii::app()->request->isAjaxRequest) {
+                    if (isset($_POST['tumbler']) && $_POST['tumbler'] > 0)
                     {
-                        $arr2 = explode("=",$val);
-                        $arr_attr[$arr2[0]] = $arr2[1];
-                    }
+                        session_write_close();
+                        $arr_attr=array();
+                        $str_1 = substr(Yii::app()->db->connectionString,6);
+                        $arr1 = explode(";",$str_1);
 
-                    $arr_attr['username'] = Yii::app()->db->username;
-                    $arr_attr['password'] = Yii::app()->db->password;
-                    chdir('/home/ngnms/NGREADY/bin/');
-                    putenv("NGNMS_HOME=/home/ngnms/NGREADY");
-                    putenv('NGNMS_CONFIGS=/home/ngnms/NGREADY/configs');
-                    putenv('PATH=/home/ngnms/NGREADY/bin:/usr/bin');
-                    putenv('PERL5LIB=/usr/local/share/perl/5.18.2:/home/ngnms/NGREADY/bin:/home/ngnms/NGREADY/lib:/home/ngnms/NGREADY/lib/Net');
+                        foreach($arr1 as $key=>$val)
+                        {
+                            $arr2 = explode("=",$val);
+                            $arr_attr[$arr2[0]] = $arr2[1];
+                        }
 
-  /*                  chdir ('/var/www/ngnms_perl/PERL/bin/');
-                    putenv("NGNMS_HOME=/var/www/ngnms_perl/PERL");
-                    putenv('NGNMS_CONFIGS=/var/www/ngnms_perl/PERL/configs');
-                    putenv('PATH=/var/www/ngnms_perl/PERL/bin:/usr/bin');
-                    putenv('PERL5LIB=/var/www/ngnms_perl/PERL/lib:/var/www/ngnms_perl/PERL/lib/Net');
-                    putenv('LD_LIBRARY_PATH=/var/www/ngnms_perl/PERL/lib');
-                    putenv('MIBDIRS=/home/ngnms/NGREADY/mibs');*/
+                        $arr_attr['username'] = Yii::app()->db->username;
+                        $arr_attr['password'] = Yii::app()->db->password;
+                                        chdir('/home/ngnms/NGREADY/bin/');
+                                          putenv("NGNMS_HOME=/home/ngnms/NGREADY");
+                                          putenv('NGNMS_CONFIGS=/home/ngnms/NGREADY/configs');
+                                          putenv('PATH=/home/ngnms/NGREADY/bin:/usr/bin');
+                                          putenv('PERL5LIB=/usr/local/share/perl/5.18.2:/home/ngnms/NGREADY/bin:/home/ngnms/NGREADY/lib:/home/ngnms/NGREADY/lib/Net');
 
 
-                    $command1 = 'perl audit.pl';
-                    if(isset($_POST['scanner']) && $_POST['scanner'] > 0)
-                    {
-                        $command1 .= " -s";
-                    }
 
-                    if(isset($arr_attr['host']) )
-                    {
-                        $command1 .= " -L ".$arr_attr['host'];
-                    }
 
-                    if(isset($arr_attr['dbname']) )
-                    {
-                        $command1 .= " -D ".$arr_attr['dbname'];
-                    }
+                                 $command1 = 'perl audit.pl';
+                                 if(isset($_POST['scanner']) && $_POST['scanner'] > 0)
+                                 {
+                                     $command1 .= " -s";
+                                 }
 
-                    if(isset($arr_attr['username']))
-                    {
-                        $command1 .= " -U ".$arr_attr['username'];
-                    }
+                                 if(isset($arr_attr['host']) )
+                                 {
+                                     $command1 .= " -L ".$arr_attr['host'];
+                                 }
 
-                    if(isset($arr_attr['password']))
-                    {
-                        $command1 .= " -W ".$arr_attr['password'];
-                    }
+                                 if(isset($arr_attr['dbname']) )
+                                 {
+                                     $command1 .= " -D ".$arr_attr['dbname'];
+                                 }
 
-                    if(isset($arr_attr['port']))
-                    {
-                        $command1 .= " -P ".$arr_attr['port'];
-                    }
+                                 if(isset($arr_attr['username']))
+                                 {
+                                     $command1 .= " -U ".$arr_attr['username'];
+                                 }
+
+                                 if(isset($arr_attr['password']))
+                                 {
+                                     $command1 .= " -W ".$arr_attr['password'];
+                                 }
+
+                                 if(isset($arr_attr['port']))
+                                 {
+                                     $command1 .= " -P ".$arr_attr['port'];
+                                 }
 /*
 
-                    $hosttype = GeneralSettings::model()->findByAttributes(array('name'=>'hostType'));
+                                                    $hosttype = GeneralSettings::model()->findByAttributes(array('name'=>'hostType'));
 
-                    if(isset($hosttype->value))
-                    {
-                        $command1 .= " -t ".trim(Cripto::decrypt($hosttype->value));
+                                                    if(isset($hosttype->value))
+                                                    {
+                                                        $command1 .= " -t ".trim(Cripto::decrypt($hosttype->value));
+                                                    }
+
+                                                    $keypath = GeneralSettings::model()->findByAttributes(array('name'=>'path to key'));
+
+                                                    if(isset($keypath->value))
+                                                    {
+                                                        $command1 .= " -K ".trim(Cripto::decrypt($keypath->value));
+                                                    }
+
+                                                    $passphr = GeneralSettings::model()->findByAttributes(array('name'=>'passphrase'));
+
+                                                    if(isset($passphr->value))
+                                                    {
+                                                        $command1 .= " -H ".trim(Cripto::decrypt($passphr->value));
+                                                    }
+
+                                                    $seedhost = GeneralSettings::model()->findByAttributes(array('name'=>'seedHost'));
+
+                                                    if(isset($seedhost->value))
+                                                    {
+                                                        $command1 .= " ".trim(Cripto::decrypt($seedhost->value));
+                                                    }
+
+                                                    $usr = GeneralSettings::model()->findByAttributes(array('name'=>'username'));
+
+                                                    if(isset($usr->value))
+                                                    {
+                                                        $command1 .= " ".trim(Cripto::decrypt($usr->value));
+                                                    }
+
+                                                    $passw = GeneralSettings::model()->findByAttributes(array('name'=>'password'));
+
+                                                    if(isset($passw->value))
+                                                    {
+                                                        $command1 .= " ".trim(Cripto::decrypt($passw->value));
+                                                    }
+
+                                                    $enpassw = GeneralSettings::model()->findByAttributes(array('name'=>'enpassword'));
+
+                                                    if(isset($enpassw->value))
+                                                    {
+                                                        $command1 .= " ".trim(Cripto::decrypt($enpassw->value));
+                                                    }
+
+                                                    $type_a = GeneralSettings::model()->findByAttributes(array('name'=>'type access'));
+
+                                                    if(isset($type_a->value))
+                                                    {
+                                                        $command1 .= " ".trim(Cripto::decrypt($type_a->value));
+                                                    }
+                                */
+
+                        $escaped_command1 = escapeshellcmd($command1);
+                        $sss=passthru($escaped_command1);
+
+
+//                        Yii::app()->user->setFlash('runaudit', 'Initial discovery  was finished.');
+//                        $this->refresh();
                     }
-
-                    $keypath = GeneralSettings::model()->findByAttributes(array('name'=>'path to key'));
-
-                    if(isset($keypath->value))
-                    {
-                        $command1 .= " -K ".trim(Cripto::decrypt($keypath->value));
-                    }
-
-                    $passphr = GeneralSettings::model()->findByAttributes(array('name'=>'passphrase'));
-
-                    if(isset($passphr->value))
-                    {
-                        $command1 .= " -H ".trim(Cripto::decrypt($passphr->value));
-                    }
-
-                    $seedhost = GeneralSettings::model()->findByAttributes(array('name'=>'seedHost'));
-
-                    if(isset($seedhost->value))
-                    {
-                        $command1 .= " ".trim(Cripto::decrypt($seedhost->value));
-                    }
-
-                    $usr = GeneralSettings::model()->findByAttributes(array('name'=>'username'));
-
-                    if(isset($usr->value))
-                    {
-                        $command1 .= " ".trim(Cripto::decrypt($usr->value));
-                    }
-
-                    $passw = GeneralSettings::model()->findByAttributes(array('name'=>'password'));
-
-                    if(isset($passw->value))
-                    {
-                        $command1 .= " ".trim(Cripto::decrypt($passw->value));
-                    }
-
-                    $enpassw = GeneralSettings::model()->findByAttributes(array('name'=>'enpassword'));
-
-                    if(isset($enpassw->value))
-                    {
-                        $command1 .= " ".trim(Cripto::decrypt($enpassw->value));
-                    }
-
-                    $type_a = GeneralSettings::model()->findByAttributes(array('name'=>'type access'));
-
-                    if(isset($type_a->value))
-                    {
-                        $command1 .= " ".trim(Cripto::decrypt($type_a->value));
-                    }
-*/
-
-                    $escaped_command1 = escapeshellcmd($command1);
-                    $sss=passthru($escaped_command1);
-
-
-                    Yii::app()->user->setFlash('runaudit', 'Initial discovery  was finished.');
-                    $this->refresh();
                 }
 
+                if($this->isOpenAudit())
+                {
+                    $status = 0;
+                    $item = DiscoveryStatus::model()->findByAttributes(array('ended'=>$status)); //obtain instance of object containing your function
+                    $date1 = strtotime($item->lastchange);
+                    $date2 = time();
+                    $subTime = $date2 - $date1;
+                    if($subTime>600)
+                    {
+                        Yii::app()->db->createCommand()
+                            ->update('discovery_status',
+                                array(
+                                    'finish'=>new CDbExpression('NOW()'),
+                                    'ended'=>new CDbExpression('ended + 1'),
+                                ),
+                                'ended=:ended',
+                                array(':ended'=>$status)
+                            );
+                    }
+                    else
+                    {
+                        Yii::app()->user->setFlash('runaudit', 'Other Initial discovery process is started. Wait a few minutes');
+                    }
+                }
 
                 $this->render('runaudit', array(
                     'model' => $model,
@@ -1878,15 +1898,56 @@ exit;*/
     /**
      *
      */
-    public function actionPercentage() {
-        /*$status =1;
-        if (Yii::app()->request->isAjaxRequest) {
-            $item = DiscoveryStatus::model()->findByAttributes(array('ended'=>$status)); //obtain instance of object containing your function
-            echo $item->percent; //to return value in ajax, simply echo it
-            echo $status;
-        }*/
-        echo mt_rand(1, 100);
-        exit;
+    public function actionPercentage($key) {
+        $status =0;
 
+        if (Yii::app()->request->isAjaxRequest) {
+
+            if($this->isOpenAudit())
+            {
+
+                $item = DiscoveryStatus::model()->findByAttributes(array('ended'=>$status)); //obtain instance of object containing your function
+                $data = array('percent'=>$item->percent); //to return value in ajax, simply echo it
+
+                if($item->percent == 100)
+                {
+                    $update = Yii::app()->db->createCommand()
+                        ->update('discovery_status',
+                            array(
+                                'finish'=>new CDbExpression('NOW()'),
+                                'ended'=>new CDbExpression('ended + 1'),
+                            ),
+                            'ended=:ended',
+                            array(':ended'=>$status)
+                        );
+                }
+            }
+            else
+            {
+                $data = array('percent'=>0);
+            }
+
+            echo CJSON::encode( $data );
+
+        }
+ /*       if (Yii::app()->request->isAjaxRequest) {
+                $percent = mt_rand($key, 100);
+                $data = array('percent'=>$percent);
+ //       echo json_encode($data);
+                echo CJSON::encode( $data );
+
+        }*/
     }
+
+    private function isOpenAudit()
+    {
+        $status =0;
+        $discoveryModels = DiscoveryStatus::model()->findAllByAttributes(array(
+            'ended'=> $status
+        ));
+        $count = count( $discoveryModels);
+
+        return $count;
+    }
+
 }

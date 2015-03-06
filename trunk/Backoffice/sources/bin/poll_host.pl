@@ -62,6 +62,17 @@ my $dbpasswd = "";
 my $dbport = "5432";
 my $dbhost = 'localhost';
 my $rt_id;
+my $criptokey;
+my $host;
+my $user;
+my $passwd;
+my $enpasswd;
+my $community;
+my $access;
+my $path_to_key;
+my $prom_val;
+my $flag;
+my $type_router;
 
 my $hostType;
 
@@ -175,10 +186,136 @@ if ($verbose eq "") {
     warn "Failed to redirect stdout to $logFile: $!\n";
 }
 
-
+sub getAttrVal($)
+{
+	my $in_val = shift;
+	my $ret_val;
+	$in_val =~ s/^\s+//;			# no leading white
+    $in_val =~ s/\s+$//;			# no trailing white
+    $ret_val = decryptAttrvalue($criptokey, $in_val) if defined($in_val);
+    if(defined($ret_val))
+    {
+		$ret_val =~ s/^\s+//;			# no leading white
+		$ret_val =~ s/\s+$//;			# no trailing white
+		}
+    
+    return $ret_val;
+}
 
 die "Usage: $0 host [user passwd en_passwd community]\n" unless ($#ARGV >= 0);
-my ($host, $user, $passwd, $enpasswd, $community,$access,$path_to_key) = @ARGV[0..6];
+($host) = $ARGV[0];
+DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
+my $p=48;
+$criptokey = DB_getCriptoKey();
+my $length = length $criptokey ;
+$p -= $length; 
+my $suffix =  ( '0' x $p );
+$criptokey.=$suffix;
+########################
+
+		
+		$type_router = DB_getRouterVendor($host);
+		my $r_id = DB_getRouterId($host);
+		if(defined $type_router)
+		{
+			$type_router =~ s/\s+$//;
+		}
+		my $amount = DB_isInRouterAccess($host);# check exists special access to router
+		if(!defined($amount))
+		{
+			$amount =0;
+		}
+           
+		if($amount < 1)	##if is not special access to router then it connects with default parameters
+		{
+			$prom_val = DB_getSettings('username');
+			$user = getAttrVal($prom_val->[0]);
+			$prom_val = DB_getSettings('password');
+			$passwd = getAttrVal($prom_val->[0]);
+			$prom_val = DB_getSettings('enpassword');
+			$enpasswd = getAttrVal($prom_val->[0]);
+			$prom_val = DB_getSettings('type access');
+			my $access1 = getAttrVal($prom_val->[0]);
+			$access = $access1 if defined($access1);
+		}
+		else	##if is special access to router then gets data to connect
+		{
+			my $arr_param = DB_getRouterAccess($r_id);
+			
+			foreach my $emp(@$arr_param)
+			{
+				$access =  $emp->[0] if defined($emp->[0]);
+				if(defined($emp->[1]))
+				{
+					$type_router = $emp->[1];
+					$type_router =~ s/\s+$//;
+				}
+					
+				$flag = lc($emp->[2]);
+
+				if($flag eq 'login')	#username
+				{
+					$user = decryptAttrvalue($criptokey,$emp->[3]);
+					$user =~ s/\s+$//; 
+				}
+				if($flag eq 'password')	#password
+				{
+					$passwd = decryptAttrvalue($criptokey,$emp->[3]); 
+					$passwd =~ s/\s+$//; 
+					$enpasswd = decryptAttrvalue($criptokey,$emp->[3]);
+					$enpasswd =~ s/\s+$//; 
+				}
+				if($flag eq 'enpassword')	#enable password
+				{
+					$enpasswd = decryptAttrvalue($criptokey,$emp->[3]);
+					$enpasswd =~ s/\s+$//; 
+				}
+
+	##			case "port"
+
+	##			case "pathphrase"
+				if($flag eq 'path_to_key')	#path to key
+				{
+					$path_to_key = decryptAttrvalue($criptokey,$emp->[3]);
+					$path_to_key =~ s/\s+$//; 
+				}
+					
+				
+			}
+		}
+		
+		my $amount1 = DB_isCommunity($r_id);
+			
+				if($amount1 > 0)
+				{
+					my $arr_param1 = DB_getCommunity($r_id);
+					foreach my $emp1(@$arr_param1)
+					{
+						$community = decryptAttrvalue($criptokey, $emp1->[0]) if defined($emp1->[0]);
+						$community =~ s/\s+$//; 
+					}						 	
+				}
+			    else
+				{
+					$prom_val = DB_getSettings('community');
+					my $community1 = getAttrVal($prom_val->[0]) ;
+					$community = $community1 if defined($community1);
+				}				
+		DB_close;
+		if($access =~/SSH/i)
+		{
+			$access = 'SSH';
+		}
+		
+########################
+=for
+print $host."\n";
+print $user."\n";
+print $passwd."\n";
+print $enpasswd."\n";
+print $access."\n";
+print $community."\n";
+=cut
 
 # Get all configs from host
 # Params:
@@ -408,6 +545,9 @@ else
 	$ret = &parseConfigs($host,$configPath);
 	}	
 
+
+
+	
 DB_close;
 $ret eq "ok" or
   logError("poll","parse configs from \'$host\': $ret");

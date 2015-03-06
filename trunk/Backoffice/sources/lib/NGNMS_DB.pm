@@ -45,7 +45,11 @@ $VERSION     = 0.01;
 		  &DB_setHostVendor &DB_setHostState
 		  &DB_getAllIntefaces &DB_isScanException
 		  &DB_replaceRouterName &DB_getInterfaceRouterId
-		  &DB_setHostLayer);
+		  &DB_setHostLayer &DB_updateDiscoveryStatus
+		  &DB_stopDiscovery &DB_insertDiscoveryStatus
+		  &DB_isOpenedDiscovery &DB_lastchangeDiscovery
+		  &DB_modeDiscovery &DB_updateDiscoveryStatusOne
+		  &DB_percentDiscovery);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -688,6 +692,89 @@ sub DB_getCriptoKey(){
 ##  print Dumper($rref);
   
     return $rref->[0];
+}
+
+sub DB_updateDiscoveryStatus ($$) {
+     my ($percent,$finish) = @_[0..1];
+  
+        my $SQL = "UPDATE discovery_status SET percent = ?,lastchange=now(),ended=? WHERE ended = 0";
+        my $link_h = $dbh->prepare($SQL);
+        $link_h->execute($percent,$finish);
+}
+
+sub DB_updateDiscoveryStatusOne ($$) {
+     my ($percent,$finish) = @_[0..1];
+  
+        my $SQL = "UPDATE discovery_status SET percent = percent+?,lastchange=now(),ended=? WHERE ended = 0";
+        my $link_h = $dbh->prepare($SQL);
+        $link_h->execute($percent,$finish);
+}
+
+sub DB_insertDiscoveryStatus ($$) {
+     my ($user,$interact) = @_[0..1];
+	 my $percent = 0;
+     my $finish = 0; 
+        my $SQL = "INSERT INTO discovery_status(start,username,percent,ended,interactive) VALUES (now(),?,?,?,?)";
+        my $link_h = $dbh->prepare($SQL);
+        $link_h->execute($user,$percent,$finish,$interact);
+}
+
+sub DB_stopDiscovery ($$$) {
+     my ($percent,$finish,$mode) = @_[0..2];
+## mode 1- normal end, 0 - overdue session finishing  
+		if($mode)
+		{
+			my $SQL = "UPDATE discovery_status SET percent = ?,finish=now(),ended=? WHERE ended = 0";
+			my $link_h = $dbh->prepare($SQL);
+			$link_h->execute($percent,$finish);
+		}
+		else
+		{
+			my $SQL = "UPDATE discovery_status SET finish=now(),ended=? WHERE ended = 0";
+			my $link_h = $dbh->prepare($SQL);
+			$link_h->execute($finish);
+		}
+        
+}
+
+sub DB_isOpenedDiscovery()
+{
+	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL;
+	$SQL = "select count(*) from discovery_status WHERE ended = 0";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+	my $ret_val = $rref->[0];
+	return $ret_val;
+}
+
+sub DB_lastchangeDiscovery()
+{
+	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL;
+	$SQL = "select lastchange from discovery_status WHERE ended = 0";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+	my $ret_val = $rref->[0];
+	return $ret_val;
+}
+
+sub DB_modeDiscovery()
+{
+##	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL;
+	$SQL = "select interactive from discovery_status WHERE ended = 0";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+	my $ret_val = $rref->[0];
+	return $ret_val;
+}
+
+sub DB_percentDiscovery()
+{
+##	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL;
+	$SQL = "select percent from discovery_status WHERE ended = 0";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+	my $ret_val = $rref->[0];
+	return $ret_val;
 }
 
 sub DB_getAllIntefaces(){
