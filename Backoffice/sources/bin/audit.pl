@@ -46,6 +46,8 @@ use NGNMS_JuniperJav;
 use NGNMS_Linux;
 use NGNMS_Extreme;
 use NGNMS_HP;
+use DateTime;
+use DateTime::Format::Strptime;
 
 use Data::Dumper;
 
@@ -82,6 +84,7 @@ my $test_host_type;
 my $ocx_session;
 my $prom_val;
 my $scan = 0;
+my $interact = 0;
 
 my $seedHosts = '';
 my $user      = '';
@@ -122,6 +125,9 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   
   if ($ARGV[0] eq "-np") {
     $noPoll = 1;
+  }
+  if ($ARGV[0] eq "-i") {
+	$interact = 1;
   }
   if ($ARGV[0] eq "-s") {
     $scan = 1;
@@ -217,7 +223,7 @@ EOF
   
   shift @ARGV;
 }
-print "scan=".$scan."\n";
+
 #####################################################################
 
 # Redirect stdout if no debugging needed
@@ -253,11 +259,43 @@ sub getAttrVal($)
     
     return $ret_val;
 	}
-print "tut:$dbname,$dbuser,$dbpasswd,$dbport,$dbhost\n";
+
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
+    
+	if(DB_isOpenedDiscovery())
+	{
+		my $ls_discovery = DB_lastchangeDiscovery();
+		my $parser = DateTime::Format::Strptime->new(
+			pattern => '%Y-%d-%m %H:%M:%S',
+			on_error => 'croak',
+		);
+		my $dt = $parser->parse_datetime($ls_discovery);
+		my $ls_timestamp = $dt->epoch;
+		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =localtime(time);
+		$year = $year + 1900;
+		$mon = $mon+1;;
+		$dt = DateTime->new(
+			year       => $year,
+			month      => $mon,
+			day        => $mday,
+			hour       => $hour,
+			minute     => $min,
+			second     => $sec,  
+		);
+  
+		my $tm_now = $dt->epoch;
+		my $tm_diff = $tm_now - $ls_timestamp;
+		if($tm_diff > 600)
+		{
+			DB_stopDiscovery (0,1,0);
+		}
 
-
-
+		
+		die "Audit cannot be run! There is other open audit \n";
+	}
+     
+	 
+	DB_insertDiscoveryStatus ('ngnms',$interact); 
     
 	my $p=48;
 	$criptokey = DB_getCriptoKey();
@@ -369,9 +407,8 @@ foreach $seedHost (@seedHostList) {
     }
 	
     $hostType = $test_host_type;
-	
   }
-
+DB_updateDiscoveryStatus(5,0);## SNMP process was ended
   ##print "$seedHost: host type \"$hostType\"\n";
 
   # get network topology from this host
@@ -415,6 +452,8 @@ foreach $seedHost (@seedHostList) {
     NGNMS_JuniperJav::juniper_parse_isis $isis_file;
     NGNMS_JuniperJav::juniper_parse_ospf $ospf_file;
   }
+  
+  DB_updateDiscoveryStatus(15,0);## getting Topology process was ended
 } # loop through seed hosts
 
 if ($noPoll) {
@@ -445,6 +484,12 @@ foreach my $child (keys %hosts) {
 	my %fdmap;
 	my $freeslots;
 	my $remaining;
+	my $start_bar = 15;
+	my $pr_bar = 35;
+	my $count_bar =0;
+	my $int_bar;
+	my $step_bar;
+	my $rest;
 	my $i;
 	my @params = ();
 	my $arr_param =();
@@ -466,83 +511,14 @@ foreach my $child (keys %hosts) {
 	  
 		
 		my $flag ;
-##		print $_[0].":".$_[5]."\n";
-##print join(", ",@_);
+
 		DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
 		my $type_router = DB_getRouterVendor($_[0]);
 		$type_router =~ s/\s+$//;
 		my $amount = DB_isInRouterAccess($_[0]);# check exists special access to router
 		DB_close; ## close DB connect
-		if(!defined($amount))
-		{
-			$amount =0;
-		}
-		print "$_[0]:Tipe=".	$type_router."--:$amount\n";
-		if($amount < 1)	##if is not special access to router then it connects with default parameters
-		{
-			@params = @_;
-		}
-		else	##if is special access to router then gets data to connect
-			{
-				DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
-				my $r_id = DB_getRouterId($_[0]);
-				$arr_param = DB_getRouterAccess($r_id);
-	##			print Dumper($arr_param);
-
-				$params[0] = $_[0]; ##host
-				$params[0] =~ s/\s+$//; 
-			
-				foreach my $emp(@$arr_param)
-				{
-					$access =  $emp->[0] if defined($emp->[0]);
-					if(defined($emp->[1]))
-					{
-						$type_router = $emp->[1];
-						$type_router =~ s/\s+$//;
-					}
-					
-					$flag = lc($emp->[2]);
-	#				print $emp->[2].":".$flag."\n";
-					if($flag eq 'login')	#username
-					{
-						$params[1] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[1] =~ s/\s+$//; 
-					}
-					if($flag eq 'password')	#password
-					{
-						$params[2] = decryptAttrvalue($criptokey,$emp->[3]); 
-						$params[2] =~ s/\s+$//; 
-						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[3] =~ s/\s+$//; 
-					}
-					if($flag eq 'enpassword')	#password
-					{
-						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[3] =~ s/\s+$//; 
-					}
-
-	##			case "port"
-
-	##			case "pathphrase"
-					if($flag eq 'path_to_key')	#path to key
-					{
-						$params[6] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[6] =~ s/\s+$//; 
-					}
-					$params[4] = $_[4]; 		##community
-					$params[4] =~ s/\s+$//; 
-					$params[5] = $_[5];			##access
-					$params[5] =~ s/\s+$//; 
-				}
-
-			DB_close;	
-					
-			}
-
-##	    print "---------------------------\n";
-##		print "host:".$params[0].":user=".$params[1].":passwod=".$params[2].":enpasswd=".$params[3].":access=".$params[5]."\n";
-##		print "---------------------------\n";
-##		print "pid=".$pid."\n";
+		$params[0] = $_[0];
+		
 	  if (!$pid) {			# child
 		close $r;
 		my @cmd2=($cmd);
@@ -576,13 +552,8 @@ foreach my $child (keys %hosts) {
 		}
 		else 
 		{	
-#		  print join(", ",@cmd2);
-#		  print "\n";
-#     	  print join(", ",@params);
-
 		  system( @cmd2, @params );
 	    }
-	#    print $w "Done: $childN";
 		exit 0;
 	  }
 	  # parent
@@ -609,6 +580,19 @@ foreach my $child (keys %hosts) {
 		print "Child $awaken finished\n";
 		$freeslots++;
 		$remaining--;
+		$rest = $int_bar - $remaining;
+		$step_bar = int(($pr_bar * $rest)/$int_bar);
+		my $up_percent = $start_bar + $step_bar;
+		print "REST $rest UPPERCENT:$up_percent.\n";
+			DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
+			my $cur_percent = DB_percentDiscovery();
+			
+			if($cur_percent <51 && $cur_percent < $up_percent)
+			{
+				DB_updateDiscoveryStatus ($up_percent,0);	
+			}
+			DB_close;
+		
 		vec($fdset, $fd, 1) = 0;
 		  } else {
 		die "Read error: $!\n";
@@ -622,7 +606,7 @@ foreach my $child (keys %hosts) {
 	  my $cmd = shift;
 	  my @children = @_;
 	  my $community_l;
-	  my $amount;
+	  my $amount;	 
 	  my $arr_param;
 	  $freeslots = $slots;
 	  $remaining = @children;
@@ -683,20 +667,41 @@ foreach my $child (keys %hosts) {
 	print "Starting polling\n";
 	print "Total $slots slots\n";
 	print "Total $Nchildren children\n";
-
-
+	
+    $int_bar = $Nchildren;
+    
 	spawnForAll ("$ENV{'NGNMS_HOME'}/bin/poll_host.pl", keys %hosts );
 
 	print "Polling done\n";
-
+DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
+my $cur_percent = DB_percentDiscovery();
+if($cur_percent <51)
+{
+	DB_updateDiscoveryStatus(50,0);## Polling process was ended
+}
 
 DB_close;
+sleep(1);
 if($scan > 0)
 {
 
 		&runScanner("$ENV{'NGNMS_HOME'}/bin/subnets_scanner.pl");
 }
 
+DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
+
+if($interact < 1)
+{
+	
+	DB_stopDiscovery(100,1,1);
+	
+}
+else
+{
+	DB_stopDiscovery(100,0,1);
+}
+
+DB_close;
 sub runScanner()
 {
 	my $cmd = shift;

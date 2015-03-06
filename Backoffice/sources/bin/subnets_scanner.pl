@@ -1,4 +1,24 @@
 #!/usr/bin/perl -w
+# NG-NetMS, a Next Generation Network Managment System
+# 
+# Version 3.2 
+# Build number N/A
+# Copyright (C) 2014 Opt/Net
+# 
+# This file is part of NG-NetMS tool.
+# 
+# NG-NetMS is free software: you can redistribute it and/or modify it under the terms of the
+# GNU General Public License v3.0 as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# NG-NetMS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# 
+# See the GNU General Public License for more details. You should have received a copy of the GNU
+# General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+# 
+# Authors: T.Matselyukh, A. Jaropud, M.Golov
+ 
 #
 # Scan subnets which were configured in network
 #
@@ -173,7 +193,7 @@ for my $key (@sorted_keys) {
 					}					
 				}	
 }
-
+DB_updateDiscoveryStatus(60,0);
 my $p=48;
 	$criptokey = DB_getCriptoKey();
 	my $length = length $criptokey ;
@@ -203,7 +223,20 @@ my $block_idx ;
 my $old_st = -1;
 my $st = 0 ;
 my $counter_join = 0;
-while( $counter_join < $#block_one){
+my $start_bar = 60;
+my $pr_bar = 39;
+my $int_bar = $#block_one + 1;;
+my $step_bar;
+my $rest;
+my $bar_shift = 0 ;
+
+print "INTBAR:$int_bar\n";
+if($int_bar < $nb_process)
+{
+	$nb_process = $int_bar;
+}
+
+while( $counter_join < $#block_one+1){
 	@running = threads->list(threads::running);
 	$old_st ++;
 	if (scalar @running < $nb_process) {
@@ -211,6 +244,18 @@ while( $counter_join < $#block_one){
 		
  		print 	"Scan ".$blocks0{$block_idx}{block}."\n" if($old_st == $st);	
 		push @threads, threads->create(\&scansubnet, $blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
+						$bar_shift++;
+						$step_bar = int(($pr_bar * $bar_shift)/$int_bar);
+						my $up_percent = $start_bar + $step_bar;
+						print "REST1 $bar_shift UPPERCENT:$up_percent.\n";
+						DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
+						my $cur_percent = DB_percentDiscovery();
+			
+						if($cur_percent <100 && $cur_percent < $up_percent)
+						{
+							DB_updateDiscoveryStatus ($up_percent,0);	
+						}
+						DB_close;
 		if ($st < $#block_one)
 		{
 			$old_st = $st;
@@ -342,7 +387,6 @@ while (my $host = $host_list->get_next())
 						DB_writeLink($id_link,$cur_id,'B');
 						push @thrs, threads->create(\&worker, $cur_ip);
 						$counter++;
-					
 					}
 				}
 				else
@@ -357,6 +401,7 @@ while (my $host = $host_list->get_next())
 			}
 		}
 	}
+		
 DB_close;
 	
 	foreach my $thr (@thrs) {
