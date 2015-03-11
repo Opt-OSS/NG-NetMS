@@ -36,6 +36,7 @@ use NGNMS_JuniperJav;
 use NGNMS_Linux;
 use NGNMS_Extreme;
 use NGNMS_HP;
+use NGNMS_SSG5;
 
 use NGNMS_util;
 use NGNMS_DB;
@@ -368,6 +369,10 @@ sub getConfigs {
   {
 	  return &NGNMS_HP::hp_get_configs;
   }
+  if($hostType eq "SSG5")
+  {
+	  return &NGNMS_SSG5::ssg5_get_configs;
+  }
   return "host type ${hostType} not supported yet";
 }
 #########################################################
@@ -447,6 +452,22 @@ sub parseConfigs {
 	  ($ret eq "ok") and
       $ret = &NGNMS_HP::hp_parse_config ($host,$config_file);
 	}	
+	if($hostType eq "SSG5")
+	{
+		my $version_file = $configPath."_version.txt";
+		my $hardwr_file = $configPath."_hardware.txt";
+		my $interfaces_file = $configPath."_interfaces.txt";
+		my $config_file = $configPath."_config.txt";
+		$ret =
+      &NGNMS_SSG5::ssg5_parse_version ($rt_id,$host,$version_file);
+	  ($ret eq "ok") and
+      my $ret = &NGNMS_SSG5::ssg5_parse_hardwr ($rt_id,$hardwr_file);
+	  ($ret eq "ok") and
+      $ret = &NGNMS_SSG5::ssg5_parse_interfaces ($rt_id,$interfaces_file,$version_file);
+	  ($ret eq "ok") and
+      $ret = &NGNMS_SSG5::ssg5_parse_config ($host,$config_file);
+	}	
+	
   return $ret;
 }
 ###########################################################
