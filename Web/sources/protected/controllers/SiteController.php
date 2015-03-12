@@ -141,6 +141,15 @@ class SiteController extends Controller {
      * Displays the login page
      */
     public function actionLogin() {
+        $defender = new Defender();
+        if (!$defender->isSafeIp())
+        {
+            $this->redirect(Yii::app()->homeUrl);
+            exit();
+            // that's all - once an IP is locked I suggest not to send any further information.
+            // simply exit() the application as soon as possible without any error messages.
+        }
+
         $model = new LoginForm;
 
         // if it is ajax validation request
@@ -154,7 +163,14 @@ class SiteController extends Controller {
             $model->attributes = $_POST['LoginForm'];
             // validate user input and redirect to the previous page if valid
             if ($model->validate() && $model->login())
+            {
+                $defender->removeFailedLogins();
                 $this->redirect(Yii::app()->user->returnUrl);
+            }
+            else
+            {
+                $defender->recordFailedLogin();
+            }
         }
         // display the login form
         $this->render('login', array('model' => $model));
