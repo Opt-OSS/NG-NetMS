@@ -16,6 +16,7 @@ use Net::SNMP;
 use Net::DNS;
 use MIME::Base64;
 use Crypt::TripleDES;
+use Data::Dumper;
 
 require Exporter;
 
@@ -58,10 +59,11 @@ my $testHostType;
 # $testHostType = "Juniper";
 
 sub getHostType($$) {
+	my @oids = ('1.3.6.1.2.1.1.3.0');
   return ($testHostType,'') if defined($testHostType);
 
   my ($host,$community) = @_;
-
+  my $version = '2c';
   my ($sess,$err) = Net::SNMP->session(-hostname => $host,
 				       -community => $community);
   if(!defined($sess)) {
@@ -69,14 +71,29 @@ sub getHostType($$) {
       return (undef,"$err");
     }
     return (undef,"SNMP: $err");
-  }
-
+  } 
   my $req = '1.3.6.1.2.1.1.2.0';    # 'sysObjectID.0'
   my $res = $sess->get_request(-varbindlist => [$req]);
-
+  
   if (!defined($res)) {
-    $err = $sess->error;
-    return (undef,"SNMP: $err");
+	  
+	  $sess->close(); 
+	  my ($sess,$err) = Net::SNMP->session(-hostname => $host,
+                       -version       => $version,
+				       -community => $community);
+	  if(!defined($sess)) {
+		if( $err =~ /Unable to resolve destination address.*/ ) {
+		return (undef,"$err");
+		}
+		return (undef,"SNMP: $err");
+	}
+	
+	$res = $sess->get_request(-varbindlist => [$req]); 
+	
+	if (!defined($res)) {
+		$err = $sess->error;
+		return (undef,"SNMP: $err");
+	}
   }
 
   my $mib = $res->{$req};
@@ -88,7 +105,9 @@ sub getHostType($$) {
   $hostt = "Linux" if $mib =~ /1\.3\.6\.1\.4\.1\.8072\..*/;
   $hostt = "HP" if $mib =~ /1\.3\.6\.1\.4\.1\.11\..*/;
   $hostt = "Extreme" if $mib =~ /1\.3\.6\.1\.4\.1\.1916\..*/;
+  $hostt = "Netscreen" if $mib =~ /1\.3\.6\.1\.4\.1\.3224\..*/;
 
+  
   return ($hostt,'');
 }
 

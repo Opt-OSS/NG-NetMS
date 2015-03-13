@@ -369,7 +369,7 @@ sub getConfigs {
   {
 	  return &NGNMS_HP::hp_get_configs;
   }
-  if($hostType eq "SSG5")
+  if($hostType eq "Netscreen")
   {
 	  return &NGNMS_SSG5::ssg5_get_configs;
   }
@@ -452,7 +452,7 @@ sub parseConfigs {
 	  ($ret eq "ok") and
       $ret = &NGNMS_HP::hp_parse_config ($host,$config_file);
 	}	
-	if($hostType eq "SSG5")
+	if($hostType eq "Netscreen")
 	{
 		my $version_file = $configPath."_version.txt";
 		my $hardwr_file = $configPath."_hardware.txt";
