@@ -389,7 +389,7 @@ sub ssg5_parse_interfaces {
 						$phInterface = $logInterface;
 						if(defined $speeds{$phInterface})
 						{
-							$speed = $speeds{$phInterface};
+							$speed = $speeds{$phInterface}*1000;
 						}
 						else
 						{
@@ -409,6 +409,7 @@ sub ssg5_parse_interfaces {
 	}
 	else ##physical interfaces
 	{
+		my $phint_name = '';
 		$line =~ s/[\n]//g;
 		print $line."\n";
 		if($line !~ m/port/i && $line !~ m/power/i && $line !~ m/----/i && $line !~ m/mii/i)
@@ -424,14 +425,16 @@ sub ssg5_parse_interfaces {
 			 }
 			 if($arr_phint[10] =~ m/(\d+)/)
 			 {
-				 $speed = $1;
+				 $speed = $1*1000000;
 			 }
 			 else
 			 {
 				 $speed = 'Unspecified';
 			 }
+			 		 		 
+			 $phint_name = "Port ".$arr_phint[1];
 			 @phifc{("interface","state","condition","speed","description")} =
-				($arr_phint[1],$newState,$arr_phint[8],$speed,'');
+				($phint_name,$newState,$arr_phint[8],$speed,'');
 #				print Dumper(%phifc);
 			DB_writePhInterface($rt_id, \%phifc);
 			@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
