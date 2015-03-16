@@ -253,6 +253,10 @@ while( $counter_join < $#block_one+1){
 			
 						if($cur_percent <100 && $cur_percent < $up_percent)
 						{
+							if($up_percent > 99 )
+							{
+								$up_percent = $cur_percent;
+							}
 							DB_updateDiscoveryStatus ($up_percent,0);	
 						}
 						DB_close;
