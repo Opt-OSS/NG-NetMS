@@ -1,17 +1,16 @@
 package NGNMS_Extreme;
 
 use strict;
-
+use warnings;
 # use Data::Dumper;
 use NGNMS_DB;
 use NGNMS_util;
 use Data::Dumper;
 use File::Copy qw(copy);
-use Net::Extreme qw($Error $debug $TIMEOUT);
-
-
-# $Net::Juniper::debug=1;
-
+use Data::Dumper;
+use Net::Netmask;
+use Net::Appliance::Session;
+    
 if (defined($ENV{"NGNMS_TIMEOUT"})) {
   $Net::Extreme::TIMEOUT = $ENV{"NGNMS_TIMEOUT"};
 } else {
@@ -27,12 +26,14 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $data);
 ## set the version for version checking; uncomment to use
 $VERSION     = 0.01;
 
-@EXPORT      = qw(&extreme_parse_version
-			&extreme_parse_hardwr
-		  &extreme_parse_config
-		  &extreme_parse_interfaces
-		  &extreme_get_topologies
-		  &extreme_get_configs);
+@EXPORT      = qw(
+				  &extreme_create_session
+				  &extreme_parse_version
+			      &extreme_parse_hardwr
+		          &extreme_parse_config		  
+				  &extreme_parse_interfaces
+				  &extreme_get_topologies
+				  &extreme_get_configs);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -43,154 +44,24 @@ $VERSION     = 0.01;
 # data
 
 $data = "my data";
-
+my @word;
+my @rword;
 # Preloaded methods
 
 my $session;
 my $Error;
-my $model_switch;
-my $name_switch;
-
-sub extreme_create_session {
-  my ($host, $username) = @_[0..1];
-  my @passwds = @_[2..3];
-  my $access =@_[6..6];
-  my $path_to_key =$_[7];
-
-  $Error = undef;
-  if(!defined($access))
-  {
-	$access = "Telnet";
-  }
-##print "Extreme:access:".$access.";host:".$host."username=".$username.";passwd0=".$passwds[0].";passwd1=".$passwds[1]."\n";
-  $session = Net::Extreme->new($access,$host, $username, @passwds,$path_to_key);
- 
-  if(defined($session->_socket))
-  {
-	$session->open($access,$host, $username, @passwds);
-	}
-  else
-  {
-	  $session->_set_error("Conection with $host via $access was not established")
-	  }
-  
-#	print "--Extreme Session:";
-# print Dumper($session);
-# print "--END Extreme Session\n";
-  if($session->{'error'} || !$session->{'logged_in'}) {
-    $Error = $session->errmsg;
-  }
-  else {  
-    my $MB = 1024 * 1024;
-  }
-}
-sub extreme_get_file($$) {
-  my ($cmd, $fname) = @_[0..1];
-#  print "TUT EXTREME:$cmd\n";
-  $Error = undef;
-  my $tm =5;
-  my @data = $session->cmd($cmd,$tm);
-  if (! @data) {
-    $session->close;
-    $Error = "extreme: " . $session->errmsg();
-    return undef;
-  }
-
-#      print @data;
-  if (!open(F_DATA, ">$fname")) {
-    $session->close;
-    $Error = "Cannot open file $fname for writing: $!";
-    return undef;
-  }
-  
-  for my $line (@data) {
-	print F_DATA "$line\n";
-	}
-##  print F_DATA @data;
-  close (F_DATA);
-  1;
-}
-
-sub extreme_get_model($){
-my $cmd =$_[0];
- 
-my $tm =5;
-			
-  $session->_socket->print($cmd);
-  my ($prematch, $match) = $session->_socket->waitfor( '/> /' );
-  my @data = split(/\n/,$prematch);
-  if (! @data) {
-    $session->close;
-    $Error = "extreme: " . $session->errmsg();
-    return undef;
-  }
-# print "model Extreme:\n";
-#  print Dumper(@data);
-# print "end model Extreme:\n"; 
-  return @data;
-}
-
-sub extreme_get_configs {
-  my ($host, $username) = @_[0..1];
-  my @passwds = @_[2..3];
-  my $configPath = $_[4];
-  my $acc = $_[6];
-  print "Getting configs from $host\n";
-  my @params = ($_[0],$_[1],$_[2],$_[3],'','',$_[6]);
-##  juniper_create_session(@_);
-  extreme_create_session(@params);
-  return $Error if $Error;
-
-  # version
-  #
-  my $file_vers = $configPath."_version.txt";
-  my $file_hard = $configPath."_hardware.txt";
-=for  
-  my @models = extreme_get_model('sh switch');
-
-	foreach my $line(@models){
-		$line =~ s/[\n]//g;
-		if ($line =~ m/System Type:      (.*)$/i) { # Model of switch
-			$model_switch = $1;
-		}
-		if($line =~ m/SysName:          (.*)$/i) { # Name of switch
-			$name_switch = $1;
-		}
-	}
-=cut	
-  extreme_get_file('sh ver detail', $configPath."_version.txt") or
-    return $Error;
-
-  # hardware inventory
-  #
-#  extreme_get_file('show chass hardw', $configPath."_hardware.txt") or
-#    return $Error;
-	copy $file_vers,$file_hard or return $Error;
-
-  # Running config
-  #
-#  extreme_get_file('show config', $configPath."_config.txt") or
-#    return $Error;
-
-  # Interfaces
-  #
-#  extreme_get_file('show interface extensive', $configPath."_interfaces.txt") or
-#    return $Error;
-
-  $session->close;
-
-  return "ok";
-}
-
-sub extreme_get_topologies ($$$$$) {
-
-  return "ok";
-}
-
+my $model_device;
+my $name_device;
+my $location_switch;
+my $log_interfaces;
+my $ph_interfaces;
+my $sys_info;
+my $configuration;
+my @swarray = ();
+my @hwarray = ();	
 my %sw_info = (	"sw_item" => undef,
 		"sw_name" => undef,
 		"sw_ver"  => undef );
-
 my %hw_info = (	"hw_item" => undef,
 		"hw_name" => undef,
 		"hw_ver"  => undef,
@@ -199,12 +70,135 @@ my %hw_info = (	"hw_item" => undef,
 my %ifc;
 
 
+sub extreme_create_session {
+  my ($host, $username) = @_[0..1];
+  my @passwds = @_[2..3];
+  my $configPath = $_[4];
+  my $access =@_[6..6];
+  my $path_to_key =$_[7];
+
+  
+  print "Path : $configPath\n";
+  my $version ='';
+  
+  $Error = undef;
+  
+  if(!defined($access))
+  {
+	$access = "Telnet";
+  }
+  
+  $access = "Telnet";
+  
+  my $file_vers = $configPath."_version.txt";
+  my $interfaces_file = $configPath."_interfaces.txt";
+  my $config_file = $configPath."_config.txt";
+  $session = Net::Appliance::Session->new({
+		personality => 'extremexos',
+		transport => $access,
+		timeout => 30,
+		connect_options => { host => $host},
+ });
+$session->do_paging(0);
+	try {
+		# try to login to the ios device, ignoring host check
+		$session->connect({ username => $username, password => $passwds[0] });
+		$session->cmd("disable clipaging");
+		return 1;
+		}
+	catch {
+		warn "failed to execute command: $_";
+		$Error = "Cannot connect to ".$host;
+	}
+}
+
+sub extreme_get_file($$) {
+  my ($cmd, $fname) = @_[0..1];
+  my @data; 
+  $Error = undef;
+  if (!open(F_DATA, ">$fname")) {
+	 $session->_socket->close;
+	 $Error = "Cannot open file $fname for writing: $!";
+	 return undef;
+	}
+	
+  @data = $session->cmd($cmd);
+  
+  for my $line (@data) {
+		$line =~ s/[\n]//g;
+		print F_DATA "$line\n";
+	}
+
+  close (F_DATA);
+}
+
+sub extreme_write_to_file($$)
+{
+	my @data = @{$_[0]};
+	my $fname = $_[1];
+	
+	if (!open(F_DATA, ">>$fname")) {
+
+    $Error = "Cannot open file $fname for writing: $!";
+    return undef;
+	}
+	
+	for  my $line1 (@data) {
+	        
+				$line1 =~ s/^[\n]//g;
+				print F_DATA $line1;			
+	}
+	close (F_DATA);
+	1;	
+}
 
 
+sub extreme_get_configs {
+  my ($host, $username) = @_[0..1];
+  my @passwds = @_[2..3];
+  my $configPath = $_[4];
+  my $acc = $_[6];
+  my @output=();
+  print "Getting configs from $host\n";
+  my @params = ($_[0],$_[1],$_[2],$_[3],$_[4],'',$_[6]);
 
+  extreme_create_session(@params);
+  return $Error if $Error;
 
+  # version
+  #
+  my $file_vers = $configPath."_version.txt";
+  my $file_hard = $configPath."_hardware.txt";
+  my $file_conf = $configPath."_config.txt";
+  my $file_interf = $configPath."_interfaces.txt";
+  
+################
+  $session->cmd("disable clipaging");
+  extreme_get_file('sh ver detail', $file_vers) or
+		return $Error; 
+  @output = $session->cmd("sh switch");	
+  print STDERR $output[0];
+  extreme_write_to_file(\@output,$file_vers) or
+ 		return $Error; 	
+  copy $file_vers,$file_hard or return $Error;
+=for  
+  extreme_get_file('sh ports information detail', $file_interf) or
+		return $Error; 		
+  @output = $session->cmd("sh ipconfig ipv4");	
+  extreme_write_to_file(\@output,$file_interf) or
+		return $Error; 	
+  extreme_get_file('sh config', $file_conf) or
+		return $Error;
+=cut		 			
+################  
+  
+  return "ok";
+}
 
+sub extreme_get_topologies ($$$$$) {
 
+  return "ok";
+}
 
 #
 # parse 'show version' output
@@ -215,31 +209,25 @@ my %ifc;
 
 sub extreme_parse_version {
 
-  my ($rt_id,$host,$version_file) = @_[0..2];
+  my ($rt_id,$version_file) = @_[0..1];
   my @word;
   my $img_vers;
+  my $softwr;
+  my @arr_sw;
   open my $info, $version_file or
-    return "error - version file $version_file: $!\n";
-
-  
+    return "error - version file $version_file: $!\n"; 
 
   DB_startSwInfo($rt_id);
   
-  if (defined $model_switch) {
-      DB_writeHostModel($rt_id,$model_switch);
-    }
-=for	
-	if (defined $name_switch) {
-	print "bbb: name\n";
-		DB_replaceRouterName($rt_id,$name_switch);
-    } 
-=cut  
-  while( my $line = <$info>)  {   
-   print "line:$line\n"; 
-    if($line =~ m/BootROM:\s(.*)    IMG:\s(.*)\s$/i)
+  
+  while( my $line = <$info>)  { 
+	  $line =~ s/[\n]//g;  
+      if($line =~ m/BootROM:\s(.*)    IMG:\s(.*)\s$/i)
 		{
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'BootROM', $1 );
+           print STDERR "------------------\n";
+			print STDERR Dumper(%sw_info);
 			DB_writeSwInfo($rt_id, \%sw_info);
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'IMG', $2 );
@@ -260,73 +248,42 @@ sub extreme_parse_version {
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'Diagnostics', $1 );
 			DB_writeSwInfo($rt_id, \%sw_info);
+
 		}
-		
-		if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
-			%hw_info = (
-			"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-			}
-		elsif($line =~ m/PSU-1       :\s(.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'PSU-1',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
+	    elsif ($line =~ m/System Type:      (.*)$/i) { # Model of switch
+			my $model_switch = $1;
+	
+			DB_writeHostModel($rt_id,$model_switch);
 		}
-		elsif($line =~ m/PSU-2       :\s(.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'PSU-1',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
+		elsif($line =~ m/SysName:          (.*)$/i) { # Name of switch
+			my $name_switch = $1;
+			DB_replaceRouterName($rt_id,$name_switch);
 		}
-		elsif($line =~ m/Switch        (.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-		elsif($line =~ m/Subsystem     (.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'Subsystem',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-		}
-  }
+	}
 
   close $info;
-
 
   return "ok";
 
 }
 
 
-sub extreme_parse_hardwr {
-    
+sub extreme_parse_hardwr {  
   my ($rt_id,$hardwr_file) = @_[0..1];
+  my %ret_arr;
+  my @arr_hw = ();
+  my $serial_number;
+  my $name_hw;
+  my $hw_rev;
+  $ret_arr{ok} ='ok';
+  open my $info, $hardwr_file or
+  return "error - hardware file $hardwr_file: $!\n";
 
-  
-    open my $info, $$hardwr_file or
-    return "error - hardware file $hardwr_file: $!\n";
-print STDERR "hard=".$hardwr_file."\n";
   DB_startHwInfo($rt_id);
-
+  
   while( my $line = <$info>)  {   
    $line =~ s/[\n]//g;
-   print STDERR "line:$line\n"; 
-
-if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
+   if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			%hw_info = (
 			"hw_item" => 'Switch',
 			"hw_name" => $1,
@@ -357,6 +314,7 @@ if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			"hw_ver"  =>'',
 			"hw_amount" => '' );
 			DB_writeHwInfo($rt_id, \%hw_info);
+
 		}
 		elsif($line =~ m/Subsystem     (.*)$/i)
 		{
@@ -366,10 +324,9 @@ if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
 			"hw_amount" => '' );
 			DB_writeHwInfo($rt_id, \%hw_info);
 		}
-  }
+ }
 
   close $info;
-
   return "ok";
 }
 
@@ -382,22 +339,12 @@ if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
 
 sub extreme_parse_config {
 
-  my ($rt_id,$config_file) = @_[0..1];
+  my ($rt,$config_file) = @_[0..1];
 
   open(F_RCF,"<$config_file") or
     return "error - config file $config_file: $!\n";
-
-  while (<F_RCF>) {
-    chomp;			# no newline
-    s/^\s+//;			# no leading white
-    s/\s+$//;			# no trailing white
-
-    if( /^location \"([^\"]+)\";/ ) {
-      DB_writeHostLocation($rt_id, $1);
-      next;
-    }
-  }
   close(F_RCF);
+  DB_addConfigFile($rt,$config_file) ;
   return "ok";
 }
 
@@ -409,165 +356,145 @@ sub extreme_parse_config {
 #  interfaces file
 
 sub extreme_parse_interfaces {
-  my ($rt_id,$ifc_file) = @_[0..1];
+  my ($rt_id,$ifc_file,$version_file) = @_[0..2];
+  my %speeds;
+  my $cur_int ='';
+  print "Get speed for logical interfaces\n";
+  open my $info0, $version_file or
+    return "error - system file $version_file: $!\n";
+     while( my $line0 = <$info0>)  {   
+		$line0 =~ s/[\n]//g;
+		if($line0 =~ m/^Interface\s(.*):/i)
+		{
+			$cur_int = $1;
+		}
+		elsif($line0 =~ m/physical\s(\d+)kbps/i)
+		{
+			$speeds{$cur_int} = $1;
+		}
+	}
+  close $info0;  
+  
   print "Parsing $ifc_file\n";
 
-  open(F_RCF,"<$ifc_file") or 
+   open my $info, $ifc_file or
     return "error - interfaces file $ifc_file: $!\n";
 
-  my @old_ph_ifcs = @{DB_getPhInterfaces($rt_id)};
   my @old_ifcs = @{DB_getInterfaces($rt_id)};
+  my @old_ph_ifcs = @{DB_getPhInterfaces($rt_id)};
 
   my %phifc;
   my $ph_int_id = '';
-
+  my $phint;
   my $phInterface = "";
   my $logInterface = "";
   my $protocol = "";
- 
-
-  while (<F_RCF>) {
-    chomp;			# no newline
-    s/\s+$//;			# no trailing white
-    
-    #print "$_\n";
-
-    if(/^Physical interface:\s+([^,]+),\s+([^,]+),\sPhysical link is\s(\S+)$/) {
-      print "Ph. interface $1, state $2, link $3\n";
-      my ($newPhInt, $newState, $newCond) = ($1, $2, $3);
-      $newState = 'enabled' if $newState =~ /Enabled/;
-      $newState = 'disabled' if $newState =~ /Disabled/;
-      $newState = 'adm down' if $newState =~ /Administratively down/;
-      $newCond = 'up' if $newCond =~ /Up/;
-      $newCond = 'down' if $newCond =~ /Down/;
-      if (($phInterface ne "") && !($phInterface =~ /^\.local\./)) {
-	DB_writePhInterface($rt_id, \%phifc);
-	@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
-      }
-      if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0' && $ifc{"ip address"} ne '127.0.0.1')) {
-	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-      }
-      $phInterface = $newPhInt;
-      $logInterface = "";
-      @ifc{("interface","ip address","mask","description")} =
-	('','0.0.0.0','255.255.255.255','');
-      @phifc{("interface","state","condition","speed","description")} =
-	($phInterface,$newState,$newCond,'','');
-      $protocol = "";
-      next;
-    }
-
-    # skip local phys interfaces
-    if ($phInterface =~ /^\.local\./) {
-      next;
-    }
-
-    if (/^  Description:\s+(.*)$/) {
-      $phifc{"description"} = $1;
-    }
-
-    if (/^  (\S+\s+)*Speed:\s+([^,]*)[,]*.*$/) {
-      my $speed = $2;
-      $phifc{"speed"} = $speed;
-      if ($speed =~ /^(\d+)m$/) {
-	$phifc{"speed"} = $1."000000";
-      }
-      if ($speed =~ /^(\d+)mbps$/) {
-	$phifc{"speed"} = $1."000000";
-      }
-      if ($speed =~ /^OC3$/) {
-	$phifc{"speed"} = "155000000";
-      }
-      if ($speed =~ /^OC12$/) {
-	$phifc{"speed"} = "622000000";
-      }
-      if ($speed =~ /^OC48$/) {
-	$phifc{"speed"} = "2488000000";
-      }
-      if ($speed =~ /^OC192$/) {
-	$phifc{"speed"} = "9952000000";
-      }
-      print "Speed: $phifc{'speed'}\n";
-    }
-
-    # Logical interface so-6/0/0.0 (Index 25) (SNMP ifIndex 20) (Generation 27)
-    if (/^  Logical interface\s+(\S+)\s+\(Index\s+(\d+)\)\s+\(SNMP ifIndex\s+(\d+)\)/) {
-      print "Log. interface $1, index $2, snmp idx $3\n";
-      if ($logInterface eq "") {
-	DB_writePhInterface($rt_id, \%phifc);
-	@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
-	$ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
-      } 
-      if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0')) {
-	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-      }
-      $logInterface = $1;
-      @ifc{("interface","ip address","mask","description")} =
-	($1,'0.0.0.0','255.255.255.255','');
-      $protocol = "";
-      next;
-    }
-
-    # rest is for log interfaces only
-    if ($logInterface eq "") {
-      next;
-    }
- 
-	 if (/\sDescription:\s+(.*)$/) {
-      $ifc{"description"} = $1;
-    }
-	
-    # Protocol inet, MTU: Unlimited, Generation: 7, Route table: 0
-    if (/^    Protocol\s+inet,/) {
-      print "Protocol: inet\n";
-      $protocol = "inet";
-      next;
-    }
-
-    if (/^    Protocol\s+([^,]+),/) {
-      print "Protocol: other\n";
-      $protocol = $1;
-      next;
-    }
-
-    if ($protocol eq "inet") {
-    #        Destination: 172.26.27/24, Local: 172.26.27.20,
-      if (/^        Destination:\s+(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+|\d+\.\d+|\d+)\/(\d+),\s+Local:\s+(\d+\.\d+\.\d+\.\d+)\D*/) {
-	print "Dest: $1, bits: $2, local: $3\n";
-	$ifc{ 'ip address' } = $3;
-	$ifc{ 'mask' } = bits2mask($2);
-	print "mask: $ifc{ 'mask' }\n";
-	next;
-      }
-
-      # handle this for local interfaces only
-      if (/^        Destination:\s+(\w+),\s+Local:\s+(\d+\.\d+\.\d+\.\d+)\D*/) {
-	$ifc{ 'ip address' } = $2;
-	if ($phInterface =~ /^lo\d+/) {
-	  print "Local interface, ip $ifc{ 'ip address' }\n";
-	  $ifc{ 'mask' } = '255.255.255.255';
+  my $speed;
+  my $newInt;
+  my $newState;
+  my $newCond;
+  my @arr_phint;
+  my @arr_interfaces;
+  my $block;
+  my $ip_addr;
+  my @arr_subarr;
+  my $ssg_layer = 3;
+  my $count_logint = 0;
+  my $flag_switch = 1;
+  $ifc{ 'ip address' } = '';
+  while( my $line = <$info>)  {   
+   $line =~ s/[\n]//g;
+   if($line =~ m/port/i)
+   {
+	   $flag_switch = 0;
+   } 
+	if($flag_switch)  #### logical interfaces
+	{
+		if ($line =~ /\d+\.\d+\.\d+\.\d+\/\d/)
+				{
+#					print $line."\n";
+					@arr_interfaces = split(/ {2,}/, $line);
+					print join(":",@arr_interfaces)."\n";
+					$block = new Net::Netmask ($arr_interfaces[1]);
+					if($block->base() ne '0.0.0.0')
+					{
+						if($arr_interfaces[5] eq 'D')
+						{
+							$newCond = 'down';
+						}
+						else
+						{
+							$newCond = 'up';
+						}
+						@arr_subarr =  split("/",$arr_interfaces[1]);
+						$logInterface = $arr_interfaces[0];
+						@ifc{("interface","ip address","mask","description")} =($logInterface ,$arr_subarr[0],$block->mask(),$newCond);
+#						print Dumper(%ifc);
+						$phInterface = $logInterface;
+						if(defined $speeds{$phInterface})
+						{
+							$speed = $speeds{$phInterface}*1000;
+						}
+						else
+						{
+							$speed = 'Unspecified';
+						}	
+						@phifc{("interface","state","condition","speed","description")} =
+			            ($phInterface,'enabled',$newCond,$speed ,'');
+#			            print Dumper(%phifc);
+						DB_writePhInterface($rt_id, \%phifc);
+					    @old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
+					    my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
+						DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+						$count_logint++;
+						@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
+					}
+				}
 	}
-	#print "Dest: $1, local: $2\n";
-	next;
-      }
-    }
+	else ##physical interfaces
+	{
+		my $phint_name = '';
+		$line =~ s/[\n]//g;
+		print $line."\n";
+		if($line !~ m/port/i && $line !~ m/power/i && $line !~ m/----/i && $line !~ m/mii/i)
+		{
+			 @arr_phint = split(/ {1,}/, $line);
+			 if($arr_phint[4] eq 'ena')
+			 {
+				 $newState = 'enabled';
+			 }
+			 else
+			 {
+				 $newState = 'disabled';
+			 }
+			 if($arr_phint[10] =~ m/(\d+)/)
+			 {
+				 $speed = $1*1000000;
+			 }
+			 else
+			 {
+				 $speed = 'Unspecified';
+			 }
+			 		 		 
+			 $phint_name = "Port ".$arr_phint[1];
+			 @phifc{("interface","state","condition","speed","description")} =
+				($phint_name,$newState,$arr_phint[8],$speed,'');
+#				print Dumper(%phifc);
+			DB_writePhInterface($rt_id, \%phifc);
+			@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
+		}
+	}	
+    
+	}
+ 
+  if($count_logint < 2)
+  {
+	$ssg_layer = 2;
   }
-
-  if (($phInterface ne "") && !($phInterface =~ /^\.local\./)) {
-    DB_writePhInterface($rt_id, \%phifc);
-    @old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
-  }
-  if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0' && $ifc{"ip address"} ne '127.0.0.1')) {
-    DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-    @old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-  }
-
+  DB_setHostLayer($rt_id,$ssg_layer);
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
-
-  close(F_RCF);
+  close $info;
   return "ok";
 }
 

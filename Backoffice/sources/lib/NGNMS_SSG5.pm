@@ -191,7 +191,7 @@ sub ssg5_get_configs {
   return "ok";
 }
 
-sub hp_get_topologies ($$$$$) {
+sub ssg5_get_topologies ($$$$$) {
 
   return "ok";
 }
