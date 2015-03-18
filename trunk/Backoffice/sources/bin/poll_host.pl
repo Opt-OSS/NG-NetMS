@@ -309,14 +309,14 @@ $criptokey.=$suffix;
 		}
 		
 ########################
-=for
+print "Poll_host parameters:\n";
 print $host."\n";
 print $user."\n";
 print $passwd."\n";
 print $enpasswd."\n";
 print $access."\n";
 print $community."\n";
-=cut
+
 
 # Get all configs from host
 # Params:
@@ -433,9 +433,9 @@ sub parseConfigs {
 		my $version_file=$configPath."_version.txt";
 		my $hardwr_file=$configPath."_hardware.txt";
 		$ret =
-      &NGNMS_Extreme::extreme_parse_version ($rt_id,$host,$version_file);
-##	  ($ret eq "ok") and
-##      $ret = &NGNMS_Extreme::extreme_parse_hardwr ($rt_id,$hardwr_file);
+      &NGNMS_Extreme::extreme_parse_version ($rt_id,$version_file);
+	  ($ret eq "ok") and
+      $ret = &NGNMS_Extreme::extreme_parse_hardwr ($rt_id,$hardwr_file);
 	}
   if($hostType eq "HP")
 	{
