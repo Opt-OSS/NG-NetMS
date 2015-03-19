@@ -226,8 +226,7 @@ sub extreme_parse_version {
 		{
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'BootROM', $1 );
-           print STDERR "------------------\n";
-			print STDERR Dumper(%sw_info);
+#			print STDERR Dumper(%sw_info);
 			DB_writeSwInfo($rt_id, \%sw_info);
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'IMG', $2 );
@@ -356,24 +355,9 @@ sub extreme_parse_config {
 #  interfaces file
 
 sub extreme_parse_interfaces {
-  my ($rt_id,$ifc_file,$version_file) = @_[0..2];
+  my ($rt_id,$ifc_file) = @_[0..1];
   my %speeds;
   my $cur_int ='';
-  print "Get speed for logical interfaces\n";
-  open my $info0, $version_file or
-    return "error - system file $version_file: $!\n";
-     while( my $line0 = <$info0>)  {   
-		$line0 =~ s/[\n]//g;
-		if($line0 =~ m/^Interface\s(.*):/i)
-		{
-			$cur_int = $1;
-		}
-		elsif($line0 =~ m/physical\s(\d+)kbps/i)
-		{
-			$speeds{$cur_int} = $1;
-		}
-	}
-  close $info0;  
   
   print "Parsing $ifc_file\n";
 
@@ -389,7 +373,7 @@ sub extreme_parse_interfaces {
   my $phInterface = "";
   my $logInterface = "";
   my $protocol = "";
-  my $speed;
+  my $speed = 'Unspecified';
   my $newInt;
   my $newState;
   my $newCond;
@@ -400,89 +384,125 @@ sub extreme_parse_interfaces {
   my @arr_subarr;
   my $ssg_layer = 3;
   my $count_logint = 0;
-  my $flag_switch = 1;
+  my $flag_switch = 0;
+  my $flag_save = 0;
+  my $phint_name = '';
+  my $phDescr = '';
+  
+  
   $ifc{ 'ip address' } = '';
+  
   while( my $line = <$info>)  {   
    $line =~ s/[\n]//g;
-   if($line =~ m/port/i)
+
+   if($line =~ m/Interface    IP Address          Flags                   nSIA/i)
    {
-	   $flag_switch = 0;
+	   $flag_switch = 1;
    } 
 	if($flag_switch)  #### logical interfaces
-	{
-		if ($line =~ /\d+\.\d+\.\d+\.\d+\/\d/)
-				{
-#					print $line."\n";
-					@arr_interfaces = split(/ {2,}/, $line);
-					print join(":",@arr_interfaces)."\n";
-					$block = new Net::Netmask ($arr_interfaces[1]);
-					if($block->base() ne '0.0.0.0')
-					{
-						if($arr_interfaces[5] eq 'D')
-						{
-							$newCond = 'down';
-						}
-						else
+	{	
+		if ($line =~ /\d+\.\d+\.\d+\.\d+/)
+				{			
+					@arr_interfaces = split(/ {2,}/, $line);					
+					@arr_subarr =  split(/ {1,}/,$arr_interfaces[2]);
+					my $mask1  = substr $arr_subarr[0], 1, 2;
+					$block = new Net::Netmask ($arr_interfaces[1]."/".$mask1);
+					
+						if($arr_subarr[1] =~ /U/)
 						{
 							$newCond = 'up';
 						}
-						@arr_subarr =  split("/",$arr_interfaces[1]);
-						$logInterface = $arr_interfaces[0];
-						@ifc{("interface","ip address","mask","description")} =($logInterface ,$arr_subarr[0],$block->mask(),$newCond);
-#						print Dumper(%ifc);
-						$phInterface = $logInterface;
-						if(defined $speeds{$phInterface})
+						else
 						{
-							$speed = $speeds{$phInterface}*1000;
+							$newCond = 'down';
+						}
+						if($arr_subarr[1] =~ /E/)
+						{
+							$newState = 'enabled';
 						}
 						else
 						{
-							$speed = 'Unspecified';
+							$newState = 'disabled';
 						}	
+						
+						$logInterface = $arr_interfaces[0];
+						@ifc{("interface","ip address","mask","description")} =($logInterface ,$arr_interfaces[1],$block->mask(),$newCond);
+#						print Dumper(%ifc);
+						$phInterface = $logInterface;						
+							$speed = 'Unspecified';	
 						@phifc{("interface","state","condition","speed","description")} =
-			            ($phInterface,'enabled',$newCond,$speed ,'');
+			            ($phInterface,$newState,$newCond,$speed ,'');
 #			            print Dumper(%phifc);
+
 						DB_writePhInterface($rt_id, \%phifc);
 					    @old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
 					    my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
 						DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
 						$count_logint++;
 						@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-					}
+					
 				}
+				
 	}
 	else ##physical interfaces
 	{
-		my $phint_name = '';
+		
 		$line =~ s/[\n]//g;
-		print $line."\n";
-		if($line !~ m/port/i && $line !~ m/power/i && $line !~ m/----/i && $line !~ m/mii/i)
+		if($line =~ m/^port:\s(.*)$/i)
 		{
-			 @arr_phint = split(/ {1,}/, $line);
-			 if($arr_phint[4] eq 'ena')
-			 {
-				 $newState = 'enabled';
-			 }
-			 else
-			 {
-				 $newState = 'disabled';
-			 }
-			 if($arr_phint[10] =~ m/(\d+)/)
-			 {
-				 $speed = $1*1000000;
-			 }
-			 else
-			 {
-				 $speed = 'Unspecified';
-			 }
-			 		 		 
-			 $phint_name = "Port ".$arr_phint[1];
-			 @phifc{("interface","state","condition","speed","description")} =
-				($phint_name,$newState,$arr_phint[8],$speed,'');
-#				print Dumper(%phifc);
+			 $phint_name = "Port ".$1;
+		}
+		elsif($line =~ m/Admin state:\s(.*)$/i)
+		{
+			@arr_phint = split(/ {2,}/, $1);
+			my($st, $garbige) = split(/ {1,}/, $arr_phint[0]);
+			$newState = lc $st;
+			if(defined $arr_phint[1])
+			{
+				if($arr_phint[1] =~ /(\d+)G/)
+				{				
+					$speed = $1*1000000000;
+				}
+			}	
+		}
+		elsif($line =~ m/Link State:\s(.*)$/i)
+		{
+			@arr_phint = split(/, /, $1);
+			if($arr_phint[0] eq 'Active')
+			{
+				$newCond = 'up';
+			}
+			else
+			{
+				$newCond = 'down';
+			}
+			
+			if(defined $arr_phint[1])		
+			{
+				if($arr_phint[1] =~ /(\d+)G/)
+				{				
+					$speed = $1*1000000000;
+				}
+			}
+			$flag_save = 1;
+		}
+		elsif($line =~ m/Description String:\s(.*)$/i)
+		{
+			my $phDescr = $1;
+		}
+		if($flag_save)
+		{
+			@phifc{("interface","state","condition","speed","description")} =
+				($phint_name,$newState,$newCond,$speed,$phDescr);
+				print Dumper(%phifc);
+				$phint_name = '';
+				$phDescr = '';
+				$speed = 'Unspecified';
+				$flag_save = 0;
 			DB_writePhInterface($rt_id, \%phifc);
 			@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
 		}
+		
 	}	
     
 	}
