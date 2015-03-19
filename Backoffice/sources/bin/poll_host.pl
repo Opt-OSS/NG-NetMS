@@ -432,10 +432,16 @@ sub parseConfigs {
 	{
 		my $version_file=$configPath."_version.txt";
 		my $hardwr_file=$configPath."_hardware.txt";
+		my $interfaces_file = $configPath."_interfaces.txt";
+		my $config_file = $configPath."_config.txt";
 		$ret =
       &NGNMS_Extreme::extreme_parse_version ($rt_id,$version_file);
 	  ($ret eq "ok") and
       $ret = &NGNMS_Extreme::extreme_parse_hardwr ($rt_id,$hardwr_file);
+      ($ret eq "ok") and
+      $ret = &NGNMS_Extreme::extreme_parse_interfaces ($rt_id,$interfaces_file);
+	  ($ret eq "ok") and
+      $ret = &NGNMS_Extreme::extreme_parse_config ($host,$config_file);
 	}
   if($hostType eq "HP")
 	{
