@@ -144,6 +144,7 @@ class SiteController extends Controller {
         $defender = new Defender();
         if (!$defender->isSafeIp())
         {
+            Yii::app()->user->setFlash('error', 'You have exceeded the limit of authentication attempts. Your <strong>IP('. Yii::app()->request->getUserHostAddress().')</strong>  was blocked.');
             $this->redirect(Yii::app()->homeUrl);
             exit();
             // that's all - once an IP is locked I suggest not to send any further information.
