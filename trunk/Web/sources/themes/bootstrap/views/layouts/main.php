@@ -746,7 +746,18 @@ $this->beginWidget('bootstrap.widgets.TbModal', array('id'=>'gpl3lic','htmlOptio
 </script>
 
 <div class="container" id="page">
+    <div style ="width: 865px">
 
+        <?php if(Yii::app()->user->hasFlash('error')){ ?>
+
+            <?php
+            $this->widget('bootstrap.widgets.TbAlert', array(
+                'closeText' => false,
+                'alerts'=>array('error'),
+            ));
+        }
+        ?>
+    </div>
 	<?php if(isset($this->breadcrumbs)):?>
 		<?php $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
 			'links'=>$this->breadcrumbs,
