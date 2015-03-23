@@ -560,7 +560,7 @@ sub run_proccessing
     my (%ip6, %ip, %scope6, %bcast, %mask, %hwaddr, %ipcount,%condition);
     my $iface_count = 0;
     my $linux_vendor = $self->linux_parse_vendor();
-	if(!defined $linux_vendor || $linux_vendor eq '')
+	if(!defined $linux_vendor || $linux_vendor eq '' || $linux_vendor !~/ubuntu/i)
 	{
 		$linux_vendor = 'Linux';
 	}
