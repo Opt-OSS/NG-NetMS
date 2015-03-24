@@ -34,7 +34,7 @@ $this->widget('bootstrap.widgets.TbExtendedGridView', array(
             'class' => 'bootstrap.widgets.TbRelationalColumn',
             'name' => 'SNMP Access method ID',
             'url' => $this->createUrl('routers/listSnmp'),
-            'value' => '$data->id',
+            'value' => '$data->name',
         )
     ), $gridColumns),
 
