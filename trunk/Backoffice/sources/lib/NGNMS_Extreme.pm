@@ -181,15 +181,15 @@ sub extreme_get_configs {
   extreme_write_to_file(\@output,$file_vers) or
  		return $Error; 	
   copy $file_vers,$file_hard or return $Error;
-=for  
+  
   extreme_get_file('sh ports information detail', $file_interf) or
 		return $Error; 		
   @output = $session->cmd("sh ipconfig ipv4");	
   extreme_write_to_file(\@output,$file_interf) or
 		return $Error; 	
-  extreme_get_file('sh config', $file_conf) or
+  extreme_get_file('show configuration detail', $file_conf) or
 		return $Error;
-=cut		 			
+	 			
 ################  
   
   return "ok";
