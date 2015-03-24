@@ -7,6 +7,12 @@
 
 <?php echo $form->errorSummary($model); ?>
 
+    <div class="row" style ="margin-left: 5px">
+    <?php echo $form->labelEx($model,'name'); ?>
+    <?php echo $form->textField($model,'name',array('size'=>50,'maxlength'=>50)); ?>
+    <?php echo $form->error($model,'name'); ?>
+    </div>
+
 	<?php echo $form->textAreaRow($model,'community_ro',array('rows'=>6, 'cols'=>50, 'class'=>'span8')); ?>
 
 	<?php echo $form->textAreaRow($model,'community_rw',array('rows'=>6, 'cols'=>50, 'class'=>'span8')); ?>

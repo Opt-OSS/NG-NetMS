@@ -29,10 +29,10 @@ class SnmpAccess extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('community_ro, community_rw', 'safe'),
+			array('community_ro, community_rw,name', 'safe'),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('id, community_ro, community_rw', 'safe', 'on'=>'search'),
+			array('id, name, community_ro, community_rw', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -55,6 +55,7 @@ class SnmpAccess extends CActiveRecord
 	{
 		return array(
 			'id' => 'ID',
+            'name' => 'SNMP Access Name',
 			'community_ro' => 'Community Ro',
 			'community_rw' => 'Community Rw',
 		);
@@ -79,6 +80,7 @@ class SnmpAccess extends CActiveRecord
 		$criteria=new CDbCriteria;
 
 		$criteria->compare('id',$this->id);
+        $criteria->compare('name',$this->name);
 		$criteria->compare('community_ro',$this->community_ro,true);
 		$criteria->compare('community_rw',$this->community_rw,true);
 

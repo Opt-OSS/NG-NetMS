@@ -5,7 +5,7 @@
 $this->breadcrumbs=array(
     'SNMP Access methods '=>array('view'),
     'SNMP Access to devices',
-     $model->snmp_access_id,
+     $model_snmp_access->name,
 );
 
 
@@ -20,7 +20,7 @@ $this->breadcrumbs=array(
 
 <?php
 $this->widget('ext.widgets.multiselects.XMultiSelects',array(
-    'leftTitle'=>'<b>Snmp Access <i> '.$model->snmp_access_id.'</i></b>',
+    'leftTitle'=>'<b>Snmp Access :<i> '.$model_snmp_access->name.'</i></b>',
     'leftName'=>'Attr[]',
     'leftList'=>$attr_curr,
     'rightTitle'=>'<b>Routers</b>',
