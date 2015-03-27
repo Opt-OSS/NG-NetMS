@@ -159,7 +159,14 @@ sub ssg5_get_configs {
   my @params = ($_[0],$_[1],$_[2],$_[3],$_[4],'',$_[6]);
 
   ssg5_create_session(@params);
-  return $Error if $Error;
+  if($Error)
+  {
+	  my $rt_id = DB_getRouterId($_[0]);
+	  my $ip_addr = DB_getRouterIpAddr($rt_id);
+	  @params = ($ip_addr,$_[1],$_[2],$_[3],$_[4],'',$_[6]);
+	  return $Error if $Error;
+  }
+ 
 
   # version
   #
