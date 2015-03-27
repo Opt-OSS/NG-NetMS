@@ -454,7 +454,9 @@ sub ssg5_parse_interfaces {
   if($count_logint < 2)
   {
 	$ssg_layer = 2;
+	if(defined $logInterfaceIp[0]){
 	DB_updateRouterId($rt_id,$logInterfaceIp[0]);
+	}
   }
   
   DB_setHostLayer($rt_id,$ssg_layer);
