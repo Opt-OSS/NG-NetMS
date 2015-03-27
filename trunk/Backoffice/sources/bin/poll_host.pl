@@ -309,6 +309,7 @@ $criptokey.=$suffix;
 		}
 		
 ########################
+=for
 print "Poll_host parameters:\n";
 print $host."\n";
 print $user."\n";
@@ -316,7 +317,7 @@ print $passwd."\n";
 print $enpasswd."\n";
 print $access."\n";
 print $community."\n";
-
+=cut
 
 # Get all configs from host
 # Params:
@@ -542,6 +543,10 @@ if (!$noPoll) {
   
   if ($ret ne "ok") {
     DB_setHostState($rt_id,"down");
+    if(defined $hostType)
+    {
+		DB_setHostVendor($rt_id,$hostType);
+	}
     DB_close;
     logError("poll","get configs from \'$host\': $ret");
     exit;

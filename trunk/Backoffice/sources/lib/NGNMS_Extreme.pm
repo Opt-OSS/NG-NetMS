@@ -177,7 +177,6 @@ sub extreme_get_configs {
   extreme_get_file('sh ver detail', $file_vers) or
 		return $Error; 
   @output = $session->cmd("sh switch");	
-  print STDERR $output[0];
   extreme_write_to_file(\@output,$file_vers) or
  		return $Error; 	
   copy $file_vers,$file_hard or return $Error;
@@ -372,6 +371,7 @@ sub extreme_parse_interfaces {
   my $phint;
   my $phInterface = "";
   my $logInterface = "";
+  my @logInterfaceIp = (); 
   my $protocol = "";
   my $speed = 'Unspecified';
   my $newInt;
@@ -426,6 +426,7 @@ sub extreme_parse_interfaces {
 						}	
 						
 						$logInterface = $arr_interfaces[0];
+						push( @logInterfaceIp, $arr_interfaces[1]);
 						@ifc{("interface","ip address","mask","description")} =($logInterface ,$arr_interfaces[1],$block->mask(),$newCond);
 #						print Dumper(%ifc);
 						$phInterface = $logInterface;						
@@ -510,6 +511,7 @@ sub extreme_parse_interfaces {
   if($count_logint < 2)
   {
 	$ssg_layer = 2;
+	DB_updateRouterId($rt_id,$logInterfaceIp[0]);
   }
   DB_setHostLayer($rt_id,$ssg_layer);
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);

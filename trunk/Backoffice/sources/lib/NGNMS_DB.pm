@@ -49,7 +49,9 @@ $VERSION     = 0.01;
 		  &DB_stopDiscovery &DB_insertDiscoveryStatus
 		  &DB_isOpenedDiscovery &DB_lastchangeDiscovery
 		  &DB_modeDiscovery &DB_updateDiscoveryStatusOne
-		  &DB_percentDiscovery);
+		  &DB_percentDiscovery DB_updateRouterId
+		  &DB_getDuplicateHostname &DB_getRouterIdDuplicateHostname
+		  &DB_dropRouterId &DB_getCountUnion &DB_getCountIntersect);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -148,6 +150,25 @@ sub DB_getInterfaces($) {
   my $rt_id = shift;
   local $dbh->{RaiseError};     # Ignore errors
   my $SQL = "SELECT name FROM interfaces WHERE router_id = $rt_id";
+  my $rref = $dbh->selectcol_arrayref($SQL);
+  # print Dumper($rref);
+    return $rref;
+}
+
+# Get list of duplicate hostname
+sub DB_getDuplicateHostname() {
+  local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "SELECT name,eq_vendor,eq_type FROM routers GROUP BY name,eq_vendor,eq_type HAVING(count(*))>1";
+  my $rref = $dbh->selectcol_arrayref($SQL);
+  # print Dumper($rref);
+    return $rref;
+}
+
+# Get list of  router_id for duplicate hostname
+sub DB_getRouterIdDuplicateHostname($) {
+  my $hname = shift;	
+  local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "SELECT router_id FROM routers where name='".$hname."' order by router_id";
   my $rref = $dbh->selectcol_arrayref($SQL);
   # print Dumper($rref);
     return $rref;
@@ -371,6 +392,24 @@ sub DB_getCommunity($){
 	 return $rref;
 }
 
+sub DB_getCountUnion($$){
+	my $rt_id = shift;
+	my $rt_id_c = shift;
+	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL = "SELECT name FROM interfaces WHERE router_id =".$rt_id." UNION(SELECT name FROM interfaces where router_id=".$rt_id_c.")";
+	my @query_results = map { $_->[0] } @{ $dbh->selectall_arrayref($SQL) };
+	 return scalar(@query_results);
+	}
+	
+sub DB_getCountIntersect($$){
+	my $rt_id = shift;
+	my $rt_id_c = shift;
+	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL = "SELECT name FROM interfaces WHERE router_id =".$rt_id." INTERSECT(SELECT name FROM interfaces where router_id=".$rt_id_c.")";
+	my @query_results = map { $_->[0] } @{ $dbh->selectall_arrayref($SQL) };
+	 return scalar(@query_results);
+	}
+	
 sub DB_getSettings($){
 	my $attr_name = shift;
 	
@@ -483,6 +522,14 @@ sub DB_setHostLayer($$)
   my $result = $if_h->execute($layer,$rtId);
 }
 
+sub DB_updateRouterId($$){
+	my $rtId = shift;
+    my $ip = shift;
+
+  my $SQL = "UPDATE routers SET ip_addr = ? WHERE router_id = ?";
+  my $if_h = $dbh->prepare($SQL);
+  my $result = $if_h->execute($ip,$rtId);
+}
 ###############################################################
 # Links
 #
@@ -582,6 +629,12 @@ sub DB_dropLinks($) {
   my $result = $if_h->execute();
 }
 
+
+sub DB_dropRouterId($) {
+  my $rt_id = shift;
+  my $if_h = $dbh->prepare("DELETE FROM routers WHERE router_id = $rt_id ");
+  my $result = $if_h->execute();
+}
 
 # Write hosts and links
 # Params:

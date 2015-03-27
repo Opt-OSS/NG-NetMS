@@ -266,7 +266,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 	{
 		my $ls_discovery = DB_lastchangeDiscovery();
 		my $parser = DateTime::Format::Strptime->new(
-			pattern => '%Y-%d-%m %H:%M:%S',
+			pattern => '%Y-%m-%d %H:%M:%S',
 			on_error => 'croak',
 		);
 		my $dt = $parser->parse_datetime($ls_discovery);

@@ -646,7 +646,6 @@ sub hp_parse_config {
 
 sub hp_parse_interfaces {
   my ($rt_id,$ifc_file,$part_n) = @_[0..2];
-  print STDERR "Part number :$part_n:$rt_id\n"; 
   print "Parsing $ifc_file\n";
 
    open my $info, $ifc_file or
@@ -660,6 +659,7 @@ sub hp_parse_interfaces {
   my $phint;
   my $phInterface = "";
   my $logInterface = "";
+  my @logInterfaceIp = (); 
   my $protocol = "";
   my $speed;
   my $newInt;
@@ -699,6 +699,7 @@ sub hp_parse_interfaces {
 					for ($phInterface) {  s/\.\d+$//; }
 					  }
 					  if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
+					push( @logInterfaceIp, $ifc{"ip address"});	  
 					my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
 					DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
 					$count_logint++;
@@ -734,6 +735,10 @@ sub hp_parse_interfaces {
   {
 	$hp_layer = 3;
   }
+  else
+  {
+	  DB_updateRouterId($rt_id,$logInterfaceIp[0]);
+	}
   DB_setHostLayer($rt_id,$hp_layer);
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
