@@ -230,7 +230,6 @@ my $step_bar;
 my $rest;
 my $bar_shift = 0 ;
 
-print "INTBAR:$int_bar\n";
 if($int_bar < $nb_process)
 {
 	$nb_process = $int_bar;
@@ -276,6 +275,37 @@ while( $counter_join < $#block_one+1){
 	}
 }
 
+DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
+    my $arr_router_id;
+    my $flag ;
+    my $control_rout;
+    my $count_union;
+    my $count_intersect;
+	my @arr_hostname = &DB_getDuplicateHostname();
+	foreach my $cur_router (@arr_hostname)
+    {
+            $flag = 0;          
+            $arr_router_id = &DB_getRouterIdDuplicateHostname($cur_router->[0]);
+            foreach my $rout_id(@{$arr_router_id})
+            {
+				if($flag == 0)
+				{
+					$control_rout = $rout_id;
+					$flag = 1;
+				} 
+				else
+				{
+					$count_union = &DB_getCountUnion($rout_id,$control_rout);
+					$count_intersect = &DB_getCountIntersect($rout_id,$control_rout);
+					if($count_union == $count_intersect)
+					{
+						&DB_dropRouterId($rout_id);
+					}
+				}
+			}
+
+     }
+DB_close;
 
 
 
@@ -384,8 +414,7 @@ while (my $host = $host_list->get_next())
 				{
 					if(!defined DB_getInterfaceRouterId($cur_ip))
 					{
-						$cur_id = DB_addRouter($cur_ip,$cur_ip,'unknown');
-						print "addr:".$cur_ip."\n";					
+						$cur_id = DB_addRouter($cur_ip,$cur_ip,'unknown');		
 						$upHosts[$counter]{'addr'} =  $cur_ip;
 						$upHosts[$counter]{'high_link'} =  $id_link;
 						DB_writeLink($id_link,$cur_id,'B');

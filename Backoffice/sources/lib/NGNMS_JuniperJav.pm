@@ -1,3 +1,13 @@
+#
+# NextGen NMS
+#
+# NGNMS_Juniper.pm: interfacing with Juniper routers
+#
+# Copyright (C) 2002,2003 OptOSS LLC
+#
+# Author: M.Golov
+#
+
 package NGNMS_JuniperJav;
 
 use strict;
@@ -48,8 +58,6 @@ $data = "my data";
 
 my $session;
 my $Error;
-my $juniper_layer = 2;
-my $juniper_logcounter = 0; 
 
 sub juniper_create_session {
   my ($host, $username) = @_[0..1];
@@ -207,6 +215,10 @@ sub juniper_parse_version {
     s/^\s+//;			# no leading white
     s/\s+$//;			# no trailing white
 
+    if (/^Hostname:\s*(\S+)$/) {
+      DB_replaceRouterName($rt_id,$1);
+    }
+	
     if (/^Model:\s*(\S+)$/) {
       DB_writeHostModel($rt_id,$1);
     }
@@ -587,7 +599,6 @@ sub juniper_parse_interfaces {
       }
       if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0' && $ifc{"ip address"} ne '127.0.0.1')) {
 	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	$juniper_logcounter++;
 	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
       }
       $phInterface = $newPhInt;
@@ -643,7 +654,6 @@ sub juniper_parse_interfaces {
       } 
       if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0')) {
 	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	$juniper_logcounter++;
 	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
       }
       $logInterface = $1;
@@ -704,15 +714,9 @@ sub juniper_parse_interfaces {
   }
   if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0' && $ifc{"ip address"} ne '127.0.0.1')) {
     DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	$juniper_logcounter++;
     @old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
   }
 
-  if($juniper_logcounter > 1)
-  {
-	$juniper_layer = 3;
-  }
-  DB_setHostLayer($rt_id,$juniper_layer);
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
 

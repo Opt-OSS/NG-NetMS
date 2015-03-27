@@ -12,10 +12,10 @@ package NGNMS_Cisco;
 
 use strict;
 
-use Data::Dumper;
+# use Data::Dumper;
 use NGNMS_DB;
 use NGNMS_util;
-use Net::Appliance::Session;
+use Net::Telnet::Cisco;
 
 require Exporter;
 
@@ -47,8 +47,7 @@ if (defined($ENV{"NGNMS_TIMEOUT"})) {
 # Preloaded methods
 
 my $community = 'public';
-my $cisco_logcounter = 0;
-my $cisco_layer = 2;
+
 ###################################################
 # getting stuff from routers
 
@@ -57,50 +56,47 @@ my $session;
 sub cisco_connect {
 
   my ($host, $username, $password, $enablepw) = @_[0..3];
-  my $access = $_[6];
-  $session = Net::Appliance::Session->new({
-     personality => 'ios',
-     transport => $access,
-      connect_options => { host => $host},
 
- });
+  $session = Net::Telnet::Cisco->new( Host => $host,
+					 #Input_Log => $host . "_input.log",
+					 #Output_log => $host . "_output.log",
+					 #Dump_log => $host . "_dump.log",
+					 Timeout => $timeout,
+					 Errmode => "return"
+				       );
 
-	try {
-		# try to login to the ios device, ignoring host check
-    $session->connect(username => $username, password => $password, SHKC => 0);
-	
-    
-    # drop in to enable mode
-    $session->begin_privileged({ password => $enablepw });
-	
-    
-    # enter config mode
-    my @output1 = $session->cmd('show privilege');
-    $output1[0]=~s/\n//g;
-	
-	if ($output1[0] ne "Current privilege level is 15") {
-		$session->close;
-		return "cisco: enable failed";
-	}    
-    
-	$session->cmd("terminal length 0");
-	return "ok";
-	}
-	catch {
-	warn $_;
-	return 0;
-	}
+  return "cisco: failed to connect to host" unless $session;
+  $session->prompt('/(?m:^[\w.\@-]+\s?(?:\(config[^\)]*\))?\s?[\$#>]\s?(?:\(enable\))?\s*$)/');
+
+  my $ok = $session->login($username, $password);
+  #printf "cisco login returned", $ok, "\n";
+
+  if( !$ok ) {
+    $session->close;
+    return "cisco: login failed";
+  }
+
+  $session->enable($enablepw);
+
+  my @output = $session->cmd('show privilege');
+  $output[0]=~s/\n//g;
+  if ($output[0] ne "Current privilege level is 15") {
+    $session->close;
+    return "cisco: enable failed";
+  }
+
+  $session->cmd("terminal length 0");
+
+  my $MB = 1024 * 1024;
+  $session->max_buffer_length(10 * $MB);
+
+  return "ok";
 }
 
 my $Error;
 
 sub cisco_get_file($$) {
   my ($cmd, $fname) = @_[0..1];
-
-print STDERR "cmd=$cmd.\n";
-print STDERR "fname=$fname.\n";
-
-
   $Error = undef;
   my @data = $session->cmd($cmd);
   if (! @data) {
@@ -133,14 +129,12 @@ print STDERR "fname=$fname.\n";
 #  "ok" or error text
 #
 
-sub cisco_get_topologies ($$$$$) {
+sub cisco_get_topologies ($$$$) {
   return $getTopReturn if defined($getTopReturn);
 
   my ($host, $username, $password, $enablepw) = @_[0..3];
-   my $access = @_[4..4];
   my $filename1 = $host."_isis.txt";
   my $filename2 = $host."_ospf.txt";
-  print Dumper(@_);
   my $er = cisco_connect(@_);
   return $er if( $er !~ m/ok/ );
 
@@ -175,6 +169,7 @@ sub cisco_get_configs {
   my ($host, $user, $password, $enablepw, $configPath) = @_[0..4];
   $community = $_[5];
   print "Getting configs from $host\n";
+
   my $er = cisco_connect(@_);
   return $er if( $er !~ m/ok/ );
 
@@ -347,15 +342,6 @@ sub cisco_parse_version {
     my @t_arr = split(/:/,$ht);
 	my $ind = $#t_arr;
 	my $last_el = $t_arr[$ind];
-	print "last_el=".$last_el."\n";
-	if(!defined $last_el || $last_el eq '')
-	{
-		my $ht1 = `snmpget -v 1 -m ALL -c $community $host sysObjectID.0`;
-		my @t_arr1 = split(/:/,$ht1);
-		my $ind1 = $#t_arr1;
-		$last_el = $t_arr1[$ind1];
-		print "last_el1=".$last_el."\n";
-	}
 		
   DB_writeHostModel($rt_id,$last_el);
   return "ok";
@@ -371,7 +357,19 @@ sub cisco_parse_version {
 sub cisco_parse_run_config {
   my ($rt_id,$run_config_file) = @_[0..1];
   print "Parsing $run_config_file\n";
-
+  open(F_RCF,"<$run_config_file");
+  while (<F_RCF>) {
+    chomp;			# no newline
+    s/^\s+//;			# no leading white
+    s/\s+$//;			# no trailing white
+    #print "$_\n";
+    if (/^hostname\s*(\S+)$/) {
+      DB_replaceRouterName($rt_id,$1);
+      last;
+    }  
+	}
+  close(F_RCF);
+  
   return "ok";
 
   open(F_RCF,"<$run_config_file") or die "error - run_config file $run_config_file: $!\n";
@@ -422,6 +420,11 @@ sub cisco_parse_run_config {
 	}
 	next;
       }
+##    if (/^hostname\s*(\S+)$/) {
+      if(substr($_,0,8) eq 'hostname')	{	
+      DB_replaceRouterName($rt_id,substr($_,10));
+      next;
+    }  
     }
     #print Dumper( %ifc );
     if ($phInterface ne "") {
@@ -433,16 +436,11 @@ sub cisco_parse_run_config {
     if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
       my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
       DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	  $cisco_logcounter++;
     }
   }
 
   close(F_RCF);
-  if($cisco_logcounter > 1)
-  {
-	$cisco_layer = 3;
-  }
-  DB_setHostLayer($rt_id,$cisco_layer);
+  
   return "ok";
 }
 
@@ -714,7 +712,6 @@ sub cisco_parse_interfaces {
       if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
 	my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
 	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	$cisco_logcounter++;
 	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
       }
 
@@ -767,14 +764,9 @@ sub cisco_parse_interfaces {
   if ($ifc{ 'ip address' } ne '' && $ifc{"ip address"} ne '127.0.0.1') {
     my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
     DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	$cisco_logcounter++;
     @old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
   }
-  if($cisco_logcounter > 1)
-  {
-	$cisco_layer = 3;
-  }
-  DB_setHostLayer($rt_id,$cisco_layer);
+
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
 

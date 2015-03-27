@@ -577,14 +577,19 @@ sub run_proccessing
 	{
 		$new_rid  = DB_getRouterId($cur_ip);
 	}
-					if (!defined($new_rid)) {
-						$new_rid = DB_addRouter($linux_compname,$cur_ip,'up');						
-					}
-					else
-					{
-						DB_replaceRouterName($new_rid,$linux_compname);
-						DB_setHostState($new_rid,'up');
-						}
+	if (!defined($new_rid)) {
+		$new_rid = DB_addRouter($linux_compname,$cur_ip,'up');						
+	}
+	else
+	{
+		DB_replaceRouterName($new_rid,$linux_compname);
+		DB_setHostState($new_rid,'up');
+		if($cur_ip eq '0.0.0.0' && $linux_compname =~ /\d+\.\d+\.\d+\.\d+/)
+		{
+			DB_updateRouterId($new_rid,$linux_compname);
+		}						
+	}
+	
 	DB_setHostVendor($new_rid,$linux_vendor);				
 	DB_setHostLayer($new_rid,$linux_layer);
 	%hw_info = (	"hw_item" => "processor",
@@ -672,6 +677,10 @@ foreach my $k1(keys %hwaddr)
 			 @ifc{("interface","ip address","mask","description")} =
 				($k,$ip{$k}->[0],'255.255.255.255','');
 			 DB_writeInterface( $new_rid, $ph_int_id, \%ifc );
+			 if($k eq 'eth0')
+			 {
+				 DB_updateRouterId($new_rid,$ip{$k}->[0]);
+			 }
 		}	
 	}
 }

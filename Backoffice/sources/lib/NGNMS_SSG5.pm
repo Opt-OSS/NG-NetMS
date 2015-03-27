@@ -173,7 +173,6 @@ sub ssg5_get_configs {
   ssg5_get_file('get system', $file_vers) or
 		return $Error; 
   @output = $session->cmd("get hostname");	
-  print STDERR $output[0];
   ssg5_write_to_file(\@output,$file_vers) or
  		return $Error; 	
   ssg5_get_file('get chassis', $file_hard) or
@@ -344,6 +343,7 @@ sub ssg5_parse_interfaces {
   my $phint;
   my $phInterface = "";
   my $logInterface = "";
+  my @logInterfaceIp = (); 
   my $protocol = "";
   my $speed;
   my $newInt;
@@ -383,6 +383,7 @@ sub ssg5_parse_interfaces {
 							$newCond = 'up';
 						}
 						@arr_subarr =  split("/",$arr_interfaces[1]);
+						push( @logInterfaceIp, $arr_subarr[0]);
 						$logInterface = $arr_interfaces[0];
 						@ifc{("interface","ip address","mask","description")} =($logInterface ,$arr_subarr[0],$block->mask(),$newCond);
 #						print Dumper(%ifc);
@@ -446,7 +447,9 @@ sub ssg5_parse_interfaces {
   if($count_logint < 2)
   {
 	$ssg_layer = 2;
+	DB_updateRouterId($rt_id,$logInterfaceIp[0]);
   }
+  
   DB_setHostLayer($rt_id,$ssg_layer);
   DB_dropPhInterfaces($rt_id, \@old_ph_ifcs);
   DB_dropInterfaces($rt_id, \@old_ifcs);
