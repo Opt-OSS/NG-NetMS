@@ -175,7 +175,6 @@ $this->breadcrumbs=array(
                     $("#progress3").html("Done");
                     $("#yw1").prop("disabled",false);
                     $("#yw2").prop("disabled",false);
-                    $( ".progress" ).hide(5000);
                 } else {
                     setTimeout("show_progress3("+data+")", 2000);
                 }
