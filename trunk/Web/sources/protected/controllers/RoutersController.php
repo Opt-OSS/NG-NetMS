@@ -1758,7 +1758,7 @@ exit;*/
 
 
 
-                                 $command1 = 'perl audit.pl';
+                                 $command1 = 'perl audit.pl -i';
                                  if(isset($_POST['scanner']) && $_POST['scanner'] > 0)
                                  {
                                      $command1 .= " -s";
