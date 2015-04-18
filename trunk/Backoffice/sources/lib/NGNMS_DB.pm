@@ -41,7 +41,7 @@ $VERSION     = 0.01;
 		  &DB_writePhInterface &DB_getPhInterfaceId
 		  &DB_getPhInterfaces &DB_dropPhInterfaces
 		  &DB_writeTopology &DB_getRouters
-		  &DB_dropLinks &DB_getSettings
+		  &DB_dropLinks &DB_getSettings &DB_getRouterName
 		  &DB_setHostVendor &DB_setHostState
 		  &DB_getAllIntefaces &DB_isScanException
 		  &DB_replaceRouterName &DB_getInterfaceRouterId
@@ -49,9 +49,13 @@ $VERSION     = 0.01;
 		  &DB_stopDiscovery &DB_insertDiscoveryStatus
 		  &DB_isOpenedDiscovery &DB_lastchangeDiscovery
 		  &DB_modeDiscovery &DB_updateDiscoveryStatusOne
-		  &DB_percentDiscovery DB_updateRouterId
+		  &DB_percentDiscovery &DB_updateRouterId &DB_isDueCommunity
 		  &DB_getDuplicateHostname &DB_getRouterIdDuplicateHostname
-		  &DB_dropRouterId &DB_getCountUnion &DB_getCountIntersect);
+		  &DB_dropRouterId &DB_getCountUnion &DB_getCountIntersect
+		  &DB_getMinRouterRA &DB_getAllHostname &DB_getBgpRouters
+		  &DB_addBgpRouter &DB_getBgpRouterId 
+		  &DB_writeTopologyBgp &DB_updateBgpRouterStatus 
+		  &DB_updateAllBgpRouterStatus &DB_updateBgpRouterAS &DB_writeBgpLink);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -164,6 +168,16 @@ sub DB_getDuplicateHostname() {
     return $rref;
 }
 
+# Get list of all hostname
+sub DB_getAllHostname() {
+  local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "SELECT DISTINCT name FROM routers ORDER BY name";
+  my $rref = $dbh->selectcol_arrayref($SQL);
+  # print Dumper($rref);
+    return $rref;
+}
+
+
 # Get list of  router_id for duplicate hostname
 sub DB_getRouterIdDuplicateHostname($) {
   my $hname = shift;	
@@ -174,13 +188,28 @@ sub DB_getRouterIdDuplicateHostname($) {
     return $rref;
 }
 
+
+sub DB_getMinRouterRA($) {
+	my $hname = shift;
+	local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "select min(ra.id_router) from routers r,router_access ra where r.name='".$hname."' and ra.id_router=r.router_id ";
+  my $rref = $dbh->selectcol_arrayref($SQL);
+#  print Dumper($rref);
+  if (defined($rref)) {
+    return $rref->[0];
+  }
+  return undef;
+	}
+	
+	
 # Get ifc id by rt_id and name
-sub DB_getInterfaceId($$$) {
+sub DB_getInterfaceId($$$$) {
   my $rt_id = shift;
   my $ph_int_id = shift;
   my $ifc_n = shift;
+  my $ip_addr = shift;
   local $dbh->{RaiseError};     # Ignore errors
-  my $SQL = "SELECT ifc_id FROM interfaces WHERE router_id = $rt_id AND ph_int_id = $ph_int_id AND name = \'$ifc_n\'";
+  my $SQL = "SELECT ifc_id FROM interfaces WHERE router_id = $rt_id AND ph_int_id = $ph_int_id AND name = \'$ifc_n\' AND ip_addr = \'$ip_addr\'";
   my $rref = $dbh->selectcol_arrayref($SQL);
 #  print Dumper($rref);
   if (defined($rref)) {
@@ -207,7 +236,7 @@ sub DB_writeInterface($$*) {
   my $rt_id = shift;
   my $ph_int_id = shift;
   my $ifc = shift;
-  my $ifc_id = DB_getInterfaceId( $rt_id, $ph_int_id, $ifc->{"interface"} );
+  my $ifc_id = DB_getInterfaceId( $rt_id, $ph_int_id, $ifc->{"interface"},$ifc->{"ip address"} );
   if( !defined($ifc_id) ) {
     # easy - insert new ifc
     my $SQL = "INSERT INTO interfaces (router_id,ph_int_id,name,ip_addr,mask,descr) VALUES (?,?,?,?,?,?)";
@@ -327,12 +356,36 @@ sub DB_getRouterId {
   return undef;
 }
 
+
+sub DB_getBgpRouterId {
+	my $SQL = "SELECT id FROM bgp_routers WHERE ip_addr = \'$_[0]\'";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+#  print Dumper($rref);
+	if (defined($rref)) {
+		return $rref->[0];
+	}
+	return undef;
+}
 # Get router ip addr
 # Param:
 #  router id
 sub DB_getRouterIpAddr {
   local $dbh->{RaiseError};     # Ignore errors
   my $SQL = "SELECT ip_addr FROM routers WHERE router_id = \'$_[0]\'";
+  my $rref = $dbh->selectcol_arrayref($SQL);
+#  print Dumper($rref);
+  if (defined($rref)) {
+    return $rref->[0];
+  }
+  return undef;
+}
+
+# Get router ip addr
+# Param:
+#  router id
+sub DB_getRouterName {
+  local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "SELECT name FROM routers WHERE router_id = \'$_[0]\'";
   my $rref = $dbh->selectcol_arrayref($SQL);
 #  print Dumper($rref);
   if (defined($rref)) {
@@ -436,6 +489,15 @@ sub DB_addRouter ($$$) {
   return DB_getRouterId $_[0];
 }
 
+sub DB_addBgpRouter($$$){
+	my $SQL = "INSERT INTO bgp_routers (ip_addr,status,bgp_type,autonomous_system) VALUES (?,?,?,?)";
+  my $sw_h = $dbh->prepare($SQL);
+  my ($rid, $bgptype,$as1) = @_[0..2];
+  my $stat = 0;
+  my $result = $sw_h->execute($rid,  $stat, $bgptype,$as1);
+  return DB_getBgpRouterId $_[0];
+}
+
 sub DB_addConfigFile($$)
 {
 	my $rt_id = DB_getRouterId($_[0]);
@@ -472,6 +534,19 @@ sub DB_getRouters ($) {
     my %tmp = map { $_ => $aref->{$_}->{'router_id'} } ( keys %$aref );
     #print Dumper(%tmp);
     return %tmp;
+  }
+  return undef;
+}
+
+# Get hash of (router => router_id) by mask
+#
+sub DB_getBgpRouters () {
+  #local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "SELECT ip_addr FROM bgp_routers WHERE status = 0";
+  my $aref = $dbh->selectall_arrayref($SQL);
+  
+  if (defined($aref)) {
+    return $aref;
   }
   return undef;
 }
@@ -530,6 +605,31 @@ sub DB_updateRouterId($$){
   my $if_h = $dbh->prepare($SQL);
   my $result = $if_h->execute($ip,$rtId);
 }
+
+sub DB_updateAllBgpRouterStatus()
+{
+	my $SQL = "UPDATE bgp_routers SET status = ? ";
+	my $stat = 0;
+	my $if_h = $dbh->prepare($SQL);
+	my $result = $if_h->execute($stat);
+}
+
+sub DB_updateBgpRouterStatus($$){
+	my $rtId = shift;
+    my $stat = shift;
+
+  my $SQL = "UPDATE bgp_routers SET status = ? WHERE ip_addr = ?";
+  my $if_h = $dbh->prepare($SQL);
+  my $result = $if_h->execute($stat,$rtId);
+}
+
+sub DB_updateBgpRouterAS($$){
+	my $id_record = shift;
+	my $as1 = shift;
+	my $SQL = "UPDATE bgp_routers SET autonomous_system = ? WHERE id = ?";
+	my $if_h = $dbh->prepare($SQL);
+	my $result = $if_h->execute($as1->[0],$id_record);
+	}
 ###############################################################
 # Links
 #
@@ -554,6 +654,27 @@ sub DB_writeLink ($$$) {
     $link_h->execute($idA,$idB,$type);
   }
 }
+
+sub DB_writeBgpLink($$$) {
+	my ($idA,$idB,$type) = @_[0..2];
+  local $dbh->{RaiseError};     # Ignore errors
+
+  
+  # try to update
+  # if fails, insert a new rec
+  my $rref = $dbh->do(q{
+			UPDATE bgp_links SET link_type = ?
+			WHERE (side_a = ? AND side_b = ?) OR (side_b = ? AND side_a = ?)
+		       }, undef, ($type, $idA, $idB, $idA, $idB));
+
+  # print "RRef: $rref\n";
+  if( $rref eq "0E0" ) {
+    my $SQL = "INSERT INTO bgp_links (side_a,side_b,link_type) VALUES (?,?,?)";
+    my $link_h = $dbh->prepare($SQL);
+    $link_h->execute($idA,$idB,$type);
+  }
+}
+
 
 sub DB_replaceRouterName($$){
 	my($r_id,$name)=@_[0..1];
@@ -582,6 +703,7 @@ sub DB_addHostIP($$$) {
   my $host_ips = shift;
   $host_ips->{ $_[0] } = $_[1];
 }
+
 
 # Remove host from list of hosts
 # Params:
@@ -679,6 +801,52 @@ sub DB_writeTopology {
 }
 
 
+# Write hosts and links
+# Params:
+#  \%host_ips
+#  \%links
+#
+sub DB_writeTopologyBgp {
+  my $host_ips = shift; # host name => ip addr
+   my $links = shift;    # host name => ( host name1, host name2, ...)
+  my $autonomous_systems = shift;    # host name => ( AS)
+  my %host_ids;         # host name => router_id in database
+  my $flag;
+  my $bgp_type = 'external';
+ 
+  foreach my $h (sort keys %$host_ips) {
+    print "Adding BGP host $h ($host_ips->{$h})\n";
+    $flag = DB_getBgpRouterId($host_ips->{$h});
+    if(!defined($flag))
+    {		
+		DB_addBgpRouter($host_ips->{$h},$bgp_type,$autonomous_systems->{$h});
+	}
+    else {
+		DB_updateBgpRouterAS($flag,$autonomous_systems->{$h});
+##      DB_dropLinks($host_ids{$h});
+    }
+  }
+
+  foreach my $hostA (sort keys %$links) {
+    foreach my $Brec (sort @{${$links->{$hostA}}}) {
+      my ($hostB,$linkT) = split /:/,$Brec;
+      print "Adding link: $hostA <-> $hostB ($linkT)\n";
+      # Check link ends
+      foreach my $chkH ($hostA,$hostB) {
+	if (!defined($host_ids{$chkH}) ) {
+	  print "Warning: link to unknown host \'$chkH\'\n";
+	  $host_ids{$chkH} = DB_getBgpRouterId($chkH);
+	  if (!defined($host_ids{$chkH})) {
+	    $host_ids{$chkH} = DB_addBgpRouter($chkH, $bgp_type, "");
+	  }	  
+	}
+      }
+      DB_writeBgpLink( $host_ids{$hostA}, $host_ids{$hostB}, $linkT );
+    }
+  }
+ 
+}
+
 # test get/add router
 
 sub DB_TEST_getAddRouter($$) {
@@ -701,17 +869,19 @@ sub DB_isInRouterAccess($) {
 	 local $dbh->{RaiseError};     # Ignore errors
 	my $SQL;
 	if( $_[0] =~ /\d+\.\d+\.\d+\.\d+/ ) {
-		$SQL = "SELECT count(ra.*) as ammount FROM router_access ra ,routers r WHERE (r.ip_addr = \'$r_n\' OR r.name = \'$r_n\') AND ra.id_router=r.router_id";
+		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_access ra ,routers r, interfaces i 
+				WHERE ((r.ip_addr = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.id_router=r.router_id ) 
+				OR (i.ip_addr = \'$r_n\'  and ra.id_router=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id ";
 	}
 	else
 	{
-		$SQL = "SELECT count(ra.*) as ammount FROM router_access ra ,routers r WHERE r.name = \'$r_n\' AND ra.id_router=r.router_id";
+		$SQL = "SELECT count(ra.*) as ammount, r.router_id as rtid FROM router_access ra ,routers r WHERE r.name = \'$r_n\' AND ra.id_router=r.router_id";
 	}
     
-  my $rref = $dbh->selectcol_arrayref($SQL);
 ##  print Dumper($rref);
-  
-    return $rref->[0];
+    my $rref = $dbh->selectall_arrayref($SQL);
+	return $rref;
+
 }
 
 sub DB_isCommunity($) {
@@ -725,6 +895,25 @@ sub DB_isCommunity($) {
   
     return $rref->[0];
 }
+
+sub DB_isDueCommunity($) {
+	my $r_n = $_[0];
+	 local $dbh->{RaiseError};     # Ignore errors
+	 my $SQL;
+	 if( $_[0] =~ /\d+\.\d+\.\d+\.\d+/ ) {
+		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_snmp_access ra ,routers r, interfaces i 
+				WHERE ((r.ip_addr = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.router_id=r.router_id ) 
+				OR (i.ip_addr = \'$r_n\'  and ra.router_id=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id";
+	}
+	else
+	{
+		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_snmp_access ra ,routers r, interfaces i 
+				WHERE ((r.ip_addr = '0.0.0.0'  or r.name = '0.0.0.0'  ) AND ra.router_id=r.router_id and i.router_id = r.router_id) 
+				OR (i.ip_addr = '0.0.0.0'  and ra.router_id=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id";
+	}
+	my $rref = $dbh->selectall_arrayref($SQL);
+	return $rref;
+	}
 
 sub DB_isScanException($){
 	my $cur_subnet = $_[0];

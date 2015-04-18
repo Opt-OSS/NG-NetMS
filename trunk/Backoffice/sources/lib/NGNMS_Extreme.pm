@@ -2,7 +2,6 @@ package NGNMS_Extreme;
 
 use strict;
 use warnings;
-# use Data::Dumper;
 use NGNMS_DB;
 use NGNMS_util;
 use Data::Dumper;
@@ -10,6 +9,7 @@ use File::Copy qw(copy);
 use Data::Dumper;
 use Net::Netmask;
 use Net::Appliance::Session;
+use Try::Tiny;
     
 if (defined($ENV{"NGNMS_TIMEOUT"})) {
   $Net::Extreme::TIMEOUT = $ENV{"NGNMS_TIMEOUT"};
@@ -87,8 +87,6 @@ sub extreme_create_session {
   {
 	$access = "Telnet";
   }
-  
-  $access = "Telnet";
   
   my $file_vers = $configPath."_version.txt";
   my $interfaces_file = $configPath."_interfaces.txt";
@@ -173,7 +171,16 @@ sub extreme_get_configs {
   my $file_interf = $configPath."_interfaces.txt";
   
 ################
-  $session->cmd("disable clipaging");
+	
+	try {
+     print $session->cmd("disable clipaging");
+		}
+	catch {
+		$session->close;
+		$Error = "$host:failed to execute command: $_";
+		return $Error;
+	};
+ 
   extreme_get_file('sh ver detail', $file_vers) or
 		return $Error; 
   @output = $session->cmd("sh switch");	
@@ -182,7 +189,7 @@ sub extreme_get_configs {
   copy $file_vers,$file_hard or return $Error;
   
   extreme_get_file('sh ports information detail', $file_interf) or
-		return $Error; 		
+		return $Error; 	
   @output = $session->cmd("sh ipconfig ipv4");	
   extreme_write_to_file(\@output,$file_interf) or
 		return $Error; 	
@@ -225,7 +232,6 @@ sub extreme_parse_version {
 		{
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'BootROM', $1 );
-#			print STDERR Dumper(%sw_info);
 			DB_writeSwInfo($rt_id, \%sw_info);
 			$sw_info{'sw_item'} = 'Firmware';
            ( $sw_info{'sw_name'}, $sw_info{'sw_ver'} ) = ( 'IMG', $2 );
@@ -428,12 +434,10 @@ sub extreme_parse_interfaces {
 						$logInterface = $arr_interfaces[0];
 						push( @logInterfaceIp, $arr_interfaces[1]);
 						@ifc{("interface","ip address","mask","description")} =($logInterface ,$arr_interfaces[1],$block->mask(),$newCond);
-#						print Dumper(%ifc);
 						$phInterface = $logInterface;						
 							$speed = 'Unspecified';	
 						@phifc{("interface","state","condition","speed","description")} =
 			            ($phInterface,$newState,$newCond,$speed ,'');
-#			            print Dumper(%phifc);
 
 						DB_writePhInterface($rt_id, \%phifc);
 					    @old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;

@@ -47,7 +47,6 @@ $VERSION     = 0.0.1;
 # as well as any optionally exported functions
 @EXPORT_OK   = qw($data);
 
-# print "loading NGNMS_Juniper\n";
 
 # data
 
@@ -57,8 +56,8 @@ $data = "my data";
 
 my $session;
 my $Error;
-my $username = "ngnms";
-my $password = "Rfhfv,jkM27";
+my $username ;
+my $password ;
 my $timeout  = 10;
 my $cmd2			= 'ls /tmp/mc-ngnms'; 
 my $debug = 0;
@@ -108,28 +107,15 @@ sub new{
 	}
 	else
 	{
-		if(defined($path_to_key) && $path_to_key ne "" )
-		{
-			$model = Net::OpenSSH->new(
-			$host,
-			user =>$username,
-			passphrase => $passphrase,
-			key_path   => $path_to_key,
-			timeout     => $timeout,
-			master_opts => [ -o => "StrictHostKeyChecking=no" ]
-			);
-		}
-		else
-		{
+		
 			$model =  Net::OpenSSH->new($host,
 											user => $username, 
 											password => $password,
 											timeout     => $timeout,
 											master_opts => [ -o => "StrictHostKeyChecking=no" ]);
-		}
 		
-		$model->error and   warn "Unable to connect to remote host: " . $model->error;
-##		$model->error and die "Unable to connect to remote host: " . $model->error;
+		$model->error and   warn "Unable to connect to remote host: ".$host.": "  . $model->error;
+##		$model->error and die "Unable to connect to remote host ".$host.": " . $model->error;
 											
 	}
 	
@@ -213,7 +199,6 @@ sub linux_create_session {
   {
 	  $session = new Net::Telnet ($host);
       $session->errmode('return');
- #     $session->errmode('die');
       $session->login($username, $passwds[0]) or return warn "$host: ",$session->errmsg,"\n";
   }
   else
@@ -540,13 +525,13 @@ sub run_proccessing
 {
     my $self = shift;
 	my $cur_ip = shift;
-##    print Dumper($self);
     my $iface;
     my $line; 
     my %phifc;
     my %ifc;
     my $speede;
     my $new_rid;
+    my $control_ip;
 	my $linux_layer = 5;
     my %sw_info = (	"sw_item" => undef,
 		"sw_name" => undef,
@@ -560,23 +545,36 @@ sub run_proccessing
     my (%ip6, %ip, %scope6, %bcast, %mask, %hwaddr, %ipcount,%condition);
     my $iface_count = 0;
     my $linux_vendor = $self->linux_parse_vendor();
+    
 	if(!defined $linux_vendor || $linux_vendor eq '' || $linux_vendor !~/ubuntu/i)
 	{
 		$linux_vendor = 'Linux';
 	}
+	
 	my $linux_softwr = $self->linux_parse_version();
 	my $linux_compname = $self->linux_parse_name();
+	
 	if(!defined $linux_compname || $linux_compname eq '')
 	{
 		$linux_compname = $cur_ip;
 	}
+	
 	my $linux_hardwr =  $self->linux_parse_hardwr();
-	print "$linux_softwr:$linux_compname:$linux_hardwr\n";
 	$new_rid  = DB_getRouterId($linux_compname);
+	
 	if(!defined($new_rid))
 	{
 		$new_rid  = DB_getRouterId($cur_ip);
 	}
+	else
+	{
+		$control_ip = DB_getRouterIpAddr($new_rid);
+		if($control_ip ne $cur_ip)
+		{
+			$new_rid  = DB_getRouterId($cur_ip);
+		}
+	}
+	
 	if (!defined($new_rid)) {
 		$new_rid = DB_addRouter($linux_compname,$cur_ip,'up');						
 	}
@@ -615,7 +613,6 @@ sub run_proccessing
 	foreach(@linux_interfaces)
   {
 	$line = $_;
-##	print "interface:".$line."\n";
 	if ($line =~ m/^([a-z0-9:]+)\s+.*?([a-z0-9:]+)\s*$/i) { # Linux interface
 		$iface	= $1;
 		my $iface_hwaddr = $2;

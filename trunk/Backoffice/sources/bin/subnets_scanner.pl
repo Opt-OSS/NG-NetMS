@@ -456,7 +456,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 	$params[0] = $ip_addr; ##host
 	$params[0] =~ s/\s+$//; 
 	
-	
+=for	
 	if(!defined($amount))
 	{
 		$amount =0;
@@ -532,6 +532,7 @@ foreach my $emp(@$arr_param)
 				
 				
 	}
+=cut	
 DB_close;	
 		@cmd2=($cmd);
 		
