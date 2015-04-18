@@ -526,13 +526,7 @@ DB_updateDiscoveryStatus(5,0);## SNMP process was ended
   }
 
   $ret = '';
-  $flag_bgp = DB_getBgpRouterId($seedHost);
-    if(!defined($flag_bgp))
-    {
-		my $bgp_type = 'external';
-		$flag_bgp = DB_addBgpRouter($seedHost,$bgp_type,'');
-	}
-	DB_updateBgpRouterStatus($seedHost,$bgp_status);
+  
 	
   if ($hostType eq "Cisco") {
     NGNMS_Cisco::cisco_parse_isis $isis_file;
@@ -545,8 +539,16 @@ DB_updateDiscoveryStatus(5,0);## SNMP process was ended
     $bgps = NGNMS_JuniperJav::juniper_parse_bgp($bgp_file,$seedHost);
   }
   
+  my $bgp_type = 'external';
+  
   if(defined $bgps)
   {
+	 $flag_bgp = DB_getBgpRouterId($seedHost);
+    if(!defined($flag_bgp))
+    {	
+		$flag_bgp = DB_addBgpRouter($seedHost,$bgp_type,'');
+	}
+	DB_updateBgpRouterStatus($seedHost,$bgp_status);
 	  discoveryBgp($bgps);
 	}
   DB_updateDiscoveryStatus(15,0);## getting Topology process was ended
