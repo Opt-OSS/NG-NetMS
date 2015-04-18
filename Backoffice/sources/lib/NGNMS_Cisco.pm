@@ -135,12 +135,14 @@ sub cisco_get_topologies ($$$$) {
   my ($host, $username, $password, $enablepw) = @_[0..3];
   my $filename1 = $host."_isis.txt";
   my $filename2 = $host."_ospf.txt";
+  my $filename3 = $host."_bgp.txt";
   my $er = cisco_connect(@_);
   return $er if( $er !~ m/ok/ );
 
 	if (defined($ENV{"NGNMS_CONFIGS"})) {
 		$filename1 = $ENV{"NGNMS_CONFIGS"}."/".$filename1;
 		$filename2 = $ENV{"NGNMS_CONFIGS"}."/".$filename2;
+		$filename3 = $ENV{"NGNMS_CONFIGS"}."/".$filename3;
 	}
 
   print "Getting ISIS topology...\n";
@@ -159,6 +161,12 @@ sub cisco_get_topologies ($$$$) {
       return $Error;
     }
 
+	print "Getting BGP topology...\n";
+  if(!cisco_get_file('show ip bgp summary', $filename3)) {
+	$session->close();
+      return $Error;
+    }
+	
   $session->close;
   print "Done\n";
 
@@ -337,13 +345,15 @@ sub cisco_parse_version {
 ##  old command : my $ht = `snmpget -m ALL -c $community $host sysObjectID.0`;
 
     my $ht = `snmpget -v 2c -m ALL -c $community $host sysObjectID.0`;
-	
 ## parse old command $ht =~/OID:.*\.(.*$)/; 
+if(defined $ht && $ht ne  '')
+{
     my @t_arr = split(/:/,$ht);
 	my $ind = $#t_arr;
 	my $last_el = $t_arr[$ind];
 		
   DB_writeHostModel($rt_id,$last_el);
+} 
   return "ok";
 }
 
@@ -662,6 +672,66 @@ sub cisco_parse_ospf {
 
   return "ok";
 }
+
+
+#
+# parse 'show ip bgp summary' output
+#
+# Params:
+#  bgp file
+
+sub cisco_parse_bgp($$) {
+  my $bgp_file = shift;
+  my $host = shift;
+
+  print "Parsing Cisco BGP topology file $bgp_file\n";
+
+  my %host_ips;
+  my %links;
+  my %autonomous_systems=();
+  my $host1;
+  my $ip1;
+  my $as1;
+  my @arr_bgp;
+  my $ip = $host;
+=for  
+  DB_addHostNoWrite( \%host_ips, $host);
+  DB_addHostIP( \%host_ips, $host, $ip);
+=cut  
+  open my $info, $bgp_file or
+    return "error - config file $bgp_file: $!\n";
+
+
+while( my $line = <$info>)  {   
+	$line =~ s/[\n]//g;
+    if($line =~ m/^(\d+\.\d+\.\d+\.\d+)\s+(\d+)\s+(\d+)\s(.*)/i){
+      $ip1 = $1;
+      $host1=$ip1;
+      $as1 = $3;
+      print "Host:", $host1, " AS:" ,$as1,"\n";
+     
+      DB_addHostNoWrite( \%host_ips, $host1);
+      DB_addHostIP( \%host_ips, $host1, $ip1);  
+      DB_addLinkNoWrite( \%links, $host, $ip1, "P" );  
+      push(@ {$autonomous_systems{$host1}}, $as1);
+
+      }
+      
+      next;
+    }
+  
+  close $info; 
+
+  DB_writeTopologyBgp( \%host_ips,\%links ,\%autonomous_systems );
+  my $hosts = DB_getBgpRouters();
+	if(defined $hosts)
+	{
+		return $hosts;
+	}
+	
+	return undef;
+}
+
 
 #
 # parse 'show interfaces' output

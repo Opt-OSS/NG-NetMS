@@ -2,7 +2,6 @@ package NGNMS_SSG5;
 
 use strict;
 use warnings;
-# use Data::Dumper;
 use NGNMS_DB;
 use NGNMS_util;
 use Data::Dumper;
@@ -375,9 +374,7 @@ sub ssg5_parse_interfaces {
 	{
 		if ($line =~ /\d+\.\d+\.\d+\.\d+\/\d/)
 				{
-#					print $line."\n";
 					@arr_interfaces = split(/ {2,}/, $line);
-					print join(":",@arr_interfaces)."\n";
 					$block = new Net::Netmask ($arr_interfaces[1]);
 					if($block->base() ne '0.0.0.0')
 					{
@@ -393,8 +390,8 @@ sub ssg5_parse_interfaces {
 						push( @logInterfaceIp, $arr_subarr[0]);
 						$logInterface = $arr_interfaces[0];
 						@ifc{("interface","ip address","mask","description")} =($logInterface ,$arr_subarr[0],$block->mask(),$newCond);
-#						print Dumper(%ifc);
 						$phInterface = $logInterface;
+						
 						if(defined $speeds{$phInterface})
 						{
 							$speed = $speeds{$phInterface}*1000;
@@ -405,7 +402,6 @@ sub ssg5_parse_interfaces {
 						}	
 						@phifc{("interface","state","condition","speed","description")} =
 			            ($phInterface,'enabled',$newCond,$speed ,'');
-#			            print Dumper(%phifc);
 						DB_writePhInterface($rt_id, \%phifc);
 					    @old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
 					    my $ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
@@ -419,7 +415,7 @@ sub ssg5_parse_interfaces {
 	{
 		my $phint_name = '';
 		$line =~ s/[\n]//g;
-		print $line."\n";
+
 		if($line !~ m/port/i && $line !~ m/power/i && $line !~ m/----/i && $line !~ m/mii/i)
 		{
 			 @arr_phint = split(/ {1,}/, $line);
@@ -442,10 +438,9 @@ sub ssg5_parse_interfaces {
 			 		 		 
 			 $phint_name = "Port ".$arr_phint[1];
 			 @phifc{("interface","state","condition","speed","description")} =
-				($phint_name,$newState,$arr_phint[8],$speed,'');
-#				print Dumper(%phifc);
-			DB_writePhInterface($rt_id, \%phifc);
-			@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
+			 ($phint_name,$newState,$arr_phint[8],$speed,'');
+			 DB_writePhInterface($rt_id, \%phifc);
+			 @old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
 		}
 	}	
     

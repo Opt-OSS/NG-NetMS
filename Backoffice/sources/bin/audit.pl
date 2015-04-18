@@ -48,6 +48,7 @@ use NGNMS_Extreme;
 use NGNMS_HP;
 use DateTime;
 use DateTime::Format::Strptime;
+use List::Util qw( min max );
 
 use Data::Dumper;
 
@@ -78,6 +79,7 @@ $verbose = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
 my $filesDir="";
 my $isis_file;
 my $ospf_file;
+my $bgp_file;
 my $criptokey ;
 my $test_topologies;
 my $test_host_type;
@@ -85,7 +87,9 @@ my $ocx_session;
 my $prom_val;
 my $scan = 0;
 my $interact = 0;
-
+my $bgps;
+my $bgp_status = 1;
+my $flag_bgp;
 my $seedHosts = '';
 my $user      = '';
 my $passwd    = '';
@@ -376,8 +380,83 @@ my $hostType;
 my $seedHost;
 my $ret;
 
+##BGP Discovery
+sub discoveryBgp($){
+	my @arr_bgps;
+	my $cur_bgp_community;
+	my $cur_bgp_host;
+	my $cur_rid;
+	my $hostBgpType;
+	my $bgps1;
+	my $er1;
+	my $isis_file;
+	my $ospf_file;
+	my $bgp_file;
+	
+    my $bgps0 = shift;
+	@arr_bgps = @{$bgps0};
+    for (my $i = 0; $i < @arr_bgps; $i++) {
+		 DB_updateBgpRouterStatus($arr_bgps[$i]->[0],$bgp_status);
+         $cur_bgp_host = $arr_bgps[$i]->[0];
+         $cur_rid = DB_getRouterId($cur_bgp_host);
+         if(defined $cur_rid){
+			$cur_bgp_community = &getBgpCommunity($cur_rid,$cur_bgp_host);	
+		 }
+		 else
+		 {
+			 $cur_bgp_community = $community;
+		 }	  
+		 ($hostBgpType, $er1) = getHostType($cur_bgp_host, $cur_bgp_community);
+		 
+		 if (!defined($hostBgpType)) {
+			logError("bgp:", $er1);
+			next;
+		}
+		
+		if($hostBgpType ne 'Cisco' && $hostBgpType ne 'Juniper' )
+		{
+			logError("bgp:", "This device is not supported!");
+			next;
+		}
+		
+		$ret = &getTopologies($hostBgpType,$cur_bgp_host,$user,$passwd,$enpasswd,$access);
 
-
+		if($ret ne "ok") {
+		  logError("bgp", "Failed to get topology from $cur_bgp_host: $ret\n");
+		  next;
+		}
+		if (defined($ENV{"NGNMS_CONFIGS"})) {
+				$isis_file = $ENV{"NGNMS_CONFIGS"}."/"."${cur_bgp_host}_isis.txt";
+				$ospf_file = $ENV{"NGNMS_CONFIGS"}."/"."${cur_bgp_host}_ospf.txt";
+				$bgp_file = $ENV{"NGNMS_CONFIGS"}."/"."${cur_bgp_host}_bgp.txt";
+			}
+			else
+			{
+				$isis_file = "${cur_bgp_host}_isis.txt";
+				$ospf_file = "${cur_bgp_host}_ospf.txt";
+				$bgp_file = "${cur_bgp_host}_bgp.txt";
+			}
+		$ret = '';
+		if ($hostBgpType eq "Cisco") {
+			NGNMS_Cisco::cisco_parse_isis $isis_file;
+			NGNMS_Cisco::cisco_parse_ospf $ospf_file;
+			$bgps1 = NGNMS_Cisco::cisco_parse_bgp($bgp_file,$cur_bgp_host);
+		}
+		if ($hostBgpType eq "Juniper") {
+		NGNMS_JuniperJav::juniper_parse_isis $isis_file;
+		NGNMS_JuniperJav::juniper_parse_ospf $ospf_file;
+		$bgps1 = NGNMS_JuniperJav::juniper_parse_bgp($bgp_file,$cur_bgp_host);
+		}	
+	    if(defined $bgps1){
+			&discoveryBgp($bgps1);
+			}		
+	  }
+	  
+	  
+	
+	}
+####
+DB_updateAllBgpRouterStatus();
 # Loop through the seed hosts
 foreach $seedHost (@seedHostList) {
   $seedHost =~ s/^\s+//;			# no leading white
@@ -391,8 +470,8 @@ foreach $seedHost (@seedHostList) {
       my $er;
       ($hostType, $er) = getHostType($seedHost, $community);
       if (!defined($hostType)) {
-	logError("audit", $er);
-	next;
+		logError("audit", $er);
+		next;
       }
       if ($hostType eq "unknown") {
 	logError("audit", "$seedHost: unknown seed host type\n");
@@ -426,11 +505,13 @@ DB_updateDiscoveryStatus(5,0);## SNMP process was ended
 		{	if (defined($ENV{"NGNMS_CONFIGS"})) {
 				$isis_file = $ENV{"NGNMS_CONFIGS"}."/"."${seedHost}_isis.txt";
 				$ospf_file = $ENV{"NGNMS_CONFIGS"}."/"."${seedHost}_ospf.txt";
+				$bgp_file = $ENV{"NGNMS_CONFIGS"}."/"."${seedHost}_bgp.txt";
 			}
 			else
 			{
 				$isis_file = "${seedHost}_isis.txt";
 				$ospf_file = "${seedHost}_ospf.txt";
+				$bgp_file = "${seedHost}_bgp.txt";
 			}
 			
 		}
@@ -440,19 +521,34 @@ DB_updateDiscoveryStatus(5,0);## SNMP process was ended
 	}
     $isis_file = $filesDir."/"."${test_topologies}_isis.txt";
     $ospf_file = $filesDir."/"."${test_topologies}_ospf.txt";
+    $bgp_file = $filesDir."/"."${test_topologies}_bgp.txt";
 	
   }
 
   $ret = '';
+  $flag_bgp = DB_getBgpRouterId($seedHost);
+    if(!defined($flag_bgp))
+    {
+		my $bgp_type = 'external';
+		$flag_bgp = DB_addBgpRouter($seedHost,$bgp_type,'');
+	}
+	DB_updateBgpRouterStatus($seedHost,$bgp_status);
+	
   if ($hostType eq "Cisco") {
     NGNMS_Cisco::cisco_parse_isis $isis_file;
     NGNMS_Cisco::cisco_parse_ospf $ospf_file;
+    $bgps = NGNMS_Cisco::cisco_parse_bgp($bgp_file,$seedHost);
   }
   if ($hostType eq "Juniper") {
     NGNMS_JuniperJav::juniper_parse_isis $isis_file;
     NGNMS_JuniperJav::juniper_parse_ospf $ospf_file;
+    $bgps = NGNMS_JuniperJav::juniper_parse_bgp($bgp_file,$seedHost);
   }
   
+  if(defined $bgps)
+  {
+	  discoveryBgp($bgps);
+	}
   DB_updateDiscoveryStatus(15,0);## getting Topology process was ended
 } # loop through seed hosts
 
@@ -515,7 +611,6 @@ foreach my $child (keys %hosts) {
 		DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
 		my $type_router = DB_getRouterVendor($_[0]);
 		$type_router =~ s/\s+$//;
-		my $amount = DB_isInRouterAccess($_[0]);# check exists special access to router
 		DB_close; ## close DB connect
 		$params[0] = $_[0];
 		
@@ -688,7 +783,46 @@ if($scan > 0)
 		&runScanner("$ENV{'NGNMS_HOME'}/bin/subnets_scanner.pl");
 }
 
+
+
+
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
+
+            my $control_rout;
+			my $count_union;
+			my $count_intersect;
+			my $arr_router_id;
+			my $arr_router_names = &DB_getAllHostname();
+            foreach my $namehost(@{$arr_router_names})
+            {
+				$arr_router_id = &DB_getRouterIdDuplicateHostname($namehost);
+				my @arr_rid = @{$arr_router_id};
+				my $min_id = min @arr_rid;
+				my $ra_router_id = &DB_getMinRouterRA($namehost);
+				
+				if(defined($ra_router_id))
+				{
+					$control_rout = $ra_router_id;
+				}
+				else
+				{
+					$control_rout = $min_id;
+				}
+			
+				foreach my $rout_id(@{$arr_router_id})
+				{
+					if($rout_id != $control_rout)
+					{
+						$count_union = &DB_getCountUnion($rout_id,$control_rout);
+						$count_intersect = &DB_getCountIntersect($rout_id,$control_rout);
+						if($count_union == $count_intersect)
+						{
+							&DB_dropRouterId($rout_id);
+						}
+					}
+				}
+			}
+
 
 if($interact < 1)
 {
@@ -722,5 +856,53 @@ sub runScanner()
 		system( @cmd2, @params );
 	
 	}
+	
+sub getBgpCommunity($$)	
+{
+	my $r_id = shift;
+	my $bgp_host = shift;
+	my $amount1 = DB_isCommunity($r_id);
+	my $community_cur;		
+	
+	if($amount1 > 0)
+	{
+		my $arr_param1 = DB_getCommunity($r_id);
+		foreach my $emp1(@$arr_param1)
+		{
+			$community_cur = decryptAttrvalue($criptokey, $emp1->[0]) if defined($emp1->[0]);
+			$community_cur =~ s/\s+$//; 
+		}						 	
+	}
+    else
+	{
+		my $arr_param7 = DB_isDueCommunity($bgp_host);
+		my $counter7 = 0;
+		
+		foreach my $emp7(@$arr_param7){										
+			if (defined($emp7->[1]))
+			{
+				$counter7++;
+				$r_id =  $emp7->[1];
+			}		 		
+		}
+		if($counter7)
+		{
+			my $arr_param1 = DB_getCommunity($r_id);
+			foreach my $emp1(@$arr_param1)
+			{
+				$community_cur = decryptAttrvalue($criptokey, $emp1->[0]) if defined($emp1->[0]);
+				$community_cur =~ s/\s+$//; 
+			}	
+		}
+		else
+		{
+			my $prom_val = DB_getSettings('community');
+			my $community1 = getAttrVal($prom_val->[0]) ;
+			$community_cur = $community1 if defined($community1);
+		}		
+	}	
+				
+	return $community_cur;			
+}
 __END__
 

@@ -17,6 +17,7 @@ use Net::DNS;
 use MIME::Base64;
 use Crypt::TripleDES;
 use Data::Dumper;
+use Nmap::Scanner;
 
 require Exporter;
 
@@ -27,7 +28,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $data);
 ## set the version for version checking; uncomment to use
 $VERSION     = 0.01;
 
-@EXPORT      = qw(&skip_till &getHostType &reverseDNS &getHostPart  &bits2mask &logError &decryptAttrvalue);
+@EXPORT      = qw(&skip_till &getHostType &reverseDNS &getHostPart  &bits2mask &logError &decryptAttrvalue &getNmapResponse );
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -190,6 +191,27 @@ sub decryptAttrvalue($$)
 	
 	return $plaintext;
 }
+
+sub getNmapResponse($)
+{
+	my $addr =shift;
+    my $scanner = new Nmap::Scanner;
+	$scanner->add_target($addr);
+	my $results = $scanner->scan();
+	my $host_list = $results->get_host_list();
+	my $counter = 0;
+ 
+	while (my $host = $host_list->get_next()) {
+		unless (!($host->addresses)[0]->addr) {
+			if( $host->status eq 'up' ) {
+			$counter++;          
+			}
+		}
+	}
+
+	return $counter;
+}
+
 
 
 1;

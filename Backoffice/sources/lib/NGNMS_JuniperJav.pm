@@ -156,6 +156,7 @@ sub juniper_get_topologies ($$$$$) {
   my @params = ($_[0],$_[1],$_[2],$_[3],'','',$_[4]);
   my $filename1 = $host."_isis.txt";
   my $filename2 = $host."_ospf.txt";
+  my $filename3 = $host."_bgp.txt";
   
   
   juniper_create_session(@params);
@@ -167,6 +168,7 @@ sub juniper_get_topologies ($$$$$) {
   if (defined($ENV{"NGNMS_CONFIGS"})) {
 		$filename1 = $ENV{"NGNMS_CONFIGS"}."/".$filename1;
 		$filename2 = $ENV{"NGNMS_CONFIGS"}."/".$filename2;
+		$filename3 = $ENV{"NGNMS_CONFIGS"}."/".$filename3;
 	}
   
   print "Getting ISIS topology...\n";
@@ -177,6 +179,9 @@ sub juniper_get_topologies ($$$$$) {
   juniper_get_file('show ospf database extensive', $filename2)  or
     return $Error;
 
+  print "Getting BGP topology...\n";
+  juniper_get_file('show bgp summary', $filename3)  or
+    return $Error;
   $session->close;
   print "Done with topology collection \n";
   return "ok";
@@ -557,6 +562,66 @@ sub juniper_parse_ospf {
 }
 
 #
+# parse 'show bgp summary' output
+#
+# Params:
+#  bgp file
+
+sub juniper_parse_bgp($$) {
+  my $bgp_file = shift;
+  my $host = shift;
+
+  print "Parsing Juniper BGP topology file $bgp_file\n";
+
+  my %host_ips;
+  my %autonomous_systems;
+  my $host1;
+  my $ip1;
+  my $as1;
+  my @arr_bgp;
+  my $ip = $host;
+  my %links;
+=for  
+  DB_addHostNoWrite( \%host_ips, $host);
+  DB_addHostIP( \%host_ips, $host, $ip);
+=cut  
+  open my $info, $bgp_file or
+    return "error - config file $bgp_file: $!\n";
+
+
+while( my $line = <$info>)  {   
+	$line =~ s/[\n]//g;
+	
+    if($line =~ m/^(\d+\.\d+\.\d+\.\d+)\s+(\d+)\s+(\d+)\s(.*)/i){
+      $ip1 = $1;
+      $host1=$ip1;
+      $as1 = $2;
+      print "Host:", $host1, " AS:" ,$as1,"\n";
+     
+      DB_addHostNoWrite( \%host_ips, $host1);
+      DB_addHostIP( \%host_ips, $host1, $ip1);
+      DB_addLinkNoWrite( \%links, $host, $ip1, "P" );  
+      push(@ {$autonomous_systems{$host1}}, $as1);
+      }
+      
+      next;
+    }
+  
+  close $info; 
+
+  DB_writeTopologyBgp( \%host_ips,\%links ,\%autonomous_systems );
+  my $hosts = DB_getBgpRouters();
+	if(defined $hosts)
+	{
+		
+		return $hosts;
+	}
+	
+	return undef;
+  
+}
+
+#
 # Params:
 #  router_id
 #  interfaces file
@@ -593,7 +658,7 @@ sub juniper_parse_interfaces {
       $newState = 'adm down' if $newState =~ /Administratively down/;
       $newCond = 'up' if $newCond =~ /Up/;
       $newCond = 'down' if $newCond =~ /Down/;
-      if (($phInterface ne "") && !($phInterface =~ /^\.local\./)) {
+      if (($phInterface ne "") && !($phInterface =~ /^\.local\./) ) {
 	DB_writePhInterface($rt_id, \%phifc);
 	@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
       }
@@ -652,10 +717,7 @@ sub juniper_parse_interfaces {
 	@old_ph_ifcs = grep {!/^$phifc{"interface"}$/} @old_ph_ifcs;
 	$ph_int_id = DB_getPhInterfaceId($rt_id, $phInterface);
       } 
-      if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0')) {
-	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
-	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
-      }
+
       $logInterface = $1;
       @ifc{("interface","ip address","mask","description")} =
 	($1,'0.0.0.0','255.255.255.255','');
@@ -691,6 +753,11 @@ sub juniper_parse_interfaces {
 	print "Dest: $1, bits: $2, local: $3\n";
 	$ifc{ 'ip address' } = $3;
 	$ifc{ 'mask' } = bits2mask($2);
+	if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0')) {
+		print "Tut\n";
+	DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+	@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
+      }
 	print "mask: $ifc{ 'mask' }\n";
 	next;
       }
@@ -701,6 +768,10 @@ sub juniper_parse_interfaces {
 	if ($phInterface =~ /^lo\d+/) {
 	  print "Local interface, ip $ifc{ 'ip address' }\n";
 	  $ifc{ 'mask' } = '255.255.255.255';
+	  if (($logInterface ne "") && ($ifc{"ip address"} ne '0.0.0.0')) {
+		DB_writeInterface( $rt_id, $ph_int_id, \%ifc );
+		@old_ifcs = grep {!/^$ifc{"interface"}$/} @old_ifcs;
+      }
 	}
 	#print "Dest: $1, local: $2\n";
 	next;

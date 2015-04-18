@@ -40,6 +40,7 @@ use NGNMS_SSG5;
 
 use NGNMS_util;
 use NGNMS_DB;
+use List::Util qw( min max );
 
  use Data::Dumper;
 
@@ -216,15 +217,41 @@ $criptokey.=$suffix;
 
 		
 		$type_router = DB_getRouterVendor($host);
-		my $r_id = DB_getRouterId($host);
+		
 		if(defined $type_router)
 		{
 			$type_router =~ s/\s+$//;
 		}
-		my $amount = DB_isInRouterAccess($host);# check exists special access to router
-		if(!defined($amount))
+		my $amount;
+		my $r_id;
+
+		my $arr_param6 = DB_isInRouterAccess($host);# check exists special access to router
+		my $counter = 0;
+
+			foreach my $emp6(@$arr_param6){
+				$counter++;
+				if (defined($emp6->[0]))
+				 {
+					 $amount =  $emp6->[0];
+				 }
+				 else
+				 {
+					 $amount =  0;
+				 }
+				 if (defined($emp6->[1]))
+				 {
+					 $r_id =  $emp6->[1];
+				 }
+				 else
+				 {
+					 $r_id =  DB_getRouterId($host);
+				 }			 		
+			}		
+		
+		if($counter < 1)
 		{
-			$amount =0;
+			$amount =  0;
+			$r_id =  DB_getRouterId($host);
 		}
            
 		if($amount < 1)	##if is not special access to router then it connects with default parameters
@@ -298,9 +325,31 @@ $criptokey.=$suffix;
 				}
 			    else
 				{
-					$prom_val = DB_getSettings('community');
-					my $community1 = getAttrVal($prom_val->[0]) ;
-					$community = $community1 if defined($community1);
+					my $arr_param7 = DB_isDueCommunity($host);
+					my $counter7 = 0;
+					foreach my $emp7(@$arr_param7){
+												
+						if (defined($emp7->[1]))
+						{
+							$counter7++;
+							$r_id =  $emp7->[1];
+						}		 		
+					}
+					if($counter7)
+					{
+						my $arr_param1 = DB_getCommunity($r_id);
+						foreach my $emp1(@$arr_param1)
+						{
+							$community = decryptAttrvalue($criptokey, $emp1->[0]) if defined($emp1->[0]);
+							$community =~ s/\s+$//; 
+						}	
+					}
+					else
+					{
+						$prom_val = DB_getSettings('community');
+						my $community1 = getAttrVal($prom_val->[0]) ;
+						$community = $community1 if defined($community1);
+						}		
 				}				
 		DB_close;
 		if($access =~/SSH/i)
@@ -374,6 +423,8 @@ sub getConfigs {
   {
 	  return &NGNMS_SSG5::ssg5_get_configs;
   }
+  
+  
   return "host type ${hostType} not supported yet";
 }
 #########################################################
@@ -382,6 +433,8 @@ sub parseConfigs {
   my $ret = "ok";
   my $config_file;
   my $run_config_file;
+  
+  
  
   DB_setHostVendor($rt_id,$hostType);
   DB_setHostState($rt_id,"up");
@@ -475,6 +528,7 @@ sub parseConfigs {
       $ret = &NGNMS_SSG5::ssg5_parse_config ($host,$config_file);
 	}	
 	
+	
   return $ret;
 }
 ###########################################################
@@ -513,6 +567,14 @@ sub getLinuxConfig()
   ##my $cur_ipaddr = DB_getRouterIpAddr($cur_id);
   my $cur_ipaddr = $host;
   my $ocx_session = NGNMS_Linux->new($cur_ipaddr,$user,$passwd,$enpasswd,$access,$path_to_key,$passphrase);
+  my $eeerror = $ocx_session->_socket->error;
+  
+  if($eeerror =~ m/unable to establish master SSH connection/)
+  {
+	  $ocx_session->close;
+	  return $eeerror;
+	  
+	}
   $ocx_session->open($cur_ipaddr,$user,$passwd,$enpasswd);
   $ocx_session->run_proccessing($cur_ipaddr);
   $ocx_session->close;
@@ -528,25 +590,56 @@ if( !defined($rt_id)) {
   exit;
 };
 
+if(defined $hostType)
+    {
+		DB_setHostVendor($rt_id,$hostType);
+	}
+	
+
 my $ret;
-if (!$noPoll) {
-  
+if (!$noPoll) { 
   $configPath = makeConfigPath($host,$rt_id);
   $ret = &getConfigs($host,$user,$passwd,$enpasswd,$configPath,$community,$access,$path_to_key);
-  
+    
   if ($ret ne "ok") {
     logError("poll","get configs from \'$host\': $ret");
     # get host ip addr and try to connect using it
     my $addr = DB_getRouterIpAddr($rt_id);
-    $ret = &getConfigs($addr,$user,$passwd,$enpasswd,$configPath,$community,$access,$path_to_key);
+    $ret = &getConfigs($addr,$user,$passwd,$enpasswd,$configPath,$community,$access,$path_to_key);    
   }
-  
   if ($ret ne "ok") {
-    DB_setHostState($rt_id,"down");
-    if(defined $hostType)
-    {
+	my $nmap_flag;
+	if(defined $hostType)
+	{
 		DB_setHostVendor($rt_id,$hostType);
 	}
+	
+	if($ret =~ m/unable to establish master SSH connection/ || $ret =~ m/Cannot connect/)
+	{
+		DB_setHostState($rt_id,"unmanaged");
+	}
+	else
+	{
+		my $addr_nmap = DB_getRouterIpAddr($rt_id);
+		
+		if(defined($addr_nmap)){
+			$nmap_flag = &getNmapResponse($addr_nmap);
+		}
+		else
+		{
+			$nmap_flag = 0;
+		}
+		if($nmap_flag > 0)
+		{
+			DB_setHostState($rt_id,"unknown");
+		}
+		else
+		{
+			DB_setHostState($rt_id,"down");
+		}     
+	}
+	
+    
     DB_close;
     logError("poll","get configs from \'$host\': $ret");
     exit;
@@ -562,11 +655,15 @@ if (!$noPoll) {
   $hostType = $test_host_type;
 }
 
-
 if( $hostType eq "Linux" || $hostType =~/ubuntu/i) 
 {
-	print "Type:$hostType-$host\n";
+		my $linux_layer = 5;
+	    DB_setHostVendor($rt_id,'Linux');
+	    DB_setHostLayer($rt_id,$linux_layer);
 		$ret = &getLinuxConfig($host,$user,$passwd,$enpasswd,$configPath,$community,$access,$path_to_key);
+		if ($ret ne "ok") {
+			DB_setHostState($rt_id,"unmanaged");
+		}
 	}
 elsif( $hostType =~/ocx/i)	
 {
@@ -577,9 +674,6 @@ else
 	$ret = &parseConfigs($host,$configPath);
 	}	
 
-
-
-	
 DB_close;
 $ret eq "ok" or
   logError("poll","parse configs from \'$host\': $ret");
