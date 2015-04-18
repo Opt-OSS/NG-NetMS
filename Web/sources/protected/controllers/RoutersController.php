@@ -1699,6 +1699,7 @@ exit;*/
                 if (isset($_POST['tumbler']) && $_POST['tumbler'] > 0)
                 {
                     Routers::model()->deleteAll();
+                    BgpRouters::model()->deleteAll();
                     Events::model()->deleteAll();
                     Yii::app()->user->setFlash('cleandb', 'DB was cleaned.');
                     $this->refresh();
