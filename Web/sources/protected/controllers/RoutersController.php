@@ -82,7 +82,7 @@ class RoutersController extends Controller {
                         $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name,$router->layer);
                         if($amount < 1)
                         {
-                            if(!isset($vendor_name) || empty($vendor_name) )
+                            if(!isset($vendor_name) || empty($vendor_name) || $vendor_name=='unknown')
                             {
                                 $vendor_name = "DEFAULT";
                             }
@@ -520,7 +520,7 @@ exit;*/
                     $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name,$router->layer);
                     if($amount < 1)
                     {
-                        if(!isset($vendor_name) || empty($vendor_name) )
+                        if(!isset($vendor_name) || empty($vendor_name) || $vendor_name=='unknown')
                         {
                             $vendor_name = "DEFAULT";
                         }
@@ -628,7 +628,7 @@ exit;*/
                     $amount = RouterIcons::model()->isImg($rt_state->id, $vendor_name,$router->layer);
                     if($amount < 1)
                     {
-                        if(!isset($vendor_name) || empty($vendor_name) )
+                        if(!isset($vendor_name) || empty($vendor_name) || $vendor_name=='unknown')
                         {
                             $vendor_name = "DEFAULT";
                         }
