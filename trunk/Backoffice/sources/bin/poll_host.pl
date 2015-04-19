@@ -590,7 +590,7 @@ if( !defined($rt_id)) {
   exit;
 };
 
-if(defined $hostType)
+if(defined $hostType && $hostType ne 'unknown')
     {
 		DB_setHostVendor($rt_id,$hostType);
 	}
@@ -609,7 +609,7 @@ if (!$noPoll) {
   }
   if ($ret ne "ok") {
 	my $nmap_flag;
-	if(defined $hostType)
+	if(defined $hostType && $hostType ne 'unknown')
 	{
 		DB_setHostVendor($rt_id,$hostType);
 	}
