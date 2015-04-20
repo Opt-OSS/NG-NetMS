@@ -870,12 +870,12 @@ sub DB_isInRouterAccess($) {
 	my $SQL;
 	if( $_[0] =~ /\d+\.\d+\.\d+\.\d+/ ) {
 		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_access ra ,routers r, interfaces i 
-				WHERE ((r.ip_addr = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.id_router=r.router_id ) 
-				OR (i.ip_addr = \'$r_n\'  and ra.id_router=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id ";
+				WHERE ((host(r.ip_addr) = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.id_router=r.router_id ) 
+				OR (host(i.ip_addr) = \'$r_n\'  and ra.id_router=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id ";
 	}
 	else
 	{
-		$SQL = "SELECT count(ra.*) as ammount, r.router_id as rtid FROM router_access ra ,routers r WHERE r.name = \'$r_n\' AND ra.id_router=r.router_id";
+		$SQL = "SELECT count(ra.*) as ammount, r.router_id as rtid FROM router_access ra ,routers r WHERE r.name = \'$r_n\' AND ra.id_router=r.router_id GROUP BY 2";
 	}
     
 ##  print Dumper($rref);
@@ -902,14 +902,14 @@ sub DB_isDueCommunity($) {
 	 my $SQL;
 	 if( $_[0] =~ /\d+\.\d+\.\d+\.\d+/ ) {
 		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_snmp_access ra ,routers r, interfaces i 
-				WHERE ((r.ip_addr = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.router_id=r.router_id ) 
-				OR (i.ip_addr = \'$r_n\'  and ra.router_id=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id";
+				WHERE ((host(r.ip_addr) = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.router_id=r.router_id ) 
+				OR (host(i.ip_addr) = \'$r_n\'  and ra.router_id=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id";
 	}
 	else
 	{
 		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_snmp_access ra ,routers r, interfaces i 
-				WHERE ((r.ip_addr = '0.0.0.0'  or r.name = '0.0.0.0'  ) AND ra.router_id=r.router_id and i.router_id = r.router_id) 
-				OR (i.ip_addr = '0.0.0.0'  and ra.router_id=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id";
+				WHERE ((host(r.ip_addr) = '0.0.0.0'  or r.name = '0.0.0.0'  ) AND ra.router_id=r.router_id and i.router_id = r.router_id) 
+				OR (host(i.ip_addr) = '0.0.0.0'  and ra.router_id=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id";
 	}
 	my $rref = $dbh->selectall_arrayref($SQL);
 	return $rref;
