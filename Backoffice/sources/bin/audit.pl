@@ -619,11 +619,7 @@ foreach my $child (keys %hosts) {
 	  if (!$pid) {			# child
 		close $r;
 		my @cmd2=($cmd);
-		if(defined($type_router))
-		{
-			push @cmd2,'-t';
-			push @cmd2,$type_router;
-		}
+		
 		push @cmd2,'-d';
 		push @cmd2,'-L';
 		push @cmd2,$dbhost;
