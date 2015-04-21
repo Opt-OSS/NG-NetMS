@@ -618,6 +618,10 @@ if (!$noPoll) {
 	{
 		DB_setHostState($rt_id,"unmanaged");
 	}
+	elsif($ret =~ m/No Response from/)
+	{
+		DB_setHostState($rt_id,"down");
+	}
 	else
 	{
 		my $addr_nmap = DB_getRouterIpAddr($rt_id);
