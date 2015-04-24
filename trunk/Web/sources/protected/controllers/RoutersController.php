@@ -1648,7 +1648,10 @@ exit;*/
             $vendors[$klucz] = $wiersz['vendor'];
         }
 
-        array_multisort($names, SORT_REGULAR,  $arr_ing);
+        if($amount1 > 0)
+        {
+            array_multisort($names, SORT_REGULAR,  $arr_ing);
+        }
 
         for ($k1 = 0; $k1 < $amount1; $k1++) {
             $arr_ing[$k1]['id'] = $k1 + 1;
