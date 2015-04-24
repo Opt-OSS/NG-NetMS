@@ -179,6 +179,13 @@ return array(
             'day' => 1440,
             'week' => 10080
         ),
+        'vendors' => array(
+                'Cisco' => 'Cisco',
+                'Extreme'=>'Extreme',
+                'Juniper'=>'Juniper',
+                'Linux'=>'Linux',
+                'Netscreen'=>'Netscreen'
+        ),
                 'color_na' => '#808080',
                 'point_on_chart'=>200,
                 'prev_of_chart'=>25,

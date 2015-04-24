@@ -4,7 +4,7 @@
 
 $this->breadcrumbs=array(
 	'Routers'=>array('index'),
-	$model->name=>array('view','id'=>$model->name),
+	$model->name=>array('view','id'=>$model->router_id),
 	'Update',
 );
 
