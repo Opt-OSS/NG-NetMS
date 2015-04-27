@@ -449,8 +449,8 @@ exit;*/
             'gridDataProvider' => new CArrayDataProvider($arr_hw),
             'gridColumns' => array(array('name' => 'type', 'header' => 'Part Type','htmlOptions'=>array('width'=>'25%'),),
                 //                        array('name'=>'details', 'header'=>'Details'),
-                array('name' => 'name', 'header' => 'Name', 'type' => 'raw', 'value' => '$data["name"]','htmlOptions'=>array('width'=>'25%'),),
-                array('name' => 'version', 'header' => 'Details/Serial Number', 'type' => 'raw', 'value' => '$data["version"]','htmlOptions'=>array('width'=>'25%'),),
+                array('name' => 'name', 'header' => 'Description', 'type' => 'raw', 'value' => '$data["name"]','htmlOptions'=>array('width'=>'25%'),),
+                array('name' => 'version', 'header' => 'Serial Number', 'type' => 'raw', 'value' => '$data["version"]','htmlOptions'=>array('width'=>'25%'),),
                 array('name' => 'amount', 'header' => 'Info', 'type' => 'raw', 'value' => '$data["amount"]','htmlOptions'=>array('width'=>'25%'),),
             )
         ));
