@@ -354,6 +354,14 @@ if(defined $ht && $ht ne  '')
 		
   DB_writeHostModel($rt_id,$last_el);
 } 
+else
+{
+	my $ht1 = `snmpget -v 1 -m ALL -c $community $host sysObjectID.0`;
+	$ht1 =~/OID:.*\.(.*$)/; 
+	if(defined $ht1 && $ht1 ne  ''){
+		DB_writeHostModel($rt_id,$ht1);
+	}
+}
   return "ok";
 }
 
