@@ -1,7 +1,7 @@
 #!/bin/sh
 # NG-NetMS, a Next Generation Network Managment System
 # 
-# Copyright (C) 2014 Opt/Net
+# Copyright (C) 2015 Opt/Net
 # 
 # This file is part of NG-NetMS tool.
 # 
@@ -28,15 +28,16 @@
 #[ -z ${0##/*} ] || mydir=`pwd`
 
 mydir=`pwd`
-echo CONSOLE Mydir --- $mydir
+echo CON Mydir --- $mydir
 logger "LOGGER Mydir --- $mydir"
 
-echo CONSOLE NGNMS_HOME --- $NGNMS_HOME
-logger "CONSOLE NGNMS_HOME --- $NGNMS_HOME"
+echo CON NGNMS_HOME --- $NGNMS_HOME
+logger "LOGGER NGNMS_HOME --- $NGNMS_HOME"
 
 origin=$4
-echo CONSOLE Testing --- $0: testing host $origin
+
+echo CON Testing --- $0: testing host $origin
 logger "LOGGER Testing ---  $0: testing host $origin"
 
-echo TESTING ************* $1 *** $2 *** $3 *** $origin ***  $5 ***  $6 *** Mydir $mydir ***
-logger "TESTING ************* $1 *** $2 *** $3 *** $origin ***  $5 ***  $6 *** Mydir $mydir ***"
+echo TESTING ******* $1 *** $2 *** $3 *** $origin ***  $5 ***  $6 *** $7 ***
+logger "LOGGER TESTING ******* $1 *** $2 *** $3 *** $origin ***  $5 ***  $6 *** $7 ***"
