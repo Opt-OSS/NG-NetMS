@@ -1,7 +1,7 @@
 <?php
 
 $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
-    'links' => array('Routers' => 'index.php?r=routers/index', 'SW Inventory'),
+    'links' => array('Devices' => 'index.php?r=routers/index', 'SW Inventory'),
 ));
 ?>
 <script type="text/javascript">

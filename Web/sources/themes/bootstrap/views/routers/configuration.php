@@ -2,7 +2,7 @@
 /* @var $this RoutersController */
 
 $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
-    'links' => array('Routers' => 'index.php?r=routers/index', 'Router Configuration' => 'index.php?r=routers/viewconf', "Router ".$router->name),
+    'links' => array('Devices' => 'index.php?r=routers/index', 'Device Configuration' => 'index.php?r=routers/viewconf', "Device ".$router->name),
 ));
 ?>
 <?php if($config_current){ ?>

@@ -2,7 +2,7 @@
 /* @var $this RoutersController */
 
 $this->breadcrumbs=array(
-	'Routers',
+	'Devices',
 );
 ?>
 <h1><?php //echo $this->id . '/' . $this->action->id; ?></h1>

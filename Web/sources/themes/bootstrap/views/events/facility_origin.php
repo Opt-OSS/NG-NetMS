@@ -3,7 +3,7 @@
 
 
 $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
-    'links'=>array('Events','Summary of activity by origin'=>'index.php?r=events/summarybyorigin', 'Facilities for router'),
+    'links'=>array('Events','Summary of activity by origin'=>'index.php?r=events/summarybyorigin', 'Facilities for device'),
 ));
 $form = $this->beginWidget(
     'bootstrap.widgets.TbActiveForm', array(
@@ -95,13 +95,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 
 ));
 if ($flag) {
-/*    echo '<div style ="float :right"> ';
-    $this->widget('bootstrap.widgets.TbButton', array(
-        'type'=>'success',
-        'label'=>'View events history',
-        'url'=>Yii::app()->createUrl("events/history", array("id"=>$router_id,"router"=>$router_name)),
-    ));
-    echo "</div>";*/
+
 ?>
 
     <script type="text/javascript">

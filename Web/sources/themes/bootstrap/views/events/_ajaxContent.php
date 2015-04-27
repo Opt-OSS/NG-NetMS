@@ -16,7 +16,7 @@
 
 <body>
 <div style ="width:90%;margin-left: 5%">
-    <h2><?php echo "Events for router/host <i><font color='#68000'>".$origin."</font></i>"; ?></h2>
+    <h2><?php echo "Events for device/host <i><font color='#68000'>".$origin."</font></i>"; ?></h2>
     <div>
         You can use operators ">", "<", ">=", "<=","<>" for searching by fields <b> <i>Severity</i>, <i>Code</i></b></br>
         and operator "<>" for searching by fields <b><i>Facility</i>,<i> Description and Time</i></b>.</br>

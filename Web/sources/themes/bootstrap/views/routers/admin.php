@@ -3,14 +3,14 @@
 /* @var $model Routers */
 
 $this->breadcrumbs=array(
-	'Routers'=>array('index'),
+	'Devices'=>array('index'),
 	'Manual control',
 );
 
 
 ?>
 
-<h1>Routers manual control</h1>
+<h1>Devices manual control</h1>
 
 
 <?php
@@ -42,7 +42,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 ));
 
 $this->widget(
-    'bootstrap.widgets.TbButton', array( 'label' => 'Create router manually ','type'=>'info',
+    'bootstrap.widgets.TbButton', array( 'label' => 'Create device manually ','type'=>'info',
         'url'=>Yii::app()->createUrl("routers/create"))
 );
 ?>
