@@ -279,6 +279,9 @@ sub extreme_parse_hardwr {
   my $serial_number;
   my $name_hw;
   my $hw_rev;
+  my $switch_record_number;
+  my $switch_record_desc;
+  my $switch_record_info;
   $ret_arr{ok} ='ok';
   open my $info, $hardwr_file or
   return "error - hardware file $hardwr_file: $!\n";
@@ -288,12 +291,7 @@ sub extreme_parse_hardwr {
   while( my $line = <$info>)  {   
    $line =~ s/[\n]//g;
    if ($line =~ m/Switch      :\s(.*)\sRev/i) { # Name of switch
-			%hw_info = (
-			"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
+	   $switch_record_number = $1;
 			}
 		elsif($line =~ m/PSU-1       :\s(.*)$/i)
 		{
@@ -313,23 +311,22 @@ sub extreme_parse_hardwr {
 		}
 		elsif($line =~ m/Switch        (.*)$/i)
 		{
-			%hw_info = (	"hw_item" => 'Switch',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
-
+			my @t_arr0 = split(/:/,$1);
+			my $ind0 = $#t_arr0;
+			$switch_record_info = $t_arr0[$ind0];
 		}
-		elsif($line =~ m/Subsystem     (.*)$/i)
-		{
-			%hw_info = (	"hw_item" => 'Subsystem',
-			"hw_name" => $1,
-			"hw_ver"  =>'',
-			"hw_amount" => '' );
-			DB_writeHwInfo($rt_id, \%hw_info);
+		elsif ($line =~ m/System Type:      (.*)$/i) { # Model of switch
+			$switch_record_desc = $1;	
 		}
  }
-
+ 
+	if(defined $switch_record_desc || defined $switch_record_number || defined $switch_record_info){
+	%hw_info = ("hw_item" => 'Switch',
+				"hw_name" => $switch_record_desc,
+				"hw_ver"  =>$switch_record_number,
+				"hw_amount" => $switch_record_info );
+				DB_writeHwInfo($rt_id, \%hw_info);
+		}
   close $info;
   return "ok";
 }
