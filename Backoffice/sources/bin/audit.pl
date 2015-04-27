@@ -30,7 +30,7 @@
 #  NGNMS_LOGFILE - if set and no debug output to sreen, log is written to this file
 #
 # Copyright (C) 2002,2003 OptOSS LLC
-# Copyright (C) 2014 Opt/Net BV
+# Copyright (C) 2015 Opt/Net BV
 #
 # Author: M.Golov, T.Matselyukh, A. Jaropud
 #

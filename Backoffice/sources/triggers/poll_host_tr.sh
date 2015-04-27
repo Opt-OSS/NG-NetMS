@@ -1,7 +1,7 @@
 #!/bin/sh
 # NG-NetMS, a Next Generation Network Managment System
 # 
-# Copyright (C) 2014 Opt/Net
+# Copyright (C) 2015 Opt/Net
 # 
 # This file is part of NG-NetMS tool.
 # 
@@ -26,11 +26,22 @@
 #
 #[ -z ${0##/*} ] || mydir=`dirname $PWD/$0`/
 
+echo CONSOLE: --> Polling host $origin ...
+logger "LOG: --> Polling host $origin ..."
+
+mydir=`pwd`
+echo CONSOLE Mydir --- $mydir
+logger "LOG: --> Mydir = $mydir"
+
 origin=$4
-echo $0: polling host $origin
-logger "$0: polling host $origin"
-echo poll_host.pl -D ngnms -U ngnms -W optoss $origin lab PocLab cisco public
-logger "poll_host.pl -D ngnms -U ngnms -W optoss $origin lab PocLab cisco public"
 
+echo poll_host.pl -D ngnms -U ngnms -W optoss $origin 
+logger "LOG: --> Starting poll_host.pl -D ngnms -U ngnms -W optoss $origin ..."
 
-poll_host.pl -D ngnms -U ngnms -W ngnms $origin lab PocLab cisco public
+poll_host.pl -D ngnms -U ngnms -W ngnms $origin 
+
+echo CONSOLE: Exit status: $?
+logger "LOG: Exit status: $?"
+
+echo CONSOLE: Exiting poll_host_tr.sh script
+logger "LOG: Exiting poll_host_tr.sh script"

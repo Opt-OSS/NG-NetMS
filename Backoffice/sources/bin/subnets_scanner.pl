@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w
 # NG-NetMS, a Next Generation Network Managment System
 # 
-# Version 3.2 
+# Version 3.3 
 # Build number N/A
-# Copyright (C) 2014 Opt/Net
+# Copyright (C) 2015 Opt/Net
 # 
 # This file is part of NG-NetMS tool.
 # 
@@ -17,8 +17,7 @@
 # See the GNU General Public License for more details. You should have received a copy of the GNU
 # General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
 # 
-# Authors: T.Matselyukh, A. Jaropud, M.Golov
- 
+# Authors: T.Matselyukh, A. Jaropud
 #
 # Scan subnets which were configured in network
 #
@@ -32,10 +31,6 @@
 #  -W 		 Pasword for DB user	
 #  -P        DB port
 #
-#
-# Copyright (C) 2015
-#
-# Author: A.Iaropud
 #
 
 use strict;

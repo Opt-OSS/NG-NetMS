@@ -25,9 +25,9 @@
 #
 #  NGNMS_LOGFILE - if set and no debug output to sreen, log is written to this file
 #
-# Copyright (C) 2002,2003 OptOSS LLC
+# Copyright 2015(C) Opt/Net BV 
 #
-# Author: M.Golov
+# Author: M.Golov, A. Jaropud, T. Matselyukh
 #
 use strict;
 

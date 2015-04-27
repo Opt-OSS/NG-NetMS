@@ -1,4 +1,5 @@
 # Copyrights: Opt/Net 
+# Date: Apr 26 2015
 # Author: T. Matselyukh
 #------------------------------------------------------------------------------
 #--------------------------- START OF STANDARD RULES --------------------------
@@ -47,7 +48,7 @@ event ALARM {
 
 #start poll cycle for juniper on configuration change
 event COMMIT_JNP {
-      condition $msg ~= "UI_COMMIT_PROGRESS: Commit operation in progress: commit complete";
+      condition $msg ~= "Commit operation in progress: commit complete";
       protocol syslog;
       severity 100;
       action "triggers/poll_host_tr.sh";
@@ -56,6 +57,14 @@ event COMMIT_JNP {
 #start poll cycle for cisco` on configuration change
 event COMMIT_CSC {
       condition $msg ~= "Configured from";
+      protocol syslog;
+      severity 100;
+      action "triggers/poll_host_tr.sh";
+}
+
+#start poll cycle for juniper SSG on configuration change
+event COMMIT_JNP_SSG {
+      condition $msg ~= "System configuration saved by";
       protocol syslog;
       severity 100;
       action "triggers/poll_host_tr.sh";
@@ -86,11 +95,25 @@ event FAILED {
       severity 500;
 }
 
-event DENIED {
-      condition $msg ~= ".*denied.*";
+event FAILURE {
+      condition $msg ~= ".*failure.*";
       severity 500;
 }
 
+event FAILED_PW {
+      condition $msg ~= ".*Failed password.*";
+      severity 50;
+}
+
+event FAILED_PW_2MANY {
+      condition $msg ~= ".*too many password failures.*";
+      severity 250;
+}
+
+event DENY {
+      condition $msg ~= ".*DENY.*";
+      severity 50;
+}
 
 #------------------------------------------------DELETE BELOW THIS LINE---------------------
 # simple demo examples for rules file parser

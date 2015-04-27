@@ -1,7 +1,7 @@
 #!/bin/sh
 # NG-NetMS, a Next Generation Network Managment System
 # 
-# Copyright (C) 2014 Opt/Net
+# Copyright (C) 2015 Opt/Net
 # 
 # This file is part of NG-NetMS tool.
 # 
