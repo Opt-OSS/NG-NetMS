@@ -2,7 +2,7 @@
 /* @var $this RoutersController */
 
 $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
-    'links' => array('Routers' => 'index.php?r=routers/index', 'Router Configuration'),
+    'links' => array('Devices' => 'index.php?r=routers/index', 'Device Configuration'),
 ));
 ?>
 <h1><?php //echo $this->id . '/' . $this->action->id; ?></h1>

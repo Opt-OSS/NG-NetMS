@@ -3,7 +3,7 @@
 
  
  $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
-    'links'=>array('Routers'=>'index.php?r=routers/index', 'SW Report by revision'),
+    'links'=>array('Devices'=>'index.php?r=routers/index', 'SW Report by revision'),
 )); 
 
 $imghtml=CHtml::image('images/csv32.png', 'csv');

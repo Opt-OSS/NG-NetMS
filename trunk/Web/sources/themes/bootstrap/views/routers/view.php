@@ -3,7 +3,7 @@
 
  
  $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
-    'links'=>array('Routers'=>'index.php?r=routers/index', $model->name),
+    'links'=>array('Devices'=>'index.php?r=routers/index', $model->name),
 )); 
 
 ?>

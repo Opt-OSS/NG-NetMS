@@ -3,7 +3,7 @@
 
  
  $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
-    'links'=>array('Routers'=>'index.php?r=routers/index', 'Hw Report by part number'),
+    'links'=>array('Devices'=>'index.php?r=routers/index', 'Hw Report by part number'),
 )); 
  /*$this->hw_data = $modelhw->reportByPartNumber();
                 print_r($this->hw_data);*/
@@ -29,7 +29,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
         array('name'=>'hw_name', 'header'=>'Name'),
         array('name'=>'amount', 'header'=>'Qtty','filter' => false,),
         array('name'=>'hw_version', 'header'=>'Serial numbers'),
-        array('name'=>'router_name', 'header'=>'Routers'),
+        array('name'=>'router_name', 'header'=>'Devices'),
         ),
         
     ));

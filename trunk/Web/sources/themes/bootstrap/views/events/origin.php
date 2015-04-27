@@ -80,7 +80,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
         'enablePagination'=>true,
         'template'=>"{items}{pager}",
         'columns'         => array(
-        array('name'=>'origin', 'header'=>'Router'),
+        array('name'=>'origin', 'header'=>'Device'),
         'numofevents',
         'sumseverity',
             array(
