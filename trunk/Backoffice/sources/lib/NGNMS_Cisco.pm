@@ -356,11 +356,24 @@ if(defined $ht && $ht ne  '')
 } 
 else
 {
-	my $ht1 = `snmpget -v 1 -m ALL -c $community $host sysObjectID.0`;
-	$ht1 =~/OID:.*\.(.*$)/; 
-	if(defined $ht1 && $ht1 ne  ''){
-		DB_writeHostModel($rt_id,$ht1);
+	my $rout_id = DB_getRouterIpAddr($rt_id);
+	my $ht0 = `snmpget -v 2c -m ALL -c $community $rout_id sysObjectID.0`;
+	if(defined $ht0 && $ht0 ne  '')
+	{
+		my @t_arr0 = split(/:/,$ht0);
+		my $ind0 = $#t_arr0;
+		my $last_el0 = $t_arr0[$ind0];
+		DB_writeHostModel($rt_id,$last_el0);
 	}
+	else
+	{
+		my $ht1 = `snmpget -v 1 -m ALL -c $community $rout_id sysObjectID.0`;
+		$ht1 =~/OID:.*\.(.*$)/; 
+		if(defined $ht1 && $ht1 ne  ''){
+			DB_writeHostModel($rt_id,$ht1);
+		} 
+	}
+
 }
   return "ok";
 }
