@@ -12,11 +12,11 @@ $(document).ready(function(){
                             columns: [
                             {width: "275",header: "Nodes",title:"_DATA_"},
                             {cellClass: "col1", value: "rname",
-                            width: "140", header: "Router"},
+                            width: "150", header: "Router"},
                             {cellClass: "col2", value: "iname",
-                            width: "140", header: "Interface"},
+                            width: "150", header: "Interface"},
                             {cellClass: "col3", value: "cl",
-                            width: "100", header: "Description"},
+                            width: "300", header: "Description"},
                             ],
                             resizable:false
                     },               
