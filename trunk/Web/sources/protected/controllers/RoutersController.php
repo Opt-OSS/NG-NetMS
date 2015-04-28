@@ -10,6 +10,11 @@ class RoutersController extends Controller {
         if (!Yii::app()->user->isGuest) {
             if (Yii::app()->user->checkAccess('viewAssets')) {
                 $model = new Routers('search');
+                $model->dbCriteria->order="(substring(name, '^[0-9]{1,3}'))::int
+                                            ,substring(name, '^[0-9]{1,3}\.([0-9]{1,3})')::int
+                                            ,substring(name, '^[0-9]{1,3}\.[0-9]{1,3}\.([0-9]{1,3})')::int
+                                            ,substring(name, '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.([0-9]{1,3})')::int
+                                            ,name";
                 $model->unsetAttributes();
                 if (isset($_GET['Routers']))
                     $model->attributes = $_GET['Routers'];
