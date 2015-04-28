@@ -300,23 +300,33 @@ sub juniper_parse_hardwr {
 
       next;
     }
-
-    if (!defined $inventory[2] ) {
-	$inventory[2] = ' ';
+    if($#inventory == 1)
+    {
+		%hw_info = (	"hw_item" => "$inventory[0]",
+			"hw_name" => "$inventory[1]",
+			"hw_ver"  => '',
+			"hw_amount" => ''  );
+	}
+	else
+	{
+		if (!defined $inventory[2] ) {
+			$inventory[2] = ' ';
     }
 
     if (!defined $inventory[3] ) {
-	$inventory[3] = ' ';
+			$inventory[3] = ' ';
     }
 
     if (!defined $inventory[4] ) {
-	$inventory[4] = ' ';
+			$inventory[4] = ' ';
     }
 
     %hw_info = (	"hw_item" => "$inventory[0]",
 			"hw_name" => "$inventory[4]",
 			"hw_ver"  => "$inventory[3]",
 			"hw_amount" => "$inventory[2]" );
+	}
+    
 
     DB_writeHwInfo($rt_id, \%hw_info);
     next;
