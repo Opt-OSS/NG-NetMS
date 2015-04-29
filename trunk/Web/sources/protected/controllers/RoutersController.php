@@ -1688,9 +1688,20 @@ exit;*/
 
 
         for ($k1 = 0; $k1 < $amount1; $k1++) {
-            $arr_ing[$k1]['id'] = $k1+1;
             $arr_ing[$k1]['name'] = $arr_r[$k1]['router']->name;
             $arr_ing[$k1]['vendor'] = $arr_r[$k1]['router']->eq_vendor;
+        }
+
+        foreach ($arr_ing as $klucz => $wiersz) {
+            $names[$klucz]  = $wiersz['name'];
+            $vendors[$klucz] = $wiersz['vendor'];
+        }
+        if($amount1 > 0)
+        {
+            array_multisort($names, SORT_REGULAR,  $arr_ing);
+        }
+        for ($k1 = 0; $k1 < $amount1; $k1++) {
+            $arr_ing[$k1]['id'] = $k1 + 1;
         }
 
         $this->renderPartial('_relational', array(
