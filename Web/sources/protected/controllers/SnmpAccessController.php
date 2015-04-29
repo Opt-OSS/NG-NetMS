@@ -171,7 +171,9 @@ class SnmpAccessController extends Controller
 
         $attr_all = CHtml::listData(Routers::getAll(), 'router_id', 'name');
         $attr_curr = CHtml::listData($router_access_model->getRouterByAccess(), 'router_id', 'name');
+        natsort($attr_curr);
         $arr_d = array_diff($attr_all, $attr_curr);
+        natsort($arr_d);
         $snmp_access_curr = $this->loadModel($acc_type_id);
 
 
