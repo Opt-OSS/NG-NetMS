@@ -68,7 +68,7 @@ for($i = 0;$i<count($dirs_array2);$i++)
 # 
 # Version '. $version_number .' 
 # Build number '. $build_number.'
-# Copyright (C) 2014 Opt/Net
+# Copyright (C) 2015 Opt/Net
 # 
 # This file is part of NG-NetMS tool.
 # 
