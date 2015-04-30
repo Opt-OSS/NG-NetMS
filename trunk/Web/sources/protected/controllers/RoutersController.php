@@ -451,7 +451,11 @@ exit;*/
 
         $this->renderPartial('_relational', array(
             'id' => Yii::app()->getRequest()->getParam('id'),
-            'gridDataProvider' => new CArrayDataProvider($arr_hw),
+            'gridDataProvider' => new CArrayDataProvider($arr_hw,array(
+                        'pagination' => array(
+                            'pageSize' => 50,
+                        )
+                    )),
             'gridColumns' => array(array('name' => 'type', 'header' => 'Part Type','htmlOptions'=>array('width'=>'25%'),),
                 //                        array('name'=>'details', 'header'=>'Details'),
                 array('name' => 'name', 'header' => 'Description', 'type' => 'raw', 'value' => '$data["name"]','htmlOptions'=>array('width'=>'25%'),),
@@ -480,7 +484,11 @@ exit;*/
 
         $this->renderPartial('_relational', array(
             'id' => Yii::app()->getRequest()->getParam('id'),
-            'gridDataProvider' => new CArrayDataProvider($arr_sw),
+            'gridDataProvider' => new CArrayDataProvider($arr_sw,array(
+                        'pagination' => array(
+                            'pageSize' => 50,
+                        )
+                    )),
             'gridColumns' => array(array('name' => 'type', 'header' => 'Type','htmlOptions'=>array('width'=>'20%'),),
                 array('name' => 'name', 'header' => 'Name','htmlOptions'=>array('width'=>'60%'),),
                 array('name' => 'version', 'header' => 'Version','htmlOptions'=>array('width'=>'20%'),),
