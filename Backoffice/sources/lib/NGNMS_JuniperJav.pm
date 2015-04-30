@@ -257,75 +257,27 @@ sub juniper_parse_hardwr {
     s/^\s+//;			# no leading white
     s/\s+$//;			# no trailing white
 
+	my $str_process = $_;
     my @inventory = split (m'\s{2,}');
-
+	
     # This works well now - only hardware anomalies cause error messages on the console, which is fine by me
 
     if ( ! defined $inventory[0]) { next;}
     if ( $inventory[0] eq 'Hardware inventory:') {next;}
     if ( $inventory[0] eq 'Item') { next;}
-    if ( $inventory[0] eq 'Chassis') {
-      %hw_info = (	"hw_item" => "$inventory[0]",
-			"hw_name" => "$inventory[2]",
-			"hw_ver"  => "$inventory[1]",
-			"hw_amount" => '' );
-
-      DB_writeHwInfo($rt_id, \%hw_info);
-
-      next;
-    }
-
-    if ( $inventory[0] eq 'Routing Engine') {
-      if( $#inventory == 4 ) {
-	%hw_info = (	"hw_item" => "$inventory[0]",
-			"hw_name" => "$inventory[4]",
-			"hw_ver"  => "$inventory[3]",
-			"hw_amount" => "$inventory[2]" );
-      }
-      elsif( $#inventory == 2 ) {
-	%hw_info = (	"hw_item" => "$inventory[0]",
-			"hw_name" => "$inventory[2]",
-			"hw_ver"  => "$inventory[1]",
-			"hw_amount" => '' );
-      }
-      else {
-	# all other cases: WTF?
-	%hw_info = (	"hw_item" => "$inventory[0]",
-			"hw_name" => '',
-			"hw_ver"  => '',
-			"hw_amount" => ''  );
-      }
-
-      DB_writeHwInfo($rt_id, \%hw_info);
-
-      next;
-    }
-    if($#inventory == 1)
-    {
-		%hw_info = (	"hw_item" => "$inventory[0]",
-			"hw_name" => "$inventory[1]",
-			"hw_ver"  => '',
-			"hw_amount" => ''  );
-	}
-	else
-	{
-		if (!defined $inventory[2] ) {
-			$inventory[2] = ' ';
-    }
-
-    if (!defined $inventory[3] ) {
-			$inventory[3] = ' ';
-    }
-
-    if (!defined $inventory[4] ) {
-			$inventory[4] = ' ';
-    }
-
+    $inventory[1] = substr $str_process, 17, 8;
+    $inventory[2] = substr $str_process, 24,12;
+    $inventory[3] = substr $str_process, 37,16;
+    $inventory[4] = substr $str_process, 55;
+    $inventory[2] =~ s/^\s+|\s+$//g;
+    $inventory[3] =~ s/^\s+|\s+$//g;
+    $inventory[4] =~ s/^\s+|\s+$//g;
+    
     %hw_info = (	"hw_item" => "$inventory[0]",
 			"hw_name" => "$inventory[4]",
 			"hw_ver"  => "$inventory[3]",
 			"hw_amount" => "$inventory[2]" );
-	}
+	
     
 
     DB_writeHwInfo($rt_id, \%hw_info);
