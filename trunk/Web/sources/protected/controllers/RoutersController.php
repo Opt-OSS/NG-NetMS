@@ -1791,7 +1791,7 @@ exit;*/
                                           putenv('NGNMS_CONFIGS=/home/ngnms/NGREADY/configs');
                                           putenv('PATH=/home/ngnms/NGREADY/bin:/usr/bin');
                                           putenv('PERL5LIB=/usr/local/share/perl/5.18.2:/home/ngnms/NGREADY/bin:/home/ngnms/NGREADY/lib:/home/ngnms/NGREADY/lib/Net');
-
+										  putenv('MIBDIRS=/home/ngnms/NGREADY/mibs');
 
 
 
@@ -1800,7 +1800,9 @@ exit;*/
                                  {
                                      $command1 .= " -s";
                                  }
-
+/* Debug in /var/log/apache2/errot.log
+ * $command1 .= " -d";
+ */
                                  if(isset($arr_attr['host']) )
                                  {
                                      $command1 .= " -L ".$arr_attr['host'];
