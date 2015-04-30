@@ -25,9 +25,9 @@
 #
 #  NGNMS_LOGFILE - if set and no debug output to sreen, log is written to this file
 #
-# Copyright 2015(C) Opt/Net BV 
+# Copyright (C) 2002,2003 OptOSS LLC
 #
-# Author: M.Golov, A. Jaropud, T. Matselyukh
+# Author: M.Golov
 #
 use strict;
 
@@ -390,7 +390,19 @@ sub getConfigs {
     my $er;
     ($hostType,$er) = getHostType($host, $community);
     if (!defined $hostType) {
-      return $er;
+	  
+	  my $cur_devicetype = DB_getHostVendor($host);
+	  
+	  $cur_devicetype =~ s/^\s+|\s+$//g;
+	  
+	  if(!defined $cur_devicetype || $cur_devicetype eq '')
+	  {
+		return $er;
+	  }
+	  else
+	  {
+		  $hostType = $cur_devicetype;
+	  }
     }
     $hostType ne "unknown" or return "$host: unrecognised host type";
   } else {

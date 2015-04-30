@@ -53,7 +53,7 @@ $VERSION     = 0.01;
 		  &DB_getDuplicateHostname &DB_getRouterIdDuplicateHostname
 		  &DB_dropRouterId &DB_getCountUnion &DB_getCountIntersect
 		  &DB_getMinRouterRA &DB_getAllHostname &DB_getBgpRouters
-		  &DB_addBgpRouter &DB_getBgpRouterId 
+		  &DB_addBgpRouter &DB_getBgpRouterId &DB_getHostVendor
 		  &DB_writeTopologyBgp &DB_updateBgpRouterStatus 
 		  &DB_updateAllBgpRouterStatus &DB_updateBgpRouterAS &DB_writeBgpLink);
 
@@ -356,6 +356,22 @@ sub DB_getRouterId {
   return undef;
 }
 
+
+sub DB_getHostVendor{
+	local $dbh->{RaiseError};     # Ignore errors
+    my $SQL;
+    if( $_[0] =~ /\d+\.\d+\.\d+\.\d+/ ) {
+    $SQL = "SELECT eq_vendor FROM routers WHERE ip_addr = \'$_[0]\' OR name = \'$_[0]\'";
+  } else {
+    $SQL = "SELECT eq_vendor FROM routers WHERE name = \'$_[0]\'";
+  }
+    
+    my $rref = $dbh->selectcol_arrayref($SQL);
+  if (defined($rref)) {
+    return $rref->[0];
+  }
+  return undef;
+}
 
 sub DB_getBgpRouterId {
 	my $SQL = "SELECT id FROM bgp_routers WHERE ip_addr = \'$_[0]\'";
