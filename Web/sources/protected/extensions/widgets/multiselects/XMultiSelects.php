@@ -78,6 +78,7 @@ class XMultiSelects extends CWidget
 		$cs=Yii::app()->getClientScript();
 		$cs->registerCoreScript('jquery');
 		$cs->registerScriptFile(Yii::app()->getAssetManager()->publish(dirname(__FILE__).'/jquery.multiselects.js'));
+        $cs->registerScriptFile(Yii::app()->getAssetManager()->publish(dirname(__FILE__).'/multiselectsfilter.js'));
 	}
 
 	/**
@@ -114,13 +115,14 @@ class XMultiSelects extends CWidget
 		if(isset($this->leftTitle))
 		{
 			echo "<label for=\"leftTitle\">{$this->leftTitle}</label><br />\n";
+            echo "<input class='search' id='left-search' type='text' placeholder='Search' autocomplete='off'></input><br />\n";
 		}
 		echo "<select name=\"{$this->leftName}\" id=\"select_left\" multiple=\"multiple\" size=\"{$this->size}\" style=\"width:{$this->width}\">\n";
 		foreach($this->leftList as $value=>$label)
 		{
 			echo "<option value=\"{$value}\">{$label}</option>\n";
 		}
-		echo "</select></td>\n";
+		echo "</select><select id='select_left_fake' multiple=\"multiple\" size=\"{$this->size}\" style=\"width:{$this->width};display:none\">\n</select></td>\n";
 
 		echo "<td style=\"width:60px; text-align:center; vertical-align:middle\">\n";
 		echo "<input type=\"button\" style=\"width:40px\" id=\"options_left\" value=\"&lt;\" /><br /><br />\n";
@@ -132,13 +134,14 @@ class XMultiSelects extends CWidget
 		if(isset($this->rightTitle))
 		{
 			echo "<label for=\"rightTitle\">{$this->rightTitle}</label><br />\n";
+            echo "<input class='search' id='right-search' type='text' placeholder='Search' autocomplete='off'></input><br />\n";
 		}
 		echo "<select name=\"{$this->rightName}\" id=\"select_right\" multiple=\"multiple\" size=\"{$this->size}\" style=\"width:{$this->width}\">\n";
 		foreach($this->rightList as $value=>$label)
 		{
 			echo "<option value=\"{$value}\">{$label}</option>\n";
 		}
-		echo "</select></td>\n";
+		echo "</select><select id='select_right_fake' multiple=\"multiple\" size=\"{$this->size}\" style=\"width:{$this->width};display:none\">\n</select></td>\n";
 		echo "</tr></table>\n";
 
 		$this->registerClientScript();

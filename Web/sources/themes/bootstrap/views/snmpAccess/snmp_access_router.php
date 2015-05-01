@@ -27,7 +27,7 @@ $this->widget('ext.widgets.multiselects.XMultiSelects',array(
     'rightName'=>'Attrn[]',
     'rightList'=>$attr_nocurr,
     'size'=>20,
-    'width'=>'200px',
+    'width'=>'219px',
 ));
 
 ?>
