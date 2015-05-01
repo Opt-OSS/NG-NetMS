@@ -1,0 +1,14 @@
+#page {
+    padding-top: 60px;
+}
+.hero-unit1.hero-unit{
+    background-image: url(/images/logo.png);    
+    background-repeat:no-repeat;
+    background-position: 10px 10px;  
+    background-color: #009900;
+    color:white;
+}
+
+canvas.linkable{
+   cursor: pointer;
+ }
