@@ -55,7 +55,8 @@ $VERSION     = 0.01;
 		  &DB_getMinRouterRA &DB_getAllHostname &DB_getBgpRouters
 		  &DB_addBgpRouter &DB_getBgpRouterId &DB_getHostVendor
 		  &DB_writeTopologyBgp &DB_updateBgpRouterStatus 
-		  &DB_updateAllBgpRouterStatus &DB_updateBgpRouterAS &DB_writeBgpLink);
+		  &DB_updateAllBgpRouterStatus &DB_updateBgpRouterAS &DB_writeBgpLink
+		  &DB_updateLinkA &DB_updateLinkB &DB_getRouterVendorById);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -223,7 +224,7 @@ sub DB_getInterfaceRouterId($) {
   my $addr= shift;
   
   local $dbh->{RaiseError};     # Ignore errors
-  my $SQL = "SELECT router_id FROM interfaces WHERE ip_addr = \'$addr\'";
+  my $SQL = "SELECT router_id FROM interfaces WHERE host(ip_addr) = \'$addr\'";
   my $rref = $dbh->selectcol_arrayref($SQL);
 #  print Dumper($rref);
   if (defined($rref)) {
@@ -417,6 +418,21 @@ sub DB_getRouterVendor {
   local $dbh->{RaiseError};     # Ignore errors
   my $SQL;
     $SQL = "SELECT eq_vendor FROM routers WHERE name = '".$_[0]."'";
+  my $rref = $dbh->selectcol_arrayref($SQL);
+#  print Dumper($rref);
+  if (defined($rref)) {
+    return $rref->[0];
+  }
+  return undef;
+}
+
+# Get router vendor
+# Param:
+#  $router_id
+sub DB_getRouterVendorById{
+  local $dbh->{RaiseError};     # Ignore errors
+  my $SQL;
+    $SQL = "SELECT eq_vendor FROM routers WHERE router_id = ".$_[0];
   my $rref = $dbh->selectcol_arrayref($SQL);
 #  print Dumper($rref);
   if (defined($rref)) {
@@ -773,6 +789,49 @@ sub DB_dropRouterId($) {
   my $if_h = $dbh->prepare("DELETE FROM routers WHERE router_id = $rt_id ");
   my $result = $if_h->execute();
 }
+
+sub DB_updateLinkB($$){
+	my $rt_id = shift;
+	my $parent_rt_id = shift;	
+	my $SQL_UP;	
+	my $router_n;
+	my $result;
+	
+	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL = "select router_id_a from network where router_id_b=\'$rt_id\' and router_id_a!=\'$parent_rt_id\' EXCEPT(select router_id_a from network where router_id_b=\'$parent_rt_id\' UNION SELECT router_id_b FROM network WHERE router_id_a=\'$parent_rt_id\')";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+	foreach my $rt_id_link(@{$rref})
+	{
+		print "Update Link B $rt_id -> $rt_id_link"."\n";
+		$SQL_UP = "UPDATE network set router_id_b = ?  WHERE where router_id_b= ? AND router_id_a = ? ";
+		$router_n = $dbh->prepare($SQL_UP);
+	    $result = $router_n->execute($parent_rt_id,$rt_id,$rt_id_link);
+	}
+##	print "LINK A:".$rt_id."\n";
+##	print Dumper($rref);
+    return $rref;
+	}
+	
+sub DB_updateLinkA($$){
+	my $rt_id = shift;
+	my $parent_rt_id = shift;
+	my $SQL_UP;	
+	my $router_n;
+	my $result;
+	local $dbh->{RaiseError};     # Ignore errors
+	my $SQL = "select router_id_b from network where router_id_a=\'$rt_id\' and router_id_b!=\'$parent_rt_id\' EXCEPT(select router_id_a from network where router_id_b=\'$parent_rt_id\' UNION SELECT router_id_b FROM network WHERE router_id_a=\'$parent_rt_id\')";
+	my $rref = $dbh->selectcol_arrayref($SQL);
+	foreach my $rt_id_link(@{$rref})
+	{
+		print "Update Link A $rt_id -> $rt_id_link"."\n";
+		$SQL_UP = "UPDATE network set router_id_a = ? WHERE where router_id_a= ? AND router_id_b = ? ";
+		$router_n = $dbh->prepare($SQL_UP);
+	    $result = $router_n->execute($parent_rt_id,$rt_id,$rt_id_link);
+	}
+##	print "LINK B:".$rt_id."\n";
+##	print Dumper($rref);
+    return $rref;
+	}
 
 # Write hosts and links
 # Params:

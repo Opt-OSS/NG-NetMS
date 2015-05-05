@@ -30,7 +30,7 @@
 #  NGNMS_LOGFILE - if set and no debug output to sreen, log is written to this file
 #
 # Copyright (C) 2002,2003 OptOSS LLC
-# Copyright (C) 2015 Opt/Net BV
+# Copyright (C) 2014 Opt/Net BV
 #
 # Author: M.Golov, T.Matselyukh, A. Jaropud
 #
@@ -791,6 +791,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
 			my $count_intersect;
 			my $arr_router_id;
 			my $arr_router_names = &DB_getAllHostname();
+			
             foreach my $namehost(@{$arr_router_names})
             {
 				$arr_router_id = &DB_getRouterIdDuplicateHostname($namehost);
@@ -815,6 +816,8 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
 						$count_intersect = &DB_getCountIntersect($rout_id,$control_rout);
 						if($count_union == $count_intersect)
 						{
+							&DB_updateLinkA($rout_id,$control_rout);
+							&DB_updateLinkB($rout_id,$control_rout);
 							&DB_dropRouterId($rout_id);
 						}
 					}
