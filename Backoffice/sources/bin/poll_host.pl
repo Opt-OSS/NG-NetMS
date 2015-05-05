@@ -385,13 +385,14 @@ sub getConfigs {
   my $access = $_[6];
   my $path_to_key = $_[7];
   my $passphrase = '';
+  my $cur_devicetype = '';
 
   if( !defined ($test_host_type)) {
     my $er;
     ($hostType,$er) = getHostType($host, $community);
     if (!defined $hostType) {
 	  
-	  my $cur_devicetype = DB_getHostVendor($host);
+	  $cur_devicetype = DB_getHostVendor($host);
 	  
 	  $cur_devicetype =~ s/^\s+|\s+$//g;
 	  
@@ -410,7 +411,7 @@ sub getConfigs {
   }
 
   $hostType =~ s/\s+$//;
-  print "$host: host type \"$hostType\"\n";
+  print "host: host type \"$hostType\"\n";
 
   if ($hostType eq "Cisco") {
     return &NGNMS_Cisco::cisco_get_configs;

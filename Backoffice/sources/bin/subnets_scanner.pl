@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w
 # NG-NetMS, a Next Generation Network Managment System
 # 
-# Version 3.3 
+# Version 3.2 
 # Build number N/A
-# Copyright (C) 2015 Opt/Net
+# Copyright (C) 2014 Opt/Net
 # 
 # This file is part of NG-NetMS tool.
 # 
@@ -17,7 +17,8 @@
 # See the GNU General Public License for more details. You should have received a copy of the GNU
 # General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
 # 
-# Authors: T.Matselyukh, A. Jaropud
+# Authors: T.Matselyukh, A. Jaropud, M.Golov
+ 
 #
 # Scan subnets which were configured in network
 #
@@ -31,6 +32,10 @@
 #  -W 		 Pasword for DB user	
 #  -P        DB port
 #
+#
+# Copyright (C) 2015
+#
+# Author: A.Iaropud
 #
 
 use strict;
@@ -276,13 +281,16 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
     my $control_rout;
     my $count_union;
     my $count_intersect;
-	my @arr_hostname = &DB_getDuplicateHostname();
-	foreach my $cur_router (@arr_hostname)
+	my $arr_hostname = &DB_getDuplicateHostname();
+	print Dumper($arr_hostname);
+	foreach my $cur_router (@{$arr_hostname})
     {
-            $flag = 0;          
-            $arr_router_id = &DB_getRouterIdDuplicateHostname($cur_router->[0]);
+            $flag = 0;         
+            $arr_router_id = &DB_getRouterIdDuplicateHostname($cur_router);
+            
             foreach my $rout_id(@{$arr_router_id})
             {
+				print $rout_id."\n";
 				if($flag == 0)
 				{
 					$control_rout = $rout_id;
@@ -294,6 +302,9 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 					$count_intersect = &DB_getCountIntersect($rout_id,$control_rout);
 					if($count_union == $count_intersect)
 					{
+						
+						&DB_updateLinkA($rout_id,$control_rout);
+						&DB_updateLinkB($rout_id,$control_rout);
 						&DB_dropRouterId($rout_id);
 					}
 				}
@@ -387,6 +398,8 @@ sub scansubnet{
 	my $scanner = new Nmap::Scanner;
 	my $cur_id ;
 	my $cur_ip;
+	my $rt_id_parent;
+	my $vendor_parent;
 	my $control_cur_id;
 	my $counter = 0;
 	my @upHosts = ();
@@ -399,6 +412,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
  
 while (my $host = $host_list->get_next()) 
 	{
+		$rt_id_parent = '';
 		unless (!($host->addresses)[0]->addr) 
 		{
 			if( $host->status eq 'up' ) 
@@ -407,21 +421,68 @@ while (my $host = $host_list->get_next())
 				$control_cur_id = DB_getRouterId($cur_ip);
 				if(!defined $control_cur_id)
 				{
-					if(!defined DB_getInterfaceRouterId($cur_ip))
-					{
-						$cur_id = DB_addRouter($cur_ip,$cur_ip,'unknown');		
+					$cur_id = DB_addRouter($cur_ip,$cur_ip,'unknown');		
+					$rt_id_parent = DB_getInterfaceRouterId($cur_ip);
+					
+					if(!defined $rt_id_parent)
+					{			
 						$upHosts[$counter]{'addr'} =  $cur_ip;
 						$upHosts[$counter]{'high_link'} =  $id_link;
 						DB_writeLink($id_link,$cur_id,'B');
 						push @thrs, threads->create(\&worker, $cur_ip);
 						$counter++;
+					}					
+					else
+					{
+						$vendor_parent = DB_getRouterVendorById($rt_id_parent);
+						
+						if(defined $vendor_parent)
+						{
+							$vendor_parent =~ s/^\s+|\s+$//g;
+							DB_setHostVendor($cur_id,$vendor_parent);
+						}
+						$upHosts[$counter]{'addr'} =  $rt_id_parent;
+						$upHosts[$counter]{'high_link'} =  $id_link;						
+						DB_writeLink($id_link,$rt_id_parent,'B');
+						push @thrs, threads->create(\&worker, $cur_ip);
+						$counter++;
+						
 					}
+					
 				}
 				else
 				{
-					$upHosts[$counter]{'addr'} =  $cur_ip;
-					$upHosts[$counter]{'high_link'} =  $id_link;
-					DB_writeLink($id_link,$control_cur_id,'B');
+					$rt_id_parent = DB_getInterfaceRouterId($cur_ip);
+					
+					if(defined $rt_id_parent)
+					{
+						if($control_cur_id != $rt_id_parent)
+						{
+							$vendor_parent = DB_getRouterVendorById($rt_id_parent);
+							print "Vendor:".$vendor_parent."-\n";
+							if(defined $vendor_parent)
+							{
+								$vendor_parent =~ s/^\s+|\s+$//g;
+								DB_setHostVendor($control_cur_id,$vendor_parent);
+							}
+							$upHosts[$counter]{'addr'} =  $rt_id_parent;
+							$upHosts[$counter]{'high_link'} =  $id_link;	
+							DB_writeLink($id_link,$rt_id_parent,'B');
+						}
+						else
+						{
+							$upHosts[$counter]{'addr'} =  $cur_ip;
+							$upHosts[$counter]{'high_link'} =  $id_link;
+							DB_writeLink($id_link,$control_cur_id,'B');
+						}
+					}
+					else
+					{
+						$upHosts[$counter]{'addr'} =  $cur_ip;
+						$upHosts[$counter]{'high_link'} =  $id_link;
+						DB_writeLink($id_link,$control_cur_id,'B');
+					}
+					
 					push @thrs, threads->create(\&worker, $cur_ip);
 					$counter++;
 					
@@ -450,84 +511,6 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 	my @params=();
 	$params[0] = $ip_addr; ##host
 	$params[0] =~ s/\s+$//; 
-	
-=for	
-	if(!defined($amount))
-	{
-		$amount =0;
-	}
-	print $amount."\n";
-	if($amount < 1)	##if is not special access to router then it connects with default parameters
-	{
-		$params[1] = $user;
-		$params[2] = $passwd;
-		$params[3] = $enpasswd;
-		$params[4] = $community; 		##community
-		$params[4] =~ s/\s+$//; 
-		$params[5] = $access;			##access
-		$params[5] =~ s/\s+$//; 
-		if(defined $path_to_key)
-		{
-			$params[6] = $path_to_key;
-			$params[6] =~ s/\s+$//; 
-		}
-	}
-	else
-	{
-		
-		my $r_id = DB_getRouterId($ip_addr);
-		my $arr_param = DB_getRouterAccess($r_id);
-
-####
-foreach my $emp(@$arr_param)
-				{
-				    my $access_cur = $access;
-					$access_cur =  $emp->[0] if defined($emp->[0]);
-					if(defined($emp->[1]))
-					{
-						my $type_router = $emp->[1];
-						$type_router =~ s/\s+$//;
-					}
-					
-					my $flag = lc($emp->[2]);
-	#				print $emp->[2].":".$flag."\n";
-					if($flag eq 'login')	#username
-					{
-						$params[1] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[1] =~ s/\s+$//; 
-					}
-					if($flag eq 'password')	#password
-					{
-						$params[2] = decryptAttrvalue($criptokey,$emp->[3]); 
-						$params[2] =~ s/\s+$//; 
-						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[3] =~ s/\s+$//; 
-					}
-					if($flag eq 'enpassword')	#password
-					{
-						$params[3] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[3] =~ s/\s+$//; 
-					}
-
-	##			case "port"
-
-	##			case "pathphrase"
-					if($flag eq 'path_to_key')	#path to key
-					{
-						$params[6] = decryptAttrvalue($criptokey,$emp->[3]);
-						$params[6] =~ s/\s+$//; 
-					}
-					$params[4] = $community; 		##community
-					$params[4] =~ s/\s+$//; 
-					$params[5] = $access_cur;			##access
-					$params[5] =~ s/\s+$//; 
-				}
-####				
-				
-				
-				
-	}
-=cut	
 DB_close;	
 		@cmd2=($cmd);
 		
