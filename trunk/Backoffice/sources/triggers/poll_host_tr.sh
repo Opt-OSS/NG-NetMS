@@ -26,14 +26,14 @@
 #
 #[ -z ${0##/*} ] || mydir=`dirname $PWD/$0`/
 
+origin=$4
+
 echo CONSOLE: --> Polling host $origin ...
 logger "LOG: --> Polling host $origin ..."
 
 mydir=`pwd`
 echo CONSOLE Mydir --- $mydir
 logger "LOG: --> Mydir = $mydir"
-
-origin=$4
 
 echo poll_host.pl -D ngnms -U ngnms -W optoss $origin 
 logger "LOG: --> Starting poll_host.pl -D ngnms -U ngnms -W optoss $origin ..."

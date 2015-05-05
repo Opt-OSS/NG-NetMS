@@ -1,21 +1,21 @@
-# Copyrights: Opt/Net 
-# Date: Apr 26 2015
+# Copyrights: Opt/Net
+# Date: May 3 2015
 # Author: T. Matselyukh
 #------------------------------------------------------------------------------
 #--------------------------- START OF STANDARD RULES --------------------------
 # IMPORTANT NOTES:
-# =============== 
-# 1. All directory locations are relative from $NGNMS_HOME environment varialbe
+# ===============
+# 1. All directory locations are relative from $NGNMS_HOME environment variable
 # Do not prepend $NGNMS_HOME in front of the file locations, this is assumed
 # automatically by collectors.
-# 2. All command line arguments are allways passed to the scripts. Do not add
+# 2. All command line arguments are always passed to the scripts. Do not add
 # the command line arguments or your rules will not work.
-# 
+#
 # FORMAT of action script invocation:
-# 
+#
 #  action "bin/script.sh";
-# 
-# implicit command line arguments will be appended in the following order: 
+#
+# implicit command line arguments will be appended in the following order:
 #
 #      $severity $priority $timestamp $origin $facility $code $msg
 #
@@ -24,7 +24,7 @@
 #------------------------------------------------------------------------------
 
 # set light severity for the login events and execute small notification script
-event LOGIN { 
+event LOGIN {
       condition $facility ~= "mgd" &&
       $msg ~= "UI_LOGIN_EVENT: User";
       protocol syslog;
@@ -44,7 +44,7 @@ event ALARM {
       ( $msg ~= "Alarm set" || $msg ~= "ALARM SET" );
       severity 666;
       action "triggers/bell.sh";
-} 
+}
 
 #start poll cycle for juniper on configuration change
 event COMMIT_JNP {
@@ -54,7 +54,7 @@ event COMMIT_JNP {
       action "triggers/poll_host_tr.sh";
 }
 
-#start poll cycle for cisco` on configuration change
+#start poll cycle for cisco on configuration change
 event COMMIT_CSC {
       condition $msg ~= "Configured from";
       protocol syslog;
@@ -72,17 +72,20 @@ event COMMIT_JNP_SSG {
 
 event LOW_SNMP {
       condition $facility ~= "^snmpd.*";
-      severity 2;
+      protocol syslog;
+severity 2;
 }
 
 event LOW_NTP {
       condition $facility ~= "^xntpd.*";
-      severity 1;
+      protocol syslog;
+severity 1;
 }
 
 event LOW_MGD {
       condition $facility ~= "^mgd.*";
-      severity 1;
+      protocol syslog;
+severity 1;
 }
 
 event ERROR {
@@ -102,12 +105,14 @@ event FAILURE {
 
 event FAILED_PW {
       condition $msg ~= ".*Failed password.*";
-      severity 50;
+      protocol syslog;
+severity 50;
 }
 
 event FAILED_PW_2MANY {
       condition $msg ~= ".*too many password failures.*";
-      severity 250;
+      protocol syslog;
+severity 250;
 }
 
 event DENY {
@@ -115,11 +120,11 @@ event DENY {
       severity 50;
 }
 
-#------------------------------------------------DELETE BELOW THIS LINE---------------------
+#---------------------------DEMO-EXAMPLES--DELETE BELOW THIS LINE--------------
 # simple demo examples for rules file parser
 
-# ignore all local events 
-#event FREEB { 
+# ignore all local events
+#event FREEB {
 #      condition $origin ~="localhost";
 #      discard;
 #      protocol syslog;
@@ -128,15 +133,15 @@ event DENY {
 # this is a test for all parameters - example only
 event EARTH_LOGIN {
       condition $origin ~= "earth" &&
-		$facility ~= "login:" && 
-		$timestamp ~= "Mar 10.*" && 
-		$code ~= "login" &&
-		$msg ~= "from 172.26.27.2 .*";
+        $facility ~= "login:" &&
+        $timestamp ~= "Mar 10.*" &&
+        $code ~= "login" &&
+        $msg ~= "from 172.26.27.2 .*";
 #      discard;
       severity 1;
 }
 
-# antother test - this one shall not fire as protocol is syslog
+# another test - this one shall not fire as protocol is syslog
 event sysUpTime {
       condition $msg ~= ".*sysUpTime.*";
       protocol syslog;
@@ -151,4 +156,4 @@ event SNMP {
       discard;
       action "triggers/trigger.sh";
 }
-
+#------------------------------------------------------------
