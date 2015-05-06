@@ -364,7 +364,7 @@ class Events extends CActiveRecord
 ## END block of FACILITY
         $criteria->compare('severity',$this->severity);
         $criteria->compare("to_char(receiver_ts, 'YYYY-MM-DD HH24:MI:SS')",$this->receiver_ts,true);
-        $criteria->compare("to_cahr(origin_ts, 'YYYY-MM-DD HH24:MI:SS')",$this->origin_ts,true);
+        $criteria->compare("to_char(origin_ts, 'YYYY-MM-DD HH24:MI:SS')",$this->origin_ts,true);
 
         $criteria->compare('code',$this->code,true);
 
