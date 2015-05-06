@@ -171,7 +171,7 @@ for my $key (@sorted_keys) {
 			if($block->bits() <30)
 				{
 					
-					if(DB_isScanException($block))
+					if(DB_isScanException($block) == 1)
 					{
 						if($block ne $old_block)
 						{
