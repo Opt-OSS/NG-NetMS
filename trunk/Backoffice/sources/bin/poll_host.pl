@@ -576,9 +576,9 @@ sub getLinuxConfig()
   my $access = $_[6];
   my $path_to_key = $_[7];
   my $passphrase = '';
-  ##my $cur_id = DB_getRouterId($host);
-  ##my $cur_ipaddr = DB_getRouterIpAddr($cur_id);
-  my $cur_ipaddr = $host;
+  my $cur_id = DB_getRouterId($host);
+  my $cur_ipaddr = DB_getRouterIpAddr($cur_id);
+  ##my $cur_ipaddr = $host;
   my $ocx_session = NGNMS_Linux->new($cur_ipaddr,$user,$passwd,$enpasswd,$access,$path_to_key,$passphrase);
   my $eeerror = $ocx_session->_socket->error;
   
