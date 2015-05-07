@@ -71,6 +71,7 @@ my $os_name;
 my $criptokey ;
 my $nb_process = 5;
 my $type_router;
+my $untrust_flag = 0;
 
 ## initialize default access to DB
 my $dbname = "";
@@ -418,14 +419,17 @@ while (my $host = $host_list->get_next())
 			if( $host->status eq 'up' ) 
 			{
 				$cur_ip = ($host->addresses)[0]->addr();
+				print "DEBUG ".$cur_ip."\n";
 				$control_cur_id = DB_getRouterId($cur_ip);
 				if(!defined $control_cur_id)
 				{
+					print "Etap 1\n";
 					$cur_id = DB_addRouter($cur_ip,$cur_ip,'unknown');		
 					$rt_id_parent = DB_getInterfaceRouterId($cur_ip);
 					
 					if(!defined $rt_id_parent)
-					{			
+					{		
+						print "Etap 1.1\n";	
 						$upHosts[$counter]{'addr'} =  $cur_ip;
 						$upHosts[$counter]{'high_link'} =  $id_link;
 						DB_writeLink($id_link,$cur_id,'B');
@@ -434,30 +438,44 @@ while (my $host = $host_list->get_next())
 					}					
 					else
 					{
-						$vendor_parent = DB_getRouterVendorById($rt_id_parent);
+						print "Etap 1.2\n";
+						## add cheking	        
+							
+							print "Etap 1.2.1\n";
+							$vendor_parent = DB_getRouterVendorById($rt_id_parent);
 						
-						if(defined $vendor_parent)
-						{
-							$vendor_parent =~ s/^\s+|\s+$//g;
-							DB_setHostVendor($cur_id,$vendor_parent);
+							if(defined $vendor_parent)
+							{
+								$vendor_parent =~ s/^\s+|\s+$//g;
+								DB_setHostVendor($cur_id,$vendor_parent);
+							}
+							
+							$upHosts[$counter]{'addr'} =  $rt_id_parent;
+							$upHosts[$counter]{'high_link'} =  $id_link;						
+							DB_writeLink($id_link,$rt_id_parent,'B');
+						if($untrust_flag){				
+							push @thrs, threads->create(\&worker, $cur_ip);						
+							$counter++;		
 						}
-						$upHosts[$counter]{'addr'} =  $rt_id_parent;
-						$upHosts[$counter]{'high_link'} =  $id_link;						
-						DB_writeLink($id_link,$rt_id_parent,'B');
-						push @thrs, threads->create(\&worker, $cur_ip);
-						$counter++;
-						
+						else
+						{
+							print "Etap 1.2.2\n";
+							DB_dropRouterId($cur_id );
+						}		
+## end checking						
 					}
 					
 				}
 				else
 				{
+					print "Etap 2\n";
 					$rt_id_parent = DB_getInterfaceRouterId($cur_ip);
 					
 					if(defined $rt_id_parent)
 					{
 						if($control_cur_id != $rt_id_parent)
 						{
+							print "Etap 2.1\n";
 							$vendor_parent = DB_getRouterVendorById($rt_id_parent);
 							print "Vendor:".$vendor_parent."-\n";
 							if(defined $vendor_parent)
@@ -468,24 +486,32 @@ while (my $host = $host_list->get_next())
 							$upHosts[$counter]{'addr'} =  $rt_id_parent;
 							$upHosts[$counter]{'high_link'} =  $id_link;	
 							DB_writeLink($id_link,$rt_id_parent,'B');
+							push @thrs, threads->create(\&worker, $cur_ip);
+							$counter++;
 						}
 						else
 						{
+							print "Etap 2.2\n";
 							$upHosts[$counter]{'addr'} =  $cur_ip;
 							$upHosts[$counter]{'high_link'} =  $id_link;
 							DB_writeLink($id_link,$control_cur_id,'B');
-						}
+							## add cheking	        
+							if($untrust_flag){					
+								push @thrs, threads->create(\&worker, $cur_ip);
+								$counter++;
+							}
+							## end checking			
+						}			
 					}
 					else
 					{
+						print "Etap 2.3\n";
 						$upHosts[$counter]{'addr'} =  $cur_ip;
 						$upHosts[$counter]{'high_link'} =  $id_link;
 						DB_writeLink($id_link,$control_cur_id,'B');
-					}
-					
-					push @thrs, threads->create(\&worker, $cur_ip);
-					$counter++;
-					
+						push @thrs, threads->create(\&worker, $cur_ip);
+						$counter++;
+					}			
 				}
 			}
 		}
