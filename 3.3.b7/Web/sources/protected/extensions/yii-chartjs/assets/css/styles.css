@@ -1,0 +1,17 @@
+.chart-label {
+    padding: 5px;
+    margin: 5px;
+    color: #FFFFFF;
+    -webkit-border-radius: 5px;
+    -khtml-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 2px 2px 5px #202020;
+    -moz-box-shadow: 2px 2px 5px #202020;
+    box-shadow: 2px 2px 5px #202020;
+    text-shadow: 0 -1px 1px #666666, 0 1px 1px #FFFFFF;
+}
+
+.labels {
+    display: block;
+}
