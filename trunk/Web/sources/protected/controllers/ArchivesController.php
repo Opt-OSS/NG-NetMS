@@ -130,7 +130,19 @@ class ArchivesController extends Controller
                 $cs->registerCssFile($baseUrl . '/css/bootstrap-switch.css');
                 $cs->registerScriptFile(Yii::app()->baseUrl . '/js/libs/bootstrap-switch.js', CClientScript::POS_HEAD);
                 $dataProvider = new CActiveDataProvider('Archives');
+                $count = ArchiveConf::model()->count();
+
+                if($count > 0)
+                {
+                    $id_conf = 1;
+                    $model1 = ArchiveConf::model()->findByPk($id_conf);
+                }
+                else
+                {
+                    $model1 = new ArchiveConf;
+                }
                 $this->render('index', array(
+                    'model1' => $model1,
                     'dataProvider' => $dataProvider,
                 ));
             } else {
