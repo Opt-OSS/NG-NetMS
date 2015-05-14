@@ -158,8 +158,18 @@ class ArchivesController extends Controller
      */
     public function actionAdmin()
     {
+        if(isset($_GET['act']) && isset($_GET['archive_id']))
+        {
+            $cur_arc = $this->loadModel($_GET['archive_id']);
+            chdir('/home/ngnms/NGREADY/archive/');
+
+            
+
+        }
+
         $model = new Archives('search');
         $model->unsetAttributes(); // clear any default values
+        
         if (isset($_GET['Archives']))
             $model->attributes = $_GET['Archives'];
 
