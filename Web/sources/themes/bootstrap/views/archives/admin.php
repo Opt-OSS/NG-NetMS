@@ -42,7 +42,7 @@ array(
         ),
         'drop' => array
         (
-            'label'=>'Remove',
+            'label'=>'Unload',
             'icon'=>'remove',
             'url'=>'Yii::app()->createUrl("archives/admin", array("archive_id"=>$data->archive_id,"act"=>0))',
             'options'=>array(
