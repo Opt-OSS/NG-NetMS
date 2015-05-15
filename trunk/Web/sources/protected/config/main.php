@@ -184,7 +184,8 @@ return array(
                 'Extreme'=>'Extreme',
                 'Juniper'=>'Juniper',
                 'Linux'=>'Linux',
-                'Netscreen'=>'Netscreen'
+                'Netscreen'=>'Netscreen',
+		'HP'=>'HP'
         ),
                 'color_na' => '#808080',
                 'point_on_chart'=>200,
