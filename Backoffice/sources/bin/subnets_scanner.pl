@@ -1,6 +1,26 @@
 #!/usr/bin/perl -w
 # NG-NetMS, a Next Generation Network Managment System
 # 
+# Version 3.3 
+# Build number N/A
+# Copyright (C) 2015 Opt/Net
+# 
+# This file is part of NG-NetMS tool.
+# 
+# NG-NetMS is free software: you can redistribute it and/or modify it under the terms of the
+# GNU General Public License v3.0 as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# NG-NetMS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# 
+# See the GNU General Public License for more details. You should have received a copy of the GNU
+# General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+# 
+# Authors: T.Matselyukh, A. Jaropud, M.Golov
+ 
+# NG-NetMS, a Next Generation Network Managment System
+# 
 # Version 3.2 
 # Build number N/A
 # Copyright (C) 2014 Opt/Net
@@ -157,7 +177,7 @@ my $logFile = "/dev/null";
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 my $arr = DB_getAllIntefaces();
 
-
+##print Dumper($arr);
 
 
          my @sorted_keys = ripv4keysort { $arr->{$_}->{ip_addr} } keys %$arr;
@@ -169,7 +189,9 @@ for my $key (@sorted_keys) {
 		    $netmask = $arr->{$key}{mask};
 		    $block = new Net::Netmask ($addr , $netmask);
 			my @nets = split /\./, $addr;
-			if($block->bits() <30)
+#print $addr."\n";
+#print Dumper($block);
+			if($block->bits() <33)
 				{
 					
 					if(DB_isScanException($block) == 1)
@@ -194,6 +216,7 @@ for my $key (@sorted_keys) {
 					}					
 				}	
 }
+
 DB_updateDiscoveryStatus(60,0);
 my $p=48;
 	$criptokey = DB_getCriptoKey();
@@ -202,7 +225,8 @@ my $p=48;
 	my $suffix =  ( '0' x $p );
 	$criptokey.=$suffix;
 	my $cmd = "$ENV{'NGNMS_HOME'}/bin/poll_host.pl";
-##print Dumper(%blocks0);
+
+#print Dumper(%blocks0);
 DB_close;
     my @block_one = keys %blocks0;
 	for my $block_idx (@block_one) {

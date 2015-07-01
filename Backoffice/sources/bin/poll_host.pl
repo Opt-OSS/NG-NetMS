@@ -1,4 +1,24 @@
 #!/usr/bin/perl -w
+# NG-NetMS, a Next Generation Network Managment System
+# 
+# Version 3.3 
+# Build number N/A
+# Copyright (C) 2015 Opt/Net
+# 
+# This file is part of NG-NetMS tool.
+# 
+# NG-NetMS is free software: you can redistribute it and/or modify it under the terms of the
+# GNU General Public License v3.0 as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# NG-NetMS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# 
+# See the GNU General Public License for more details. You should have received a copy of the GNU
+# General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+# 
+# Authors: T.Matselyukh, A. Jaropud, M.Golov
+ 
  
 #
 # Poll configuration from a single host
@@ -366,6 +386,7 @@ print $passwd."\n";
 print $enpasswd."\n";
 print $access."\n";
 print $community."\n";
+
 =cut
 
 # Get all configs from host
@@ -580,15 +601,26 @@ sub getLinuxConfig()
   my $cur_ipaddr = DB_getRouterIpAddr($cur_id);
   ##my $cur_ipaddr = $host;
   my $ocx_session = NGNMS_Linux->new($cur_ipaddr,$user,$passwd,$enpasswd,$access,$path_to_key,$passphrase);
-  my $eeerror = $ocx_session->_socket->error;
+ 
+  if(!defined($ocx_session->_socket)){
+	  return "Unable to connect to remote host: $cur_ipaddr\n";
+	  }
+  if($access ne 'Telnet'){
+		my $eeerror = $ocx_session->_socket->error;
   
-  if($eeerror =~ m/unable to establish master SSH connection/)
-  {
-	  $ocx_session->close;
-	  return $eeerror;
+		if($eeerror =~ m/unable to establish master SSH connection/)
+		{
+			$ocx_session->close;
+			return $eeerror;
 	  
+		}
 	}
   $ocx_session->open($cur_ipaddr,$user,$passwd,$enpasswd);
+  
+  if($ocx_session->{'logged_in'} < 1){
+	  print "ERROR:".$ocx_session->{'error'}."\n";
+	  return $ocx_session->{'error'};
+	  }
   $ocx_session->run_proccessing($cur_ipaddr);
   $ocx_session->close;
   return 'ok';

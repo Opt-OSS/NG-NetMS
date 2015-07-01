@@ -20,6 +20,7 @@ use Data::Dumper;
 use NGNMS_DB;
 use NGNMS_util;
 use JSON::Parse 'json_file_to_perl';
+use Net::IPv4Addr;
 
 my $module_version='0.0.1';
 ##print "using NGNMS_Linux.pm, version $module_version\n";
@@ -35,6 +36,22 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $data);
 ## set the version for version checking; uncomment to use
 $VERSION     = 0.0.1;
 
+use constant NR_DEFAULT_ROUTE4 => '0.0.0.0/0';
+use constant NR_DEFAULT_ROUTE6 => '::/0';
+use constant NR_LOCAL_ROUTE4 => '0.0.0.0';
+use constant NR_LOCAL_ROUTE6 => '::';
+
+
+our %EXPORT_TAGS = (
+   constants => [qw(
+      NR_DEFAULT_ROUTE4
+      NR_DEFAULT_ROUTE6
+      NR_LOCAL_ROUTE4
+      NR_LOCAL_ROUTE6
+   )],
+);
+
+
 @EXPORT      = qw(
 		  &linux_parse_version
 		  &linux_parse_config
@@ -45,8 +62,7 @@ $VERSION     = 0.0.1;
 
 # your exported package globals go here,
 # as well as any optionally exported functions
-@EXPORT_OK   = qw($data);
-
+@EXPORT_OK   = qw($data @{$EXPORT_TAGS{constants}});
 
 # data
 
@@ -190,322 +206,176 @@ sub close {
 }
 sub linux_create_session {
   my ($host, $username) = @_[0..1];
-  my @passwds = @_[2..3];
+  my $password =$_[2];
+	my $enpassword=$_[3];
   my $access = $_[4];
-  my $path_to_key = "/home/ngnms/.ssh/id_rsa" ;
-  my $passphrase = "colonel";
+  
   $Error = undef;
   if($access eq "Telnet")
   {
-	  $session = new Net::Telnet ($host);
-      $session->errmode('return');
-      $session->login($username, $passwds[0]) or return warn "$host: ",$session->errmsg,"\n";
+	  $session = new Net::Telnet (Errmode=>'return',Host => $host) ;
+##      $session->errmode('return');
+      if (defined($session)){
+       $session->login($username, $password)  ;
+	}
   }
   else
   {
-	$session = Net::OpenSSH->new(
-    $host,
-    passphrase => $passphrase,
-    key_path   => $path_to_key,
-    timeout     => $timeout,
-    master_opts => [ -o => "StrictHostKeyChecking=no" ]
-);
-	$session->error and die "Unable to connect to remote host: " . $session->error;
+	$session =  Net::OpenSSH->new($host,
+											user => $username, 
+											password => $password,
+											timeout     => $timeout,
+											master_opts => [ -o => "StrictHostKeyChecking=no" ]);
+##	$session->error and die "Unable to connect to remote host: " . $session->error;
 	  }
   
-
+    return $session;
 
 }
 
 sub linux_get_topologies ($$$$$) {
-	
+	my ($host, $username, $password, $enablepw, $access) = @_[0..4];
+	my @nets;
+    my $sess = linux_create_session($host, $username, $password, $enablepw, $access);
+    if(!defined($sess) ){
+		return "Unable to connect to remote host: $host\n";
+		}
+    if($access eq 'Telnet'){
+		if($sess->errmsg){
+			print "$host: ",$sess->errmsg,"\n";
+			return  "$host: ",$sess->errmsg,"\n";
+			}
+		} else {
+				if($sess->error) {
+				return "Unable to connect to remote host: " . $sess->error;
+			}
+		}
     
+	if($access eq 'Telnet'){
+			@nets = $sess->cmd("netstat -rn");
+			if($sess->errmsg){
+				return  "remote netstat command failed: ",$sess->errmsg,"\n"
+			}
+		} else {
+			@nets = $sess->capture("netstat -rn");
+			if($sess->error) {
+				return "remote netstat command failed: " . $sess->error;
+			}
+		}
+    
+	
+    if($access eq 'Telnet'){
+			$sess->cmd("exit");
+		} else {
+			$sess->system("exit");
+		}
+    my @routes = ();
+    my %cache = ();
+    my %host_ips;
+	my %links;
+	my $state = '';
+	my $DR = '';
+
+
+   for my $line (@nets) {
+      my @toks = split(/\s+/, $line);
+      my $route = $toks[0];
+      my $gateway = $toks[1];
+      my $netmask = $toks[2];
+      my $flags = $toks[3];
+      my $mss = $toks[4];
+      my $window = $toks[5];
+      my $irtt = $toks[6];
+      my $interface = $toks[7];
+
+      if (defined($route) && defined($gateway) && defined($interface)
+      &&  defined($netmask)) {
+         # A first sanity check to help Net::IPv4Addr
+         if ($route !~ /^[0-9\.]+$/ || $gateway !~ /^[0-9\.]+$/
+         ||  $netmask !~ /^[0-9\.]+$/) {
+            next;
+         }
+
+         eval {
+            my ($ip1, $cidr1) = Net::IPv4Addr::ipv4_parse($route);
+            my ($ip2, $cidr2) = Net::IPv4Addr::ipv4_parse($gateway);
+            my ($ip3, $cidr3) = Net::IPv4Addr::ipv4_parse($netmask);
+         };
+         if ($@) {
+            #chomp($@);
+            #print "*** DEBUG[$@]\n";
+            next; # Not a valid line for us.
+         }
+
+         # Ok, proceed.
+         my %route = (
+            route => $route,
+            gateway => $gateway,
+            interface => $interface,
+         );
+
+         # Default route
+         if ($route eq '0.0.0.0' && $netmask eq '0.0.0.0') {
+            $route{default} = 1;
+            $route{route} = NR_DEFAULT_ROUTE4();
+         }
+         else {
+            my ($ip, $cidr) = Net::IPv4Addr::ipv4_parse("$route / $netmask");
+            $route{route} = "$ip/$cidr";
+         }
+
+         # Local subnet
+         if ($gateway eq '0.0.0.0') {
+            $route{local} = 1;
+            $route{gateway} = NR_LOCAL_ROUTE4();
+         }
+
+         my $id = _to_psv(\%route);
+         if (! exists($cache{$id})) {
+            push @routes, \%route;
+            $cache{$id}++;
+         }
+      }
+   }
+
+ 
+	DB_addHostNoWrite( \%host_ips, $host);
+    DB_addHostIP( \%host_ips, $host, $host); 
+   
+for my $route(@routes) {
+	if($route->{default}){
+		my $ip = $route->{gateway};
+		$DR=$ip;
+		DB_addHostNoWrite( \%host_ips, $DR);
+		DB_addHostIP( \%host_ips, $DR, $ip);
+		DB_addLinkNoWrite( \%links, $host, $DR, "B" );
+		}
+	}
+	
+	DB_writeTopology( \%host_ips, \%links );   
+	DB_setHostVendorByIP($host, 'Linux');
+
     return "ok";
 }
 
+sub _to_psv {
+   my ($route) = @_;
+
+   my $psv = $route->{route}.'|'.$route->{gateway}.'|'.$route->{interface}.'|'.
+      (exists($route->{default})?'1':'0').'|'.(exists($route->{local})?'1':'0');
+
+   return $psv;
+}
 sub linux_get_configs()
 {
 	return 'ok';
 }
 sub linux_parse_config
 {
-	my $isis_file = shift;
-	use JSON::Parse 'json_file_to_perl';
-    my $p = json_file_to_perl ($isis_file);
-    
-    proccessing_servers($p->{response}->{ocxServers});
-    proccessing_clients($p->{response}->{ocxClients});
-    processing_providers($p->{response}->{providers});
+	
     return "ok";
-	}
-	
-sub proccessing_servers()
-{
-	my $servers = shift;
-	my $k;
-	my $l;
-	my $i1;
-	my $i;
-	my $j = 0;
-	my @f_con;
-	my @s_con;
-	my %con_a;
-	my @amount;
-	my $rt_id;
-	my $linkT= "P";
-	my $server_connections;
-	
-	foreach my $k (keys $servers)
-    {
-		$rt_id = DB_getRouterId($servers->{$k}->{name});
-		if (!defined($rt_id)) {
-			$rt_id = DB_addRouter($servers->{$k}->{name}, '0.0.0.0', "up");
-			DB_setHostVendor($rt_id,'OCX');
-		}
-		else {
-				DB_dropLinks($rt_id);
-			}			
-		$con_a{$servers->{$k}->{name}} =  $rt_id;	
-		$server_connections = $servers->{$k}->{connectedTo};
-		for $i ( 0 .. $#{ $server_connections } ) 
-						{
-							    $f_con[$j] = $servers->{$k}->{name};
-							    $s_con[$j] = $server_connections->[$i];
-							    $amount[$j] = 0;
-								$j++;		
-														
-						}
-    }	
- 
-	for($l=0;$l<$j-1;$l++)	
-    {
-		for($i1=$l+1;$i1<$j;$i1++)
-		{
-			if(($s_con[$i1] eq $f_con[$l]) && ($s_con[$l] eq $f_con[$i1]))
-			{
-				$amount[$i1]++;
-			}
-		}
-	}
-	for($l=0;$l<$j;$l++)	
-    {
-		if($amount[$l] <1)
-		{
-			DB_writeLink($con_a{$f_con[$l]},$con_a{$s_con[$l]},$linkT);
-		}
-		
-	}													
 }
-
-sub proccessing_clients()
-{
-	my $level_new;
-	my $clients = shift;
-	my $rt_id ;
-	my $rt_id_vm ;
-	my $router_addr;
-	my $linkT= "P";
-	my $status ;
-
-	foreach my $k (keys $clients)
-    {
-		undef $router_addr;
-		$level_new = $clients->{$k}->{instances}[0];
-		
-			if ($level_new->{address} =~ /\d+\.\d+\.\d+\.\d+/)
-				{
-					$router_addr = $level_new->{address};
-				}
-			else
-				{
-					$router_addr = $level_new->{id};
-				}
-			
-			if(defined($router_addr))
-				{
-					$rt_id_vm = DB_getRouterId($router_addr);
-					$rt_id = DB_getRouterId($clients->{$k}{ocxServer});
-					if (!defined($rt_id_vm)) {	
-						if($level_new->{status} =~ m/^RUNNING/i)
-					   {	
-						   $status = "up";		
-						}	
-						else
-						{
-							$status = "down";
-						}		
-						$rt_id_vm = DB_addRouter($level_new->{id}, $level_new->{address}, $status);
-						DB_setHostVendor($rt_id_vm,$level_new->{role});
-					}
-					else {
-					DB_dropLinks($rt_id_vm);
-					}
-					DB_writeLink($rt_id,$rt_id_vm,$linkT);
-				}											
-		
-	}
-}
-
-sub processing_providers()
-{
-	my $providers = shift;
-	my $level2;
-	my $k1;
-	my $k2;
-    my $i;
-    my $j;
-    my $rt_id ;
-	my $rt_id_vm ;
-	my $rt_id_cl;
-	my $router_addr;
-	my $linkT= "P";
-	my $status ;
 	
-	foreach my $k (keys $providers)
-    {
-		print "$k:$providers->{$k}->{ocxServer}\n" ;## cloud provider
-		$rt_id = DB_getRouterId($providers->{$k}->{ocxServer});
-		$rt_id_cl = DB_getRouterId($k);
-		
-		if (!defined($rt_id_cl)) {						
-						$rt_id_cl = DB_addRouter($k, '0.0.0.0', "up");
-						DB_setHostVendor($rt_id_cl,'CloudProvider');
-					}
-					else {
-					DB_dropLinks($rt_id_cl);
-					}
-					
-		DB_writeLink($rt_id,$rt_id_cl,$linkT);					
-		$level2 = $providers->{$k}->{instances};	
-				
-	    for $j ( 0 .. $#{ $level2} ) 
-		{						
-			undef $rt_id_vm;
-														
-				if ($level2->[$j]->{address} =~ /\d+\.\d+\.\d+\.\d+/)
-				{
-					$router_addr = $level2->[$j]->{address};
-				}
-				elsif ($level2->[$j]->{networks}->{private}[0] =~ /\d+\.\d+\.\d+\.\d+/)
-				{
-					$router_addr = $level2->[$j]->{networks}->{private}[0];
-				}
-				
-				if(defined($router_addr))
-				{
-					$rt_id_vm = DB_getRouterId($router_addr);
-					if (!defined($rt_id_vm)) {
-						if($level2->[$j]->{status} =~ m/^RUNNING/i)
-						{
-							$status = 'up';	
-						}
-						else
-						{
-							$status = "down";
-						}
-						$rt_id_vm = DB_addRouter($level2->[$j]->{id}, $router_addr, $status);
-						DB_setHostVendor($rt_id_vm,'Linux');
-					}
-					else {
-						DB_dropLinks($rt_id_vm);
-					}
-				}
-				print "$rt_id_cl:$rt_id_vm\n";
-				DB_writeLink($rt_id_cl,$rt_id_vm,$linkT);
-				
-				if(defined ($level2->[$j]->{networks}))
-				{					 
-					foreach $k2(keys $level2->[$j]->{networks})
-					{		
-						for $i ( 0 .. $#{ $level2->[$j]->{networks}->{$k2} } ) 
-						{
-							if( $level2->[$j]->{networks}->{$k2}[$i] =~ /\d+\.\d+\.\d+\.\d+/ ) 
-							{
-##								print " $i = $level2->[$j]->{networks}->{$k2}[$i]";
-							}							
-						}
-##							print "\n";								 
-					}				
-				}																		
-		}
-	}	
-}
-
-sub linux_get_topologies_old ($$$$$) {
-  my ($host, $username) = @_[0..1];
-  my @passwds = @_[2..3];
-  my $access = $_[4];
-  my $p = json_file_to_perl ('ocx.json');
-    my $k1;
-    my $k2;
-    my $level2;
-    my $arr;
-    my $rt_id;
-    my $rt_id_vm;
-    my $router_addr ;
-    my $i;
-    my $linkT= "P";
-
-    foreach my $k (keys $p)
-    {
-		undef $rt_id;
-		undef $router_addr ;
-		print Dumper($k);## cloud provider
-		$rt_id = DB_getRouterId($k);
-		if (!defined($rt_id)) {
-			$rt_id = DB_addRouter($k, '0.0.0.0', "up");
-			DB_setHostVendor($rt_id,'CloudProvider');
-		}
-			else {
-			DB_dropLinks($rt_id);
-		}
-		$level2 = $p->{$k};
-		foreach  $k1(keys $level2)
-		{
-			undef $rt_id_vm;
-			if($level2->{$k1}->{status} =~ m/^RUNNING/i)
-			{								
-				print $k1."\n";
-				if ($level2->{$k1}->{address} =~ /\d+\.\d+\.\d+\.\d+/)
-				{
-					$router_addr = $level2->{$k1}->{address};
-				}
-				elsif ($level2->{$k1}->{networks}->{private}[0] =~ /\d+\.\d+\.\d+\.\d+/)
-				{
-					$router_addr = $level2->{$k1}->{networks}->{private}[0];
-				}
-				if(defined($router_addr))
-				{
-					$rt_id_vm = DB_getRouterId($router_addr);
-					if (!defined($rt_id_vm)) {
-						$rt_id_vm = DB_addRouter($k1, $router_addr, "up");
-						DB_setHostVendor($rt_id_vm,'Linux');
-					}
-					else {
-					DB_dropLinks($rt_id_vm);
-					}
-				}
-				DB_writeLink($rt_id,$rt_id_vm,$linkT);
-				if(defined ($level2->{$k1}->{networks}))
-				{					 
-					foreach $k2(keys $level2->{$k1}->{networks})
-					{		
-						for $i ( 0 .. $#{ $level2->{$k1}->{networks}->{$k2} } ) 
-						{
-							if( $level2->{$k1}->{networks}->{$k2}[$i] =~ /\d+\.\d+\.\d+\.\d+/ ) 
-							{
-								print " $i = $level2->{$k1}->{networks}->{$k2}[$i]";
-							}							
-						}
-							print "\n";								 
-					}				
-				}	
-			}		
-		}
-	}
-	
-  return "ok";
-}
 
 sub run_proccessing_alone
 {
@@ -604,12 +474,7 @@ sub run_proccessing
     DB_writeSwInfo($new_rid, \%sw_info);
 					
 	my @linux_interfaces = $self->linux_parse_intefaces();
-=for	
-	foreach(@linux_interfaces)
-  {
-	print $_;
-}
-=cut	
+
 	foreach(@linux_interfaces)
   {
 	$line = $_;
@@ -656,6 +521,9 @@ foreach my $k1(keys %hwaddr)
 	if(defined($speede))
 	{
 		$speede =~ s/\s+$//;
+		if($speede =~ m/^Cannot/){
+			$speede = 'Unspecified';
+			}
 	}
 	else
 	{
@@ -672,7 +540,7 @@ foreach my $k1(keys %hwaddr)
 		{
 			 $ph_int_id = DB_getPhInterfaceId($new_rid,$k);
 			 @ifc{("interface","ip address","mask","description")} =
-				($k,$ip{$k}->[0],'255.255.255.255','');
+				($k,$ip{$k}->[0],$mask{$k},'');
 			 DB_writeInterface( $new_rid, $ph_int_id, \%ifc );
 			 if($k eq 'eth0')
 			 {
