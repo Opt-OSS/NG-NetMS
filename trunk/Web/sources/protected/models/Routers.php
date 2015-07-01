@@ -150,6 +150,16 @@ class Routers extends CActiveRecord
         return $arr_data;
     }
 
+    protected function beforeSave()
+    {
+        if(parent::beforeSave())
+        {
+                $this->ip_addr=$this->name;
+            return true;
+        }
+        else
+            return false;
+    }
 
     protected function afterDelete()
     {

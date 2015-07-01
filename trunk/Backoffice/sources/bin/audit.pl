@@ -1,4 +1,24 @@
 #!/usr/bin/perl -w
+# NG-NetMS, a Next Generation Network Managment System
+# 
+# Version 3.3 
+# Build number N/A
+# Copyright (C) 2015 Opt/Net
+# 
+# This file is part of NG-NetMS tool.
+# 
+# NG-NetMS is free software: you can redistribute it and/or modify it under the terms of the
+# GNU General Public License v3.0 as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# NG-NetMS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# 
+# See the GNU General Public License for more details. You should have received a copy of the GNU
+# General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+# 
+# Authors: T.Matselyukh, A. Jaropud, M.Golov
+ 
  
 
 # NextGen NMS Discovery/audit 
@@ -46,6 +66,7 @@ use NGNMS_JuniperJav;
 use NGNMS_Linux;
 use NGNMS_Extreme;
 use NGNMS_HP;
+use Net::Netmask;
 use DateTime;
 use DateTime::Format::Strptime;
 use List::Util qw( min max );
@@ -96,6 +117,7 @@ my $passwd    = '';
 my $enpasswd  = '';
 my $access    = 'Telnet';
 my $community = 'public';
+my $lastSeedHost;
 
 
  my $path_to_key = "" ;
@@ -265,7 +287,7 @@ sub getAttrVal($)
 	}
 
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
-    
+=for    
 	if(DB_isOpenedDiscovery())
 	{
 		my $ls_discovery = DB_lastchangeDiscovery();
@@ -277,7 +299,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 		my $ls_timestamp = $dt->epoch;
 		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =localtime(time);
 		$year = $year + 1900;
-		$mon = $mon+1;;
+		$mon = $mon+1;
 		$dt = DateTime->new(
 			year       => $year,
 			month      => $mon,
@@ -285,8 +307,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 			hour       => $hour,
 			minute     => $min,
 			second     => $sec,  
-		);
-  
+		);  
 		my $tm_now = $dt->epoch;
 		my $tm_diff = $tm_now - $ls_timestamp;
 		if($tm_diff > 600)
@@ -297,7 +318,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 		
 		die "Audit cannot be run! There is other open audit \n";
 	}
-     
+=cut     
 	 
 	DB_insertDiscoveryStatus ('ngnms',$interact); 
     
@@ -310,7 +331,10 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 	
     $prom_val = DB_getSettings('seedHost');
     $seedHosts = getAttrVal($prom_val->[0]);
-	$prom_val = DB_getSettings('username');
+    $prom_val = DB_getSettings('hostType');
+    my $test_host_type1 = getAttrVal($prom_val->[0]);
+    $test_host_type = $test_host_type1 if defined($test_host_type1);
+    $prom_val = DB_getSettings('username');
     $user = getAttrVal($prom_val->[0]);
     $prom_val = DB_getSettings('password');
     $passwd = getAttrVal($prom_val->[0]);
@@ -461,6 +485,7 @@ DB_updateAllBgpRouterStatus();
 foreach $seedHost (@seedHostList) {
   $seedHost =~ s/^\s+//;			# no leading white
   $seedHost =~ s/\s+$//;			# no trailing white
+  $lastSeedHost = $seedHost;
 
   if (!defined($test_topologies)) {
     if (defined($test_host_type)) {
@@ -554,8 +579,21 @@ DB_updateDiscoveryStatus(5,0);## SNMP process was ended
   DB_updateDiscoveryStatus(15,0);## getting Topology process was ended
 } # loop through seed hosts
 
+
+
+
 if ($noPoll) {
   print "Skipping polling stage.\n";
+  if($interact < 1)
+	{
+	
+		DB_stopDiscovery(15,1,1);
+	
+	}
+	else
+	{
+		DB_stopDiscovery(15,0,1);
+	}
   DB_close;
   exit;
 }
@@ -574,6 +612,15 @@ foreach my $child (keys %hosts) {
  
 	if(!%hosts) {
 	  logError("audit","No network found\n");
+	  if($interact < 1)
+		{
+			DB_stopDiscovery(15,1,1);
+		}
+	  else
+		{
+			DB_stopDiscovery(15,0,1);
+		}
+	  DB_close;
 	  exit;
 	}
 
@@ -773,14 +820,40 @@ if($cur_percent <51)
 	DB_updateDiscoveryStatus(50,0);## Polling process was ended
 }
 
-DB_close;
+
 sleep(1);
 if($scan > 0)
 {
 
 		&runScanner("$ENV{'NGNMS_HOME'}/bin/subnets_scanner.pl");
 }
-
+else
+{
+	if($hostType eq 'Linux'){
+		
+		my $seed_router_id = DB_getRouterId($lastSeedHost);
+		my @seedIntefaces = @{DB_getInterfacesAll($seed_router_id)};
+		my $control_block;
+		my @arrIp = ();
+		foreach my $seedInterface(@seedIntefaces){
+			push @arrIp,$seedInterface->[1];
+			}
+		
+		my $hostswls = DB_getRoutersWithoutLinks();
+		foreach my $hostswl (@{$hostswls})
+		{
+			my @wlinterfaces = @{DB_getInterfacesAll($hostswl->[0])};
+			foreach my $wlinterface(@wlinterfaces)
+			{
+				my $control_block=new Net::Netmask ($wlinterface->[1] , $wlinterface->[2]);
+				if($control_block->match($arrIp[0])){
+					DB_writeLink($seed_router_id,$hostswl->[0],'B')
+					}
+				}
+		}
+	}
+}
+DB_close;
 
 
 

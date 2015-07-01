@@ -13,7 +13,7 @@ use Data::Dumper;
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $data);
 
-# use Data::Dumper;
+use Data::Dumper;
 use NGNMS_util;
 use DBI;
 use DBD::Pg;
@@ -54,9 +54,10 @@ $VERSION     = 0.01;
 		  &DB_dropRouterId &DB_getCountUnion &DB_getCountIntersect
 		  &DB_getMinRouterRA &DB_getAllHostname &DB_getBgpRouters
 		  &DB_addBgpRouter &DB_getBgpRouterId &DB_getHostVendor
-		  &DB_writeTopologyBgp &DB_updateBgpRouterStatus 
+		  &DB_writeTopologyBgp &DB_updateBgpRouterStatus &DB_getRoutersWithoutLinks
 		  &DB_updateAllBgpRouterStatus &DB_updateBgpRouterAS &DB_writeBgpLink
-		  &DB_updateLinkA &DB_updateLinkB &DB_getRouterVendorById);
+		  &DB_updateLinkA &DB_updateLinkB &DB_getRouterVendorById &DB_setHostVendorByIP
+		  &DB_getInterfacesAll);
 
 # your exported package globals go here,
 # as well as any optionally exported functions
@@ -157,6 +158,15 @@ sub DB_getInterfaces($) {
   my $SQL = "SELECT name FROM interfaces WHERE router_id = $rt_id";
   my $rref = $dbh->selectcol_arrayref($SQL);
   # print Dumper($rref);
+    return $rref;
+}
+
+sub DB_getInterfacesAll($) {
+  my $rt_id = shift;
+  local $dbh->{RaiseError};     # Ignore errors
+  my $SQL = "SELECT name,ip_addr,mask FROM interfaces WHERE router_id = $rt_id";
+  my $rref = $dbh->selectall_arrayref($SQL);
+ ## print Dumper($rref);
     return $rref;
 }
 
@@ -307,6 +317,7 @@ sub DB_writePhInterface($*) {
     my $if_h = $dbh->prepare($SQL);
 
     my @SQLARGS = @$ifc{("interface","state","condition","speed","description")};
+    print Dumper(@SQLARGS);
     my $result = $if_h->execute($rt_id,@SQLARGS);
     return $result;
   }
@@ -583,11 +594,30 @@ sub DB_getBgpRouters () {
   return undef;
 }
 
+sub DB_getRoutersWithoutLinks(){
+	my $SQL = "select routers.router_id from routers, network where router_id_a!=router_id and router_id_b!=router_id and status='up'";
+  my $aref = $dbh->selectall_arrayref($SQL);
+  
+  if (defined($aref)) {
+    return $aref;
+  }
+  return undef;
+	}
+
 sub DB_setHostVendor($$) {
   my $rtId = shift;
   my $vendor = shift;
 
   my $SQL = "UPDATE routers SET eq_vendor = ? WHERE router_id = ?";
+  my $if_h = $dbh->prepare($SQL);
+  my $result = $if_h->execute($vendor,$rtId);
+}
+
+sub DB_setHostVendorByIP($$) {
+  my $rtId = shift;
+  my $vendor = shift;
+
+  my $SQL = "UPDATE routers SET eq_vendor = ? WHERE ip_addr = ?";
   my $if_h = $dbh->prepare($SQL);
   my $result = $if_h->execute($vendor,$rtId);
 }
@@ -944,17 +974,20 @@ sub DB_isInRouterAccess($) {
 	 local $dbh->{RaiseError};     # Ignore errors
 	my $SQL;
 	if( $_[0] =~ /\d+\.\d+\.\d+\.\d+/ ) {
-		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_access ra ,routers r, interfaces i 
-				WHERE ((host(r.ip_addr) = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.id_router=r.router_id ) 
-				OR (host(i.ip_addr) = \'$r_n\'  and ra.id_router=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id ";
+		$SQL = "SELECT count(ra.*) as ammount,r.router_id FROM router_access ra ,routers r 
+				WHERE ((host(r.ip_addr) = \'$r_n\'  or r.name = \'$r_n\'  ) AND ra.id_router=r.router_id ) GROUP BY r.router_id
+				UNION 
+				SELECT count(ra.*) as ammount,r.router_id FROM router_access ra ,routers r, interfaces i  
+				WHERE (host(i.ip_addr) = \'$r_n\'   and ra.id_router=i.router_id and i.router_id = r.router_id) GROUP BY r.router_id";
 	}
 	else
 	{
 		$SQL = "SELECT count(ra.*) as ammount, r.router_id as rtid FROM router_access ra ,routers r WHERE r.name = \'$r_n\' AND ra.id_router=r.router_id GROUP BY 2";
 	}
-    
-##  print Dumper($rref);
+##    print $SQL."\n";
+
     my $rref = $dbh->selectall_arrayref($SQL);
+    ##  print Dumper($rref);
 	return $rref;
 
 }
