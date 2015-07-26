@@ -197,9 +197,9 @@ $form = $this->beginWidget(
         var mode_en_dis = $("#arc_en_dis").val();
         var arc_path = 'archive';
 
-        var arr_per = {old_period:old_period,exp_pеriod:exp_period,del_pеriod:del_period,mode:mode_en_dis,arc_path:arc_path};
+        var arr_per = {old_period:old_period,exp_period:exp_period,del_period:del_period,mode:mode_en_dis,arc_path:arc_path};
         $.ajax({
-            url     : '<?php echo Yii::app() -> createUrl('archivConf/setconfiguration'); ?>',
+            url     : '<?php echo Yii::app() -> createUrl('archiveConf/setconfiguration'); ?>',
             type    : 'POST',
             data    : arr_per,
             cache   : false,

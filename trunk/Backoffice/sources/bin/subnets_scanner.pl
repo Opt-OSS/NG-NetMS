@@ -58,6 +58,7 @@
 # Author: A.Iaropud
 #
 
+use lib "$ENV{'NGNMS_HOME'}/lib/";
 use strict;
 use threads;
 
@@ -69,6 +70,9 @@ use Net::Netmask;
 use Nmap::Scanner;
 use Sort::Key::IPv4 qw(ripv4keysort);
 
+use Emsgd;
+
+logError("subnets_scanner","starting subnet_scanner... \n");
 my $netmask;
 my $addr;
 my $start;
@@ -104,6 +108,21 @@ my $dbhost = 'localhost';
 # Parse command line
 #
 
+
+
+###################################
+# Print debugging output to screen
+
+
+
+my $verbose = "";
+$verbose = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
+print "Subnet_scanner - init variables complete...\n" if ($verbose);
+#####################################################################
+# Parse command line
+#
+print "#Debug - Subnet_scanner - parsing arguments...\n" if ($verbose >1);
+
 while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   
   if ($ARGV[0] eq "-L") {
@@ -133,7 +152,13 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
 	shift @ARGV;
     next;
   }
-  
+
+    if ($ARGV[0] eq "-d") {
+      $verbose = 1;
+      shift @ARGV;
+      next;
+    }
+
   if ($ARGV[0] eq "-P") {
     shift @ARGV;
     $dbport = $ARGV[0] if defined($ARGV[0]);
@@ -162,18 +187,21 @@ die "Usage: $0 user passwd access_type [pass_to_key]\n" unless ($#ARGV >= 0);
 my ($user, $passwd, $enpasswd, $access,$community,$path_to_key) = @ARGV[0..5];
 
 # Redirect stdout
-=for
-my $logFile = "/dev/null";
+
+if ($verbose) {
+  # Print debugging output to file
+
+  my $logFile = "/dev/null";
   if (defined($ENV{"NGNMS_LOGFILE"})) {
     $logFile = $ENV{"NGNMS_LOGFILE"};
   }
 
   open( STDERR, ">&STDOUT") or
-    warn "Failed to redirect stderr to stdout: $!\n";
-  open( STDOUT, "> $logFile") or
-    warn "Failed to redirect stdout to $logFile: $!\n";
-##
-=cut
+    warn "Poll_host failed to redirect STDERR to STDOUT: $!\n";
+  open( STDOUT, ">> $logFile") or
+    warn "Failed to redirect STDOUT to $logFile: $!\n";
+}
+
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 my $arr = DB_getAllIntefaces();
 
@@ -213,8 +241,8 @@ for my $key (@sorted_keys) {
 								$high_link = &ip2num($addr);
 							}
 						}
-					}					
-				}	
+					}
+				}
 }
 
 DB_updateDiscoveryStatus(60,0);
@@ -268,6 +296,7 @@ while( $counter_join < $#block_one+1){
 		
  		print 	"Scan ".$blocks0{$block_idx}{block}."\n" if($old_st == $st);	
 		push @threads, threads->create(\&scansubnet, $blocks0{$block_idx}{block},$blocks0{$block_idx}{high_link});
+
 						$bar_shift++;
 						$step_bar = int(($pr_bar * $bar_shift)/$int_bar);
 						my $up_percent = $start_bar + $step_bar;
@@ -417,10 +446,10 @@ sub num2ip()
     my $ip="$intip.$b.$c.$d";
     return $ip;
 
-}	
+}
+
 sub scansubnet{
 	my ($target,$high_link) = @_;
-	my $scanner = new Nmap::Scanner;
 	my $cur_id ;
 	my $cur_ip;
 	my $rt_id_parent;
@@ -429,21 +458,35 @@ sub scansubnet{
 	my $counter = 0;
 	my @upHosts = ();
 	my @thrs;
-	my $results = $scanner->scan("-sn $target");
-	my $host_list = $results->get_host_list();
-	
+
+# NMAP system call - modify command line here as needed
+#
+my $nmap_cmd = "/usr/bin/nmap -T4 -sn -PA22,23,80,443 -oG - $target | /bin/grep Up | /usr/bin/awk '{print \$2}'";
+my $fh;
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
     my $id_link = DB_getInterfaceRouterId(&num2ip($high_link));
- 
-while (my $host = $host_list->get_next()) 
+
+Emsgd::print 	"NMAP CMD $nmap_cmd";
+if (!open($fh, '-|', $nmap_cmd)) {
+    Emsgd::print("Nmap epic fail");
+    die $!;
+    };
+# while (my $host = <$fh>) {
+#   print 	"\n            ====\n $host \n ==\n";
+# }
+# return;
+while (my $host = <$fh>)
+
+#while (my $host = $host_list->get_next())
 	{
 		$rt_id_parent = '';
-		unless (!($host->addresses)[0]->addr) 
+		chomp $host;
+		unless (!($host) )
 		{
-			if( $host->status eq 'up' ) 
+			if( 1 )
 			{
-				$cur_ip = ($host->addresses)[0]->addr();
-				print "DEBUG ".$cur_ip."\n";
+				$cur_ip = $host;
+#				Emsgd::print "CURIP ".$cur_ip;
 				$control_cur_id = DB_getRouterId($cur_ip);
 				if(!defined $control_cur_id)
 				{
@@ -552,7 +595,7 @@ sub worker
 {
 	my $ip_addr= shift;
 	my @cmd2 = ();
-	print "Process ".$ip_addr.":";
+	print "**WORKER** Process ".$ip_addr.":";
 	
 #	$cur_id = DB_addRouter($ipaddr->{addr},$ipaddr->{addr},'unknown');
 #	DB_writeLink($ipaddr->{high_link},$cur_id,'B');
@@ -561,9 +604,9 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 	my @params=();
 	$params[0] = $ip_addr; ##host
 	$params[0] =~ s/\s+$//; 
-DB_close;	
+DB_close;
 		@cmd2=($cmd);
-		
+
 		push @cmd2,'-d';
 		push @cmd2,'-L';
 		push @cmd2,$dbhost;
@@ -575,8 +618,6 @@ DB_close;
 		push @cmd2,$dbpasswd;
 		push @cmd2,'-P';
 		push @cmd2,$dbport;
-		
+		Emsgd::print(\@cmd2);
 		system( @cmd2, @params );
-}	
-	
-
+}
