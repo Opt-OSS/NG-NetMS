@@ -1,23 +1,26 @@
 <?php
 
 /**
- * This is the model class for table "archives".
+ * This is the model class for table "archive_conf".
  *
- * The followings are the available columns in table 'archives':
- * @property integer $archive_id
- * @property string $start_time
- * @property string $end_time
- * @property string $file_name
- * @property boolean $in_db
+ * The followings are the available columns in table 'archive_conf':
+ * @property string $arc_expire
+ * @property string $arc_delete
+ * @property string $arc_period
+ * @property integer $arc_enable
+ * @property string $arc_path
+ * @property integer $log_syslog
+ * @property integer $log_level
+ * @property integer $arc_gzip
  */
-class Archives extends CActiveRecord
+class ArchiveConf extends CActiveRecord
 {
 	/**
 	 * @return string the associated database table name
 	 */
 	public function tableName()
 	{
-		return 'archives';
+		return 'archive_conf';
 	}
 
 	/**
@@ -28,12 +31,13 @@ class Archives extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('start_time, end_time, file_name', 'required'),
-			array('file_name', 'length', 'max'=>64),
-			array('in_db', 'safe'),
+			array('arc_enable, log_syslog, log_level, arc_gzip, id_conf', 'numerical', 'integerOnly'=>true),
+			array('arc_expire, arc_delete', 'length', 'max'=>10),
+			array('arc_period', 'length', 'max'=>4),
+			array('arc_path', 'length', 'max'=>100),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('archive_id, start_time, end_time, file_name, in_db', 'safe', 'on'=>'search'),
+			array('arc_expire, arc_delete, arc_period, arc_enable, arc_path, log_syslog, log_level, arc_gzip, id_conf', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -54,11 +58,15 @@ class Archives extends CActiveRecord
 	public function attributeLabels()
 	{
 		return array(
-			'archive_id' => 'Archive',
-			'start_time' => 'Start Time',
-			'end_time' => 'End Time',
-			'file_name' => 'File Name',
-			'in_db' => 'In Db',
+			'arc_expire' => 'ArcTimeout',
+			'arc_delete' => 'ArcDelTimeout',
+			'arc_period' => 'period for cron',
+			'arc_enable' => 'Arc Enable',
+			'arc_path' => 'Arc Path',
+			'log_syslog' => 'Log Syslog',
+			'log_level' => 'Log Level',
+			'arc_gzip' => 'Arc Gzip',
+            'id_conf' => "Configuration ID"
 		);
 	}
 
@@ -80,19 +88,18 @@ class Archives extends CActiveRecord
 
 		$criteria=new CDbCriteria;
 
-		$criteria->compare('archive_id',$this->archive_id);
-/*		$criteria->compare('start_time',$this->start_time,true);
-		$criteria->compare('end_time',$this->end_time,true);*/
-        $criteria->compare("to_char(start_time, 'YYYY-MM-DD HH24:MI:SS')",$this->start_time,true);
-        $criteria->compare("to_char(end_time, 'YYYY-MM-DD HH24:MI:SS')",$this->end_time,true);
-		$criteria->compare('file_name',$this->file_name,true);
-		$criteria->compare('in_db',$this->in_db);
+		$criteria->compare('arc_expire',$this->arc_expire,true);
+		$criteria->compare('arc_delete',$this->arc_delete,true);
+		$criteria->compare('arc_period',$this->arc_period,true);
+		$criteria->compare('arc_enable',$this->arc_enable);
+		$criteria->compare('arc_path',$this->arc_path,true);
+		$criteria->compare('log_syslog',$this->log_syslog);
+		$criteria->compare('log_level',$this->log_level);
+		$criteria->compare('arc_gzip',$this->arc_gzip);
+        $criteria->compare('id_conf',$this->arc_gzip);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
-            'sort' => array(
-                'defaultOrder' => 'archive_id',
-            )
 		));
 	}
 
@@ -100,7 +107,7 @@ class Archives extends CActiveRecord
 	 * Returns the static model of the specified AR class.
 	 * Please note that you should have this exact method in all your CActiveRecord descendants!
 	 * @param string $className active record class name.
-	 * @return Archives the static model class
+	 * @return ArchiveConf the static model class
 	 */
 	public static function model($className=__CLASS__)
 	{

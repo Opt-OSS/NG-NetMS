@@ -4,9 +4,10 @@
 # NGNMS_DB.pm: database interface
 #
 # Copyright (C) 2002,2003 OptOSS LLC
+# Copyright (C) 2014,2015 Opt/Net BV
+# Author: M.Golov, T.Matselyukh
 #
-# Author: M.Golov
-#
+use Emsgd;
 
 package NGNMS_DB;
 use Data::Dumper;
@@ -86,7 +87,7 @@ sub DB_open {
   $DB_passwd = $_[2] if defined($_[2]);
   $DB_port =$_[3] if defined($_[3]);
   $DB_host =$_[4] if defined($_[4]);
-  #print "db=".$DB_name.":"."user=".$DB_user.":"."passwd=".$DB_passwd.":"."port=".$DB_port;
+#  print "#Debug db=".$DB_name.":"."user=".$DB_user.":"."passwd=".$DB_passwd.":"."port=".$DB_port."\n";
   $dbh=DBI->connect("dbi:Pg:dbname=".$DB_name.";host=".$DB_host.";port=".$DB_port,
 		    $DB_user, $DB_passwd,
 		    { AutoCommit=>1, RaiseError=>1, PrintError=>0 });
@@ -528,6 +529,7 @@ sub DB_addRouter ($$$) {
   if( $hostname =~ /\d+\.\d+\.\d+\.\d+/ ) {
     $hostname = getHostPart(reverseDNS($hostname));
   }
+#  Emsgd::print($ip);
   my $result = $sw_h->execute($hostname, $ip, $stat);
   return DB_getRouterId $_[0];
 }

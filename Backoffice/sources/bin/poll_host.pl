@@ -62,10 +62,10 @@ use NGNMS_util;
 use NGNMS_DB;
 use List::Util qw( min max );
 
- use Data::Dumper;
+use Data::Dumper;
 
 use passwds;
-
+logError("poll_host","starting poll_host... \n");
 #####################################################################
 # General configuration section
 #
@@ -108,14 +108,17 @@ my $seedf = "$ENV{'NGNMS_HOME'}/share/poll.cfg";
 # Print debugging output to screen
 my $verbose = "";
 $verbose = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
-
+print "#Poll_host - init variables complete...\n" if ($verbose);
 #####################################################################
 # Parse command line
 #
-
+print "#Debug - Poll_host - parsing arguments...\n" if ($verbose >1);
 while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
+print "#Debug - in arg while $ARGV[0]\n" if ($verbose >1);
   if ($ARGV[0] eq "-np") {
     $noPoll = 1;
+    shift @ARGV;
+    next;
   }
   if ($ARGV[0] eq "-p") {
     shift @ARGV;
@@ -131,6 +134,8 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   }
   if ($ARGV[0] eq "-d") {
     $verbose = 1;
+    shift @ARGV;
+    next;
   }
   
   if ($ARGV[0] eq "-L") {
@@ -194,7 +199,7 @@ EOF
 
 # Redirect stdout if no debugging needed
 
-if ($verbose eq "") {
+if ($verbose) {
   # Print debugging output to file
 
   my $logFile = "/dev/null";
@@ -203,9 +208,9 @@ if ($verbose eq "") {
   }
 
   open( STDERR, ">&STDOUT") or
-    warn "Failed to redirect stderr to stdout: $!\n";
-  open( STDOUT, "> $logFile") or
-    warn "Failed to redirect stdout to $logFile: $!\n";
+    warn "Poll_host failed to redirect STDERR to STDOUT: $!\n";
+  open( STDOUT, ">> $logFile") or
+    warn "Failed to redirect STDOUT to $logFile: $!\n";
 }
 
 sub getAttrVal($)
@@ -378,7 +383,7 @@ $criptokey.=$suffix;
 		}
 		
 ########################
-=for
+if ($verbose > 1) {
 print "Poll_host parameters:\n";
 print $host."\n";
 print $user."\n";
@@ -386,8 +391,7 @@ print $passwd."\n";
 print $enpasswd."\n";
 print $access."\n";
 print $community."\n";
-
-=cut
+}
 
 # Get all configs from host
 # Params:
@@ -580,7 +584,7 @@ sub makeConfigPath($$) {
   mkdir("$ENV{'NGNMS_HOME'}/data/rtconfig", 0755);
   mkdir($datadir,0755);
   if( !open(F_HOST, ">$datadir/$host.dir")) {
-    logError("poll","Failed to create $datadir/$host.dir");
+    logError("poll_host","Failed to create $datadir/$host.dir");
     exit;
   }
   close (F_HOST);
@@ -631,7 +635,7 @@ DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 $rt_id = DB_getRouterId($host);
 if( !defined($rt_id)) {
   DB_close;
-  logError("poll","host \'$host\' not found in the database");
+  logError("poll_host","host \'$host\' not found in the database");
   exit;
 };
 
@@ -647,7 +651,7 @@ if (!$noPoll) {
   $ret = &getConfigs($host,$user,$passwd,$enpasswd,$configPath,$community,$access,$path_to_key);
     
   if ($ret ne "ok") {
-    logError("poll","get configs from \'$host\': $ret");
+    logError("poll_host","get configs from \'$host\': $ret");
     # get host ip addr and try to connect using it
     my $addr = DB_getRouterIpAddr($rt_id);
     $ret = &getConfigs($addr,$user,$passwd,$enpasswd,$configPath,$community,$access,$path_to_key);    
@@ -690,7 +694,7 @@ if (!$noPoll) {
 	
     
     DB_close;
-    logError("poll","get configs from \'$host\': $ret");
+    logError("poll_host","get configs from \'$host\': $ret");
     exit;
   }
   
@@ -725,8 +729,8 @@ else
 
 DB_close;
 $ret eq "ok" or
-  logError("poll","parse configs from \'$host\': $ret");
+  logError("poll_host","parse configs from \'$host\': $ret");
 
-print "Done\n";
+print "Poll_host process - Done\n";
 
 __END__

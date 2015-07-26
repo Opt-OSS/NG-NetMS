@@ -1,5 +1,5 @@
 <?php
-
+include_once 'protected/extensions/emsgd.php';
 // change the following paths if necessary
 $yii=dirname(__FILE__).'/../framework/yii.php';
 $config=dirname(__FILE__).'/protected/config/main.php';
