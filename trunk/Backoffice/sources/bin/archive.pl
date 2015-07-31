@@ -57,7 +57,7 @@ my $_ArcTimeout     = 86400*180;
 my $_ArcDelTimeout  = 86400*365;
 my $_ArcPeriod      = 86400;
 my $_ArcGzip        = 0;
-my $_ArcPath		    =	$ENV{NGNMS_HOME}.'/archive';
+my $_ArcPath		= $ENV{NGNMS_HOME}.'/archive';
 my $_ArcSettings    = $ENV{NGNMS_HOME}.'/conf/archive-time.conf';
 
 # Logging settings

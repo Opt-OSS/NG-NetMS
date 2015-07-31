@@ -1,44 +1,5 @@
 #!/usr/bin/perl -w
-# NG-NetMS, a Next Generation Network Managment System
-# 
-# Version 3.3 
-# Build number N/A
-# Copyright (C) 2015 Opt/Net
-# 
-# This file is part of NG-NetMS tool.
-# 
-# NG-NetMS is free software: you can redistribute it and/or modify it under the terms of the
-# GNU General Public License v3.0 as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# NG-NetMS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# 
-# See the GNU General Public License for more details. You should have received a copy of the GNU
-# General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
-# 
-# Authors: T.Matselyukh, A. Jaropud, M.Golov
- 
-# NG-NetMS, a Next Generation Network Managment System
-# 
-# Version 3.2 
-# Build number N/A
-# Copyright (C) 2014 Opt/Net
-# 
-# This file is part of NG-NetMS tool.
-# 
-# NG-NetMS is free software: you can redistribute it and/or modify it under the terms of the
-# GNU General Public License v3.0 as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# NG-NetMS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# 
-# See the GNU General Public License for more details. You should have received a copy of the GNU
-# General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
-# 
-# Authors: T.Matselyukh, A. Jaropud, M.Golov
- 
+
 #
 # Scan subnets which were configured in network
 #
@@ -115,7 +76,7 @@ my $dbhost = 'localhost';
 
 
 
-my $verbose = "";
+my $verbose = 0;
 $verbose = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
 print "Subnet_scanner - init variables complete...\n" if ($verbose);
 #####################################################################
@@ -448,6 +409,9 @@ sub num2ip()
 
 }
 
+
+
+
 sub scansubnet{
 	my ($target,$high_link) = @_;
 	my $cur_id ;
@@ -621,3 +585,4 @@ DB_close;
 		Emsgd::print(\@cmd2);
 		system( @cmd2, @params );
 }
+													

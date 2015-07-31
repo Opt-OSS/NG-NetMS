@@ -1,25 +1,4 @@
 #!/usr/bin/perl -w
-# NG-NetMS, a Next Generation Network Managment System
-# 
-# Version 3.3 
-# Build number N/A
-# Copyright (C) 2015 Opt/Net
-# 
-# This file is part of NG-NetMS tool.
-# 
-# NG-NetMS is free software: you can redistribute it and/or modify it under the terms of the
-# GNU General Public License v3.0 as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# NG-NetMS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# 
-# See the GNU General Public License for more details. You should have received a copy of the GNU
-# General Public License along with NG-NetMS. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
-# 
-# Authors: T.Matselyukh, A. Jaropud, M.Golov
- 
- 
 
 # NextGen NMS Discovery/audit 
 #
@@ -86,17 +65,17 @@ logError("audit","Program initialization");
 #
 # Number of simultaneous poll processes
 #
-my $slots = 12;
+my $slots           = 12;
 # Skip the poll stage by default
 #
-my $noPoll = 0;
+my $noPoll          = 0;
 
 my $dbhost = "localhost";
-my $dbname = "";
-my $dbuser = "";
-my $dbpasswd = "";
-my $dbport = "5432";
-my $filesDir="";
+my $dbname          = "";
+my $dbuser          = "";
+my $dbpasswd        = "";
+my $dbport      = "5432";
+my $filesDir        = "";
 my $isis_file;
 my $ospf_file;
 my $bgp_file;
@@ -105,24 +84,24 @@ my $test_topologies;
 my $test_host_type;
 my $ocx_session;
 my $prom_val;
-my $scan = 0;
-my $interact = 0;
+my $scan            = 0;
+my $interact        = 0;
 my $bgps;
-my $bgp_status = 1;
+my $bgp_status      = 1;
 my $flag_bgp;
-my $seedHosts = '';
-my $user      = '';
-my $passwd    = '';
-my $enpasswd  = '';
-my $access    = '';
-my $community = '';
-my $lastSeedHost;
-my $logFile = "/dev/null";
- my $path_to_key = "";
- my $passphrase = "";
+my $seedHosts       = '';
+my $user            = '';
+my $passwd          = '';
+my $enpasswd        = '';
+my $access          = '';
+my $community       = '';
+my $lastSeedHost    = '';
+my $logFile= "/dev/null";
+my $path_to_key     = "";
+my $passphrase      = "";
 
 # Print debugging output to screen if in debug
-my $verbose = '';
+my $verbose = 0;
 $verbose = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
 
 # Redirect stdout if debugging is required
