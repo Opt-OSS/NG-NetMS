@@ -198,7 +198,7 @@ die "Usage: $0 host [user passwd en_passwd community]\n" unless ($#ARGV >= 0);
 
 ($host) = $ARGV[0];
 
-logError("poll_host","starting poll_host -> $host \n");
+logError("poll_host","starting poll_host -> $host");
 
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
 my $p=48;
