@@ -11,7 +11,7 @@ use Time::Local;
 use POSIX qw/strftime/;
 use Config::Crontab;
 use Data::Dumper;
-
+use Emsgd;
 # Syslog defines
 use constant LOG_EMERG    => (0, 'emerg');
 use constant LOG_ALERT    => (1, 'alert');
@@ -28,10 +28,18 @@ use constant LOG_USER     => scalar 'user';
 my $_crontab  = "/usr/bin/crontab";
 
 # ------------------------------------------------------------------------------
+# DB Version !!!!!!!!! IMPORTANT FOR ABILITY TO PROCESS OLD ARCHIVES
+# ------------------------------------------------------------------------------
+use constant DB_VERSION => 34000;# x.xx.xx
+
+# ------------------------------------------------------------------------------
 # Queries constants
 # ------------------------------------------------------------------------------
+
+my $sEventsFields = '*';
+
 my $qGetTimes     = "SELECT MIN(receiver_ts), MAX(receiver_ts) FROM events WHERE (receiver_ts >= ? AND receiver_ts <  ?)";
-my $qGetEvents    = "SELECT event_id, origin_ts, receiver_ts, origin, origin_id, facility, code, descr, priority, severity, raw_event FROM events WHERE receiver_ts >= ? AND receiver_ts <  ? ORDER BY receiver_ts ASC";
+my $qGetEvents    = "SELECT $sEventsFields FROM events WHERE receiver_ts >= ? AND receiver_ts <  ? ORDER BY receiver_ts ASC";
 my $qGetEvtCount  = "SELECT COUNT(*) FROM events WHERE receiver_ts >= ? AND receiver_ts <  ?";
 my $qDelEvents    = "DELETE FROM events WHERE receiver_ts >= ? AND receiver_ts < ?";
 my $qVacuumEvt    = "VACUUM events";
@@ -361,25 +369,36 @@ sub doDump {
       logMsg( LOG_INFO, "Dumping events to $_ArcPath/$fileName" );
       open( DUMP, ">$_ArcPath/$fileName" ) || die "cannot create dump file $_ArcPath/$fileName : $!";
 
+
       logMsg( LOG_INFO, ">> Dump started" );
 
       # --- Header start
+      print DUMP '-- Version  '.DB_VERSION."\n";
       print DUMP<<EOF;
 -- Disable triggers
 --UPDATE "pg_class" SET "reltriggers" = 0 WHERE "relname" = 'events';
 
-COPY "events" FROM stdin;
+COPY "events" FROM stdin  WITH (DELIMITER ';' , FORMAT CSV , HEADER , QUOTE  '\"' );
 EOF
+
       # --- Header end
+
 
       # Dump events to file
       logMsg( LOG_DEBUG, "SQL: [$qGetEvents], [$fromTime, \"$_ArcTimeout second\"]" );
-      $sth = $dbh->prepare( $qGetEvents );
-      $sth->execute( ($fromTime, $time_shift) );
-      while( @row = $sth->fetchrow_array ) {
-        print DUMP join( "\t", @row )."\n";
+      $qGetEvents =~  s/\?/'$fromTime'/;
+      $qGetEvents =~  s/\?/'$time_shift'/;
+      my $sql = " copy ($qGetEvents) TO STDOUT  WITH (DELIMITER ';' , FORMAT CSV , HEADER , QUOTE  '\"' ,FORCE_QUOTE *)";
+		$dbh->do($sql);
+       Emsgd::pp($sql);
+      my $copy_data;
+      while ($dbh->pg_getcopydata($copy_data) >= 0) {
+       	print DUMP $copy_data;
       }
-
+      #Emsgd::pp(@copy_data[1]);
+#      while( @row = $sth->fetchrow_array ) {
+#        print DUMP join( "\t", @row )."\n";
+#      }
       # --- Footer start
       print DUMP<<EOF;
 \\.

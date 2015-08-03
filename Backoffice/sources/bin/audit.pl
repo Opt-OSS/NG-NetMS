@@ -167,7 +167,7 @@ print "#Debug - in arg while $ARGV[0]\n" if ($verbose > 1);
     next;
   }
   if ($ARGV[0] eq "-d") {
-    $verbose = 1 if ($verbose == 0);    # ignore -d option if already in deep debug mode due to environmet set
+    $verbose = 1 if ($verbose == 0);    # ignore -d option if already in deep debug mode due to environment set
     shift @ARGV;
     next;
   }
