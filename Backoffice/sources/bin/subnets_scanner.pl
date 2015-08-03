@@ -22,6 +22,7 @@
 use lib "$ENV{'NGNMS_HOME'}/lib/";
 use strict;
 use threads;
+use warnings;
 
 use NGNMS_DB;
 use NGNMS_util;
@@ -33,7 +34,7 @@ use Sort::Key::IPv4 qw(ripv4keysort);
 
 use Emsgd;
 
-logError("subnets_scanner","starting subnet_scanner... \n");
+logError("subnets_scanner","starting subnet_scanner...");
 my $netmask;
 my $addr;
 my $start;
@@ -59,25 +60,34 @@ my $type_router;
 my $untrust_flag = 0;
 
 ## initialize default access to DB
-my $dbname = "";
-my $dbuser = "";
-my $dbpasswd = "";
-my $dbport = "5432";
-my $dbhost = 'localhost';
-############
-#####################################################################
-# Parse command line
-#
-
-
+my $dbname 	= '';
+my $dbuser 	= '';
+my $dbpasswd = '';
+my $dbport 	= '5432';
+my $dbhost 	= 'localhost';
 
 ###################################
 # Print debugging output to screen
 
-
-
 my $verbose = 0;
 $verbose = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
+
+# Redirect stdout
+
+if ($verbose) {
+  # Print debugging output to file
+
+  my $logFile = "/dev/null";
+  if (defined($ENV{"NGNMS_LOGFILE"})) {
+    $logFile = $ENV{"NGNMS_LOGFILE"};
+  }
+
+  open( STDERR, ">&STDOUT") or
+    warn "Poll_host failed to redirect STDERR to STDOUT: $!\n";
+  open( STDOUT, ">> $logFile") or
+    warn "Failed to redirect STDOUT to $logFile: $!\n";
+}
+
 print "Subnet_scanner - init variables complete...\n" if ($verbose);
 #####################################################################
 # Parse command line
@@ -115,7 +125,7 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
   }
 
     if ($ARGV[0] eq "-d") {
-      $verbose = 1;
+      $verbose = 1 if ($verbose == 0);  # ignore if already in debug mode via NGNMS_DEBUG variable
       shift @ARGV;
       next;
     }
@@ -128,17 +138,7 @@ while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
 	}
 	
   if ($ARGV[0] eq "-h") {
-    print <<EOF ;
-Usage:
-  subnets_scanner.pl [switches] user passwd access_type(Telnet/SSH) enpasswd community pass_to_key(if it exist)
-
-  Switches:
-   -L       DB host (default:localhost)
-   -D       DB name
-   -U	 	DB User
-   -W		Pasword for DB user
-   -P		DB Port
-EOF
+	&usage;
     exit;
   }
   shift @ARGV;
@@ -147,29 +147,12 @@ EOF
 die "Usage: $0 user passwd access_type [pass_to_key]\n" unless ($#ARGV >= 0);
 my ($user, $passwd, $enpasswd, $access,$community,$path_to_key) = @ARGV[0..5];
 
-# Redirect stdout
-
-if ($verbose) {
-  # Print debugging output to file
-
-  my $logFile = "/dev/null";
-  if (defined($ENV{"NGNMS_LOGFILE"})) {
-    $logFile = $ENV{"NGNMS_LOGFILE"};
-  }
-
-  open( STDERR, ">&STDOUT") or
-    warn "Poll_host failed to redirect STDERR to STDOUT: $!\n";
-  open( STDOUT, ">> $logFile") or
-    warn "Failed to redirect STDOUT to $logFile: $!\n";
-}
-
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);
 my $arr = DB_getAllIntefaces();
 
 ##print Dumper($arr);
 
-
-         my @sorted_keys = ripv4keysort { $arr->{$_}->{ip_addr} } keys %$arr;
+my @sorted_keys = ripv4keysort { $arr->{$_}->{ip_addr} } keys %$arr;
 my $old_block=new Net::Netmask ('0.0.0.0' , '255.0.0.0');
 my $high_link = 4294967295;
 
@@ -585,4 +568,17 @@ DB_close;
 		Emsgd::print(\@cmd2);
 		system( @cmd2, @params );
 }
-													
+sub usage {
+    print <<EOF ;
+Usage:
+  subnets_scanner.pl [switches] user passwd access_type(Telnet/SSH) enpasswd community pass_to_key(if it exist)
+
+  Switches:
+   -L       DB host (default:localhost)
+   -D       DB name
+   -U	 	DB User
+   -W		Pasword for DB user
+   -P		DB Port
+EOF
+exit;
+}

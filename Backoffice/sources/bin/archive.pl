@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use warnings;
 use DBI qw(:sql_types);
 use Config::General;
 use Sys::Syslog qw(:DEFAULT setlogsock);
@@ -58,14 +59,14 @@ my $_ArcDelTimeout  = 86400*365;
 my $_ArcPeriod      = 86400;
 my $_ArcGzip        = 0;
 my $_ArcPath		= $ENV{NGNMS_HOME}.'/archive';
-my $_ArcSettings    = $ENV{NGNMS_HOME}.'/conf/archive-time.conf';
+my $_ArcSettings    = $ENV{NGNMS_HOME}.'/configs/archive-time.conf';
 
 # Logging settings
 my $_LogSyslog      = 1;
 my $_LogLevel       = 6;
 
 # Other settings
-my $ConfigFile      = $ENV{NGNMS_HOME}.'/conf/archive.conf';
+my $ConfigFile      = $ENV{NGNMS_HOME}.'/configs/archive.conf';
 
 # ------------------------------------------------------------------------------
 # Main section

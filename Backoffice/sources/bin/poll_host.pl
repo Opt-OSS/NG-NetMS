@@ -30,6 +30,7 @@
 # Author: M.Golov
 #
 use strict;
+use warnings;
 
 use NGNMS_Cisco;
 use NGNMS_JuniperJav;
@@ -45,7 +46,7 @@ use List::Util qw( min max );
 use Data::Dumper;
 
 use passwds;
-logError("poll_host","starting poll_host... \n");
+
 #####################################################################
 # General configuration section
 #
@@ -57,11 +58,11 @@ logError("poll_host","starting poll_host... \n");
 #
 
 # Skip the poll stage
-my $noPoll = 0;
-my $dbname = "";
-my $dbuser = "";
-my $dbpasswd = "";
-my $dbport = "5432";
+my $noPoll 			= 0;
+my $dbname 		    = '';
+my $dbuser 			= '';
+my $dbpasswd 		= '';
+my $dbport 		= "5432";
 my $dbhost = 'localhost';
 my $rt_id;
 my $criptokey;
@@ -83,12 +84,29 @@ my $configPath = "";
 
 my $test_host_type;
 
-my $seedf = "$ENV{'NGNMS_HOME'}/share/poll.cfg";
-
 # Print debugging output to screen
 my $verbose = 0;
 $verbose    = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
+
+#####################################################################
+# Redirect stdout if no debugging needed
+
+if ($verbose) {
+  # Print debugging output to file
+
+  my $logFile = "/dev/null";
+  if (defined($ENV{"NGNMS_LOGFILE"})) {
+    $logFile = $ENV{"NGNMS_LOGFILE"};
+  }
+
+  open( STDERR, ">&STDOUT") or
+    warn "Poll_host failed to redirect STDERR to STDOUT: $!\n";
+  open( STDOUT, ">> $logFile") or
+    warn "Failed to redirect STDOUT to $logFile: $!\n";
+}
+
 print   "#Poll_host - init variables complete...\n" if ($verbose);
+
 #####################################################################
 # Parse command line
 #
@@ -113,7 +131,7 @@ print "#Debug - in arg while $ARGV[0]\n" if ($verbose >1);
     next;
   }
   if ($ARGV[0] eq "-d") {
-    $verbose = 1;
+    $verbose = 1 if ($verbose == 0); # ignore -d if already in debug due to NGNMS_DEBUG set
     shift @ARGV;
     next;
   }
@@ -154,43 +172,10 @@ print "#Debug - in arg while $ARGV[0]\n" if ($verbose >1);
 	}
 	
   if ($ARGV[0] eq "-h") {
-    print <<EOF ;
-Usage:
-  poll_host.pl [switches] host user passwd en_passwd community access_type(Telnet/SSH) pass_to_key(if it exist)
-
-  Switches:
-   -np      Only process config files
-   -p path  Path to config files
-   -t type  Host type
-   -d       Print debug output to screen
-   -L       DB host (default:localhost)
-   -D       DB name
-   -U	 	DB User
-   -W		Pasword for DB user
-   -P		DB Port
-EOF
+    &usage;
     exit;
   }
   shift @ARGV;
-}
-
-#####################################################################
-
-
-# Redirect stdout if no debugging needed
-
-if ($verbose) {
-  # Print debugging output to file
-
-  my $logFile = "/dev/null";
-  if (defined($ENV{"NGNMS_LOGFILE"})) {
-    $logFile = $ENV{"NGNMS_LOGFILE"};
-  }
-
-  open( STDERR, ">&STDOUT") or
-    warn "Poll_host failed to redirect STDERR to STDOUT: $!\n";
-  open( STDOUT, ">> $logFile") or
-    warn "Failed to redirect STDOUT to $logFile: $!\n";
 }
 
 sub getAttrVal($)
@@ -210,7 +195,11 @@ sub getAttrVal($)
 }
 
 die "Usage: $0 host [user passwd en_passwd community]\n" unless ($#ARGV >= 0);
+
 ($host) = $ARGV[0];
+
+logError("poll_host","starting poll_host -> $host \n");
+
 DB_open($dbname,$dbuser,$dbpasswd,$dbport,$dbhost);# open DB connect
 my $p=48;
 $criptokey = DB_getCriptoKey();
@@ -713,4 +702,22 @@ $ret eq "ok" or
 
 print "Poll_host process - Done\n";
 
+sub usage {
+    print <<EOF ;
+Usage:
+  poll_host.pl [switches] host user passwd en_passwd community access_type(Telnet/SSH) pass_to_key(if it exist)
+
+  Switches:
+   -np      Only process config files
+   -p path  Path to config files
+   -t type  Host type
+   -d       Print debug output to screen
+   -L       DB host (default:localhost)
+   -D       DB name
+   -U	 	DB User
+   -W		Pasword for DB user
+   -P		DB Port
+EOF
+exit;
+}
 __END__

@@ -4,14 +4,14 @@
 #
 # Audit main module
 #
-# Usage: audit.pl [switches] host user passwd enpasswd [Telnet/SSH1/SSH2]
+# Usage: audit.pl [switches] host user passwd enpasswd [Telnet/SSHv1/SSHv2]
 #
 # Switches:
 #  -np       skip poll stage
 #  -s		 run subnets scanner
 #  -f fname  get topologies from files 'file_isis.txt' and 'file_ospf.txt'
 #  -t type   seed host type [Juniper/Cisco/Linux]
-#  -d        print debugging info to screen (unless env NGNMS_LOGFILE is set)
+#  -d        verbose info to screen
 #  -L        DB host
 #  -D		 DB name
 #  -U		 DB User
@@ -19,15 +19,14 @@
 #  -P        DB port
 #  -K        absolute path to public Key
 #  -H        passphrase for public key
-#  -i        interactive
+#  -i        interactive status updates
 #
 # Example: audit.pl c1600 "" cisco cisco Telnet
 #
 # Environment:
 #
-#  NGNMS_DEBUG - if not empty, equivalent to -d switch set
-#
-#  NGNMS_LOGFILE - if set and no debug output to sreen, log is written to this file
+#  NGNMS_DEBUG   - if set to 1, equivalent to -d switch set. Use for deep debug.
+#  NGNMS_LOGFILE - if set, log is written to this file
 #
 # Copyright (C) 2002,2003 OptOSS LLC
 # Copyright (C) 2014,2015 Opt/Net BV
@@ -38,6 +37,7 @@ use lib "$ENV{'NGNMS_HOME'}/lib/";
 
 use strict;
 use threads;
+use warnings;
 
 use NGNMS_DB;
 use NGNMS_util;
@@ -104,11 +104,10 @@ my $passphrase      = "";
 my $verbose = 0;
 $verbose = $ENV{"NGNMS_DEBUG"} if defined($ENV{"NGNMS_DEBUG"});
 
-# Redirect stdout if debugging is required
-
+# Redirect stdout if deep debugging is required
 if ($verbose) {
-  # Print debugging output to file
-  logError("audit", "Started in debug mode $verbose...");
+  # Print debugging output to file if NGNMS_DEBUG is defined
+  logError("audit", "Started in debug mode due to NGNMS_DEBUG= $verbose...");
 
   if (defined($ENV{"NGNMS_LOGFILE"})) {
     $logFile = $ENV{"NGNMS_LOGFILE"};
@@ -130,26 +129,8 @@ print "-> Will print debug output to file [$logFile]\n";
 print "#Audit -- Parsing command line...\n" if ($verbose);
 if($#ARGV < 0)
 {
-	print <<EOF ;
-Usage: audit.pl [switches] host user passwd enpasswd accesstype[Telnet/SSH1/SSH2]
-
-Switches:
- -np       skip poll stage
- -s	   run subnets scanner
- -f fname  get isis topology from file
- -t type   host type for the file
- -d        print debugging info to screen
-           or log file as defined in NGNMS_LOGFILE
- -L        DB host (default:localhost)
- -D        DB name
- -U        DB User
- -W        Pasword for DB user
- -P        DB Port
- -K        absolute path to public Key
- -H        passpHrase for public key
- -i        interactive
-Example: audit.pl c1600 "" cisco cisco Telnet
-EOF
+    &usage;
+    logError("audit", "Started without arguments. Exiting audit programme.");
     exit;
 }
 while (($#ARGV >= 0) && ($ARGV[0] =~ /^-.*/)) {
@@ -186,7 +167,7 @@ print "#Debug - in arg while $ARGV[0]\n" if ($verbose > 1);
     next;
   }
   if ($ARGV[0] eq "-d") {
-    $verbose = 1;
+    $verbose = 1 if ($verbose == 0);    # ignore -d option if already in deep debug mode due to environmet set
     shift @ARGV;
     next;
   }
@@ -241,26 +222,8 @@ print "#Debug - in arg while $ARGV[0]\n" if ($verbose > 1);
   }
   
   if ($ARGV[0] eq "-h") {
-    print <<EOF ;
-Usage: audit.pl [switches] host user passwd enpasswd accesstype(Telnet/SSH1/SSH2)
-
-Switches:
- -np       skip poll stage
- -s        run subnets scanner
- -f fname  get isis topology from file
- -t type   host type for the file
- -d        print debugging info to screen
- -L        DB host (default:localhost)
- -D        DB name
- -U        DB User
- -W        Pasword for DB user
- -P        DB Port
- -K        absolute path to public Key
- -H        passpHrase for public key
- -i        interactive
-Example: audit.pl c1600 "" cisco cisco Telnet
-EOF
-logError("audit","No arguments were provided, exiting audit programe");
+    &usage;
+    logError("audit","Displaying help, exiting audit programme.");
     exit;
   }
   
@@ -1006,5 +969,33 @@ sub getBgpCommunity($$)
 	}	
 				
 	return $community_cur;			
+}
+
+sub usage {
+	print <<EOF ;
+Usage: audit.pl [switches] host user passwd enpasswd accesstype[Telnet/SSHv1/SSHv2]
+
+Switches:
+ -np       skip poll stage
+ -s	   run subnets scanner
+ -f fname  get isis topology from file
+ -t type   host type for the file
+ -d        verbose info to screen
+ -L        DB host (default:localhost)
+ -D        DB name
+ -U        DB User
+ -W        Pasword for DB user
+ -P        DB Port
+ -K        absolute path to public Key
+ -H        passpHrase for public key
+ -i        interactive status updates
+Example:
+audit.pl c1600 "" cisco cisco Telnet
+audit.pl -s -L localhost -D ngnms -U ngnms -W ngnms 192.168.3.1 lab cisco cisco SSHv2
+Environment:
+  NGNMS_DEBUG - if set to 1, equivalent to -d switch set. Use for deep debug.
+  NGNMS_LOGFILE - if set, log is written to this file
+EOF
+exit;
 }
 __END__
