@@ -377,7 +377,6 @@ sub doDump {
       print DUMP<<EOF;
 -- Disable triggers
 --UPDATE "pg_class" SET "reltriggers" = 0 WHERE "relname" = 'events';
-
 COPY "events" FROM stdin  WITH (DELIMITER ';' , FORMAT CSV , HEADER , QUOTE  '\"' );
 EOF
 
@@ -390,7 +389,7 @@ EOF
       $qGetEvents =~  s/\?/'$time_shift'/;
       my $sql = " copy ($qGetEvents) TO STDOUT  WITH (DELIMITER ';' , FORMAT CSV , HEADER , QUOTE  '\"' ,FORCE_QUOTE *)";
 		$dbh->do($sql);
-       Emsgd::pp($sql);
+#       Emsgd::pp($sql);
       my $copy_data;
       while ($dbh->pg_getcopydata($copy_data) >= 0) {
        	print DUMP $copy_data;
