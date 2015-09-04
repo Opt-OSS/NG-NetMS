@@ -57,7 +57,7 @@ DbReturnCode Database::GetDatabaseKey( string &Key )
     return DbReturnCode( DbReturnCode::Code::OK );
 }
 
-DbReturnCode Database::GetGeneralSetting( string Name, string& Value )
+DbReturnCode Database::GetGeneralEncryptedSetting( string Name, string& Value )
 {
     DbConnector connector( m_DbConnectionData );
     DbReturnCode rc = connector.Connect();
@@ -133,7 +133,7 @@ DbReturnCode Database::IsGeneralSettingExist( string Name, bool &Exist )
     return DbReturnCode( DbReturnCode::Code::OK );
 }
 
-DbReturnCode Database::SetGeneralSetting( string Name, string Value  )
+DbReturnCode Database::SetGeneralEncryptedSetting( string Name, string Value  )
 {
     bool settingExist;
     DbReturnCode rc = IsGeneralSettingExist( Name, settingExist );
