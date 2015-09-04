@@ -11,8 +11,8 @@ class Database
         DbReturnCode SetDiscoverySettings( DiscoverySettings& Settings );
         DbReturnCode GetDiscoverySettings( DiscoverySettings& Settings );
 
-        DbReturnCode GetGeneralSetting( string Name, string& Value );
-        DbReturnCode SetGeneralSetting( string Name, string Value  );
+        DbReturnCode GetGeneralEncryptedSetting( string Name, string& Value );
+        DbReturnCode SetGeneralEncryptedSetting( string Name, string Value  );
     private:
         DbReturnCode IsGeneralSettingExist( string Name, bool &Exist );
         DbReturnCode GetDatabaseKey( string &Key );

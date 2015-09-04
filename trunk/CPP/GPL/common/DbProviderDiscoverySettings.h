@@ -38,7 +38,7 @@ class DbProviderDiscoverySettings
 
             for( auto &item : values )
             {
-                DbReturnCode rc = m_DbProvider.SetGeneralSetting( item.first, item.second );
+                DbReturnCode rc = m_DbProvider.SetGeneralEncryptedSetting( item.first, item.second );
                 if( rc.IsFail() )
                 {
                     return rc;
@@ -62,7 +62,7 @@ class DbProviderDiscoverySettings
             for( string name : names )
             {
                 string value;
-                DbReturnCode rc = m_DbProvider.GetGeneralSetting( name, value );
+                DbReturnCode rc = m_DbProvider.GetGeneralEncryptedSetting( name, value );
                 if( rc.IsFail() )
                 {
                     return rc;
