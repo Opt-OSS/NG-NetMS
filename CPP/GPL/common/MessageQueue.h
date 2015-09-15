@@ -25,7 +25,7 @@ namespace ngnms
 
 	
 	enum class LinkType {C2P, P2D};		//Collector to Profiler, Profiler to Detector
-	enum class OpenMode {READ, WRITE};
+	enum class OpenMode {OMQ_READ, OMQ_WRITE};
 
 	class MQueue
 	{
