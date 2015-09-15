@@ -23,7 +23,8 @@ namespace ngnms
 
 
 	MQueue::MQueue(const LinkType& link, const OpenMode& mode) :
-		_syncMode(false)
+		_syncMode(false),
+		_maxMqCurmsgs(0)
 	{
 		_bufLen = sizeof(P2DBuf);
 		_link = link;
@@ -38,10 +39,10 @@ namespace ngnms
 			{
 				switch (mode)
 				{
-					case OpenMode::READ:
+					case OpenMode::OMQ_READ:
 						_mqfd = mq_open(QFileC2P.c_str(), O_RDONLY|O_CREAT, PMODE, &attr);
 						break;
-					case OpenMode::WRITE:
+					case OpenMode::OMQ_WRITE:
 						_mqfd = mq_open(QFileC2P.c_str(), O_WRONLY|O_CREAT, PMODE, &attr);
 						break;
 				}
@@ -50,10 +51,10 @@ namespace ngnms
 			{
 				switch (mode)
 				{
-					case OpenMode::READ:
+					case OpenMode::OMQ_READ:
 						_mqfd = mq_open(QFileP2D.c_str(), O_RDONLY|O_CREAT, PMODE, &attr);
 						break;
-					case OpenMode::WRITE:
+					case OpenMode::OMQ_WRITE:
 						_mqfd = mq_open(QFileP2D.c_str(), O_WRONLY|O_CREAT, PMODE, &attr);
 						break;
 				}
