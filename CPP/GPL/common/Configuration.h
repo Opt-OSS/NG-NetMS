@@ -2,7 +2,7 @@
 
 
 static string BUILD_DATE        = "2015-09-16";
-static string BUILD_TIME        = "11:13:16";
+static string BUILD_TIME        = "14:59:25";
 static string VERSION_MAJOR     = "3";
 static string VERSION_MINOR     = "4";
 static string DB_CFG_FILE_NAME  = "db.cfg";
