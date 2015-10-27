@@ -23,7 +23,6 @@ class DbReturnCode
         DbReturnCode( Code Code, string Details ):
         m_Details( Details ),
         m_ReturnCode( Code )
-
         {
 
         }

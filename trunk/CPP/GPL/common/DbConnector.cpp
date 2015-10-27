@@ -5,7 +5,8 @@
 
 DbConnector::DbConnector( const DbSettings& DbConnection ) throw():
 m_DbConnectionData( DbConnection ),
-m_Connection( nullptr )
+m_Connection( nullptr ),
+m_Connected( false )
 {
     try
     {
@@ -26,15 +27,22 @@ DbReturnCode DbConnector::Connect( )
     }
     catch( const exception &e )
     {
+        m_Connected = false;
         return DbReturnCode( DbReturnCode::Code::ERROR, e.what() );
     }
 
+    m_Connected = true;
     return DbReturnCode( DbReturnCode::Code::OK );
 }
 
 pqxx::asyncconnection* DbConnector::GetConnection( )
 {
     return m_Connection;
+}
+
+bool DbConnector::IsConnected( )
+{
+    return m_Connected;
 }
 
 DbConnector::~DbConnector() throw()

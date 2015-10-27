@@ -319,7 +319,6 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             stringstream ss;
             ss << "DB Settings File = " << dbSettingsFileName;
             m_Logger->LogInfo( ss.str( ) );
-
             if( !dbSettings.FillFromFile( dbSettingsFileName ) )
             {
                 m_Logger->LogError( "Failed to read DB configuration file!" );
@@ -331,7 +330,6 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             {
                 if( !m_Database->Connect( dbSettings ) )
                 {
-
                     sleep( 1 );
                     continue;
                 }

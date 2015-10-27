@@ -12,6 +12,7 @@ class DbConnector
         DbConnector( const DbSettings& DbConnection ) throw( );
         ~DbConnector() throw( );
         DbReturnCode Connect( );
+        bool IsConnected( );
         pqxx::asyncconnection* GetConnection( );
 
     private:
@@ -20,4 +21,5 @@ class DbConnector
     private:
         DbSettings  m_DbConnectionData;
         pqxx::asyncconnection* m_Connection;
+        bool                   m_Connected;
 };
