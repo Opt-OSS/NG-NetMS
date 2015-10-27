@@ -1248,6 +1248,91 @@ string ParserSyslog::GetTimestamp( CiscoTimestampParser& TimestampParser )
     return CreateTimestamp( Year, Month, Day, Hours, Minutes, Seconds );
 }
 
+class NetscreenDeviceIdParser : public TokenParser
+{
+    public:
+        bool Parse( string& Input )
+        {
+            static string MARKER_STRING = "NetScreen device_id=";
+
+            m_Found = false;
+
+            size_t marker_start = Input.find( MARKER_STRING );
+            if( string::npos == marker_start )
+            {
+                return false;
+            }
+
+            Input = Input.substr( marker_start + MARKER_STRING.length( ) );
+            GetString( Input, m_DeviceId );
+
+            DropWhitespace( Input );
+            m_Output = Input;
+            m_Found = true;
+            return true;
+        }
+
+        string& GetDeviceId( )
+        {
+            return m_DeviceId;
+        }
+
+    private:
+        string m_DeviceId;
+};
+
+class NetscreenFacilityParser : public TokenParser
+{
+    public:
+        bool Parse( string Input )
+        {
+            m_Found = false;
+
+            size_t stopMarker = Input.find( ':' );
+            if( string::npos == stopMarker )
+            {
+                return false;
+            }
+
+            string facilityBLock = Input.substr( 0, stopMarker );
+
+            size_t susbfacStart = facilityBLock.find_first_of( '(' );
+            size_t susbfacEnd   = facilityBLock.find_first_of( ')' );
+            if( susbfacEnd > susbfacStart )
+            {
+                m_SubFacility = facilityBLock.substr( susbfacStart + 1, susbfacEnd - susbfacStart - 1 );
+                facilityBLock = facilityBLock.substr( 0, susbfacStart  );
+            }
+
+            size_t facilityMarker = facilityBLock.find_last_of( '-' );
+            if( string::npos != facilityMarker )
+            {
+                m_Facility =facilityBLock.substr( facilityMarker + 1 );
+            }
+
+            m_Found = true;
+            Input = Input.substr( stopMarker + 1 );
+            DropWhitespace( Input );
+            m_Output = Input;
+
+            return true;
+        }
+
+        string& GetFacility( )
+        {
+            return m_Facility;
+        }
+
+        string& GetSubFacility( )
+        {
+            return m_SubFacility;
+        }
+
+    private:
+        string m_Facility;
+        string m_SubFacility;
+};
+
 bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
 {
     // Save original message
@@ -1264,75 +1349,10 @@ bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
         hostName.clear( );
     }
 
-    bool junosFormat = false;
-    static    JunosStructuredPriorityParser juniperStructPriorityParser;
-    juniperStructPriorityParser.Parse( Message );
-    if( juniperStructPriorityParser.GetFound( ) )
-    {
-        junosFormat = true;
-        Message = juniperStructPriorityParser.GetOutput( );
-    }
-
-    if( junosFormat ) // We sure that we parse JunOS structured message
-    {
-        // Get Juniper time stamp
-        static JunosStructuredTimestampParser timestampParser;
-
-        timestampParser.Parse( Message );
-        if( timestampParser.GetFound( ) )
-        {
-            Message = timestampParser.GetOutput( );
-        }
-
-        if( parseHostName )
-        {
-            // Get host name
-            static HostnameParser hostnameParser;
-
-            hostnameParser.Parse( Message );
-            if( hostnameParser.GetFound() )
-            {
-                Message = hostnameParser.GetOutput( );
-            }
-
-            hostName = hostnameParser.GetHostname( );
-        }
-
-        // Collect Event data
-        static string eventPriority;
-        if( juniperStructPriorityParser.GetFound( ) )
-        {
-            eventPriority = juniperStructPriorityParser.GetPriority( );
-        }
-        else
-        {
-            eventPriority = "0";
-        }
-
-        static string facility;
-        static string eventCode;
-        static JunosFacilityParser junosFacilityParser;
-
-        junosFacilityParser.Parse( Message );
-        if( junosFacilityParser.GetFound( ) )
-        {
-            Message = junosFacilityParser.GetOutput( );
-            facility = junosFacilityParser.GetFacility( );
-            eventCode =  junosFacilityParser.GetCode( );
-        }
-        else
-        {
-            facility = "";
-        }
-
-        Event event( EventProtocol::SYSLOG, eventPriority, GetTimestamp( ), GetTimestamp( timestampParser ), hostName, facility, eventCode, Message, OriginalMessage, 0, 0 );
-        m_Notifier.Notify( event );
-        return true;
-    }
-    else  // CISCO | Linux PC message
+    bool netscreen = IsNetscreenFormat( Message );
+    if( netscreen )
     {
         static PriorityParser priorityParser;
-
         priorityParser.Parse( Message );
         if( priorityParser.GetFound( ) )
         {
@@ -1340,116 +1360,253 @@ bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
         }
 
         static TimestampRFC3164Parser timestampRFC3164Parser;
-
         timestampRFC3164Parser.Parse( Message );
         if( timestampRFC3164Parser.GetFound( ) )
         {
             Message = timestampRFC3164Parser.GetOutput( );
         }
 
-        static HostnameParser hostnameParser;
-        hostnameParser.Parse( Message );
-        if( hostnameParser.GetFound() )
+        static NetscreenDeviceIdParser netscreenDeviceIdParser;
+        netscreenDeviceIdParser.Parse( Message );
+        if( netscreenDeviceIdParser.GetFound( ) )
         {
-            Message = hostnameParser.GetOutput( );
+            Message = netscreenDeviceIdParser.GetOutput( );
         }
 
-        if( parseHostName )
+        NetscreenFacilityParser netscreenFacilityParser;
+        netscreenFacilityParser.Parse( Message );
+        if( netscreenFacilityParser.GetFound( ) )
         {
-            hostName = hostnameParser.GetHostname( );
+            Message = netscreenFacilityParser.GetOutput( );
         }
 
-        static CiscoDummyCounterParser ciscoDummyCounterParser;
-
-        ciscoDummyCounterParser.Parse( Message );
-        if( ciscoDummyCounterParser.GetFound( ) )
-        {
-            Message = ciscoDummyCounterParser.GetOutput( );
-        }
-
-        static CiscoTimestampParser ciscoTimestampParser;
-
-        ciscoTimestampParser.Parse( Message );
-        if( ciscoTimestampParser.GetFound( ) )
-        {
-            Message = ciscoTimestampParser.GetOutput( );
-        }
-
-        static CiscoFacilityBlockParser ciscoFacilityBlockParser;
-
-        ciscoFacilityBlockParser.Parse( Message );
-        if( ciscoFacilityBlockParser.GetFound( ) )
-        {
-            Message = ciscoFacilityBlockParser.GetOutput( );
-        }
-
-        static ProcessPidParser processPidParser;
-
-        processPidParser.Parse( Message );
-        if( processPidParser.GetFound( ) )
-        {
-            Message = processPidParser.GetOutput( );
-        }
-
-        // Collect Event data
-        static string eventOriginalTimestamp;
-
-        if( ciscoTimestampParser.GetFound( ) ) // CISCO timestamp has higher priority
-        {
-            eventOriginalTimestamp = GetTimestamp( ciscoTimestampParser );
-        }
-        else if( timestampRFC3164Parser.GetFound( ) )
-        {
-            eventOriginalTimestamp = GetTimestamp( timestampRFC3164Parser );
-        }
-        else
-        {
-            eventOriginalTimestamp = GetTimestamp( );
-        }
-
-        static string eventPriority;
+        string priority;
         if( priorityParser.GetFound( ) )
         {
-            eventPriority = priorityParser.GetPriority( );
-        }
-        else
-        {
-            eventPriority = "0";
+            priority = priorityParser.GetPriority( );
         }
 
-        static string eventFacility;
-        static string eventCode;
-        int    eventSeverity = 0;
-        if( ciscoFacilityBlockParser.GetFound( ) ) // CISCO facility block has higher priority
+        if( timestampRFC3164Parser.GetFound( ) )
         {
-            eventFacility = ciscoFacilityBlockParser.GetFacility( );
-            eventCode = ciscoFacilityBlockParser.GetSubFacility( );
-            eventSeverity = ciscoFacilityBlockParser.GetSeverity( );
-        }
-        else if( processPidParser.GetFound( ) )
-        {
-            eventFacility = processPidParser.GetProcess( );
-            eventCode = processPidParser.GetPid( );
-        }
-        else
-        {
-            eventFacility.clear( );
-            eventCode.clear( );
+            cout << "Time month = " << to_string( timestampRFC3164Parser.GetMonth( ) ) << endl;
+            cout << "Time day = " << to_string( timestampRFC3164Parser.GetDay( ) ) << endl;
+            cout << "Time hours = " << to_string( timestampRFC3164Parser.GetHours( ) ) << endl;
+            cout << "Time minutes = " << to_string( timestampRFC3164Parser.GetMinutes( ) ) << endl;
+            cout << "Time seconds = " << to_string( timestampRFC3164Parser.GetSeconds( ) ) << endl;
         }
 
-        static JunosFacilityParser junosFacilityParser;
-        junosFacilityParser.Parse( Message );
-        if( junosFacilityParser.GetFound( ) )
+        if( netscreenDeviceIdParser.GetFound( ) )
         {
-            Message = junosFacilityParser.GetOutput( );
-            eventFacility = junosFacilityParser.GetFacility( );
-            eventCode  = junosFacilityParser.GetCode( );
+            cout << "Device id = " << netscreenDeviceIdParser.GetDeviceId( ) << endl;
         }
 
-        Event event( EventProtocol::SYSLOG, eventPriority, GetTimestamp( ), eventOriginalTimestamp, hostName, eventFacility, eventCode, Message, OriginalMessage, 0, eventSeverity );
+        string facility;
+        string eventCode;
+        if( netscreenFacilityParser.GetFound( ) )
+        {
+            facility  = netscreenFacilityParser.GetFacility( );
+            eventCode = netscreenFacilityParser.GetSubFacility( );
+        }
+
+        Event event( EventProtocol::SYSLOG, priority , GetTimestamp( ), GetTimestamp( timestampRFC3164Parser ), hostName, facility, eventCode, Message, OriginalMessage, 0, 0 );
         m_Notifier.Notify( event );
+
         return true;
     }
+    else
+    {
+        bool junosFormat = false;
+        static    JunosStructuredPriorityParser juniperStructPriorityParser;
+        juniperStructPriorityParser.Parse( Message );
+        if( juniperStructPriorityParser.GetFound( ) )
+        {
+            junosFormat = true;
+            Message = juniperStructPriorityParser.GetOutput( );
+        }
+
+        if( junosFormat ) // We sure that we parse JunOS structured message
+        {
+            // Get Juniper time stamp
+            static JunosStructuredTimestampParser timestampParser;
+
+            timestampParser.Parse( Message );
+            if( timestampParser.GetFound( ) )
+            {
+                Message = timestampParser.GetOutput( );
+            }
+
+            if( parseHostName )
+            {
+                // Get host name
+                static HostnameParser hostnameParser;
+
+                hostnameParser.Parse( Message );
+                if( hostnameParser.GetFound() )
+                {
+                    Message = hostnameParser.GetOutput( );
+                }
+
+                hostName = hostnameParser.GetHostname( );
+            }
+
+            // Collect Event data
+            static string eventPriority;
+            if( juniperStructPriorityParser.GetFound( ) )
+            {
+                eventPriority = juniperStructPriorityParser.GetPriority( );
+            }
+            else
+            {
+                eventPriority = "0";
+            }
+
+            static string facility;
+            static string eventCode;
+            static JunosFacilityParser junosFacilityParser;
+
+            junosFacilityParser.Parse( Message );
+            if( junosFacilityParser.GetFound( ) )
+            {
+                Message = junosFacilityParser.GetOutput( );
+                facility = junosFacilityParser.GetFacility( );
+                eventCode =  junosFacilityParser.GetCode( );
+            }
+            else
+            {
+                facility = "";
+            }
+
+            Event event( EventProtocol::SYSLOG, eventPriority, GetTimestamp( ), GetTimestamp( timestampParser ), hostName, facility, eventCode, Message, OriginalMessage, 0, 0 );
+            m_Notifier.Notify( event );
+            return true;
+        }
+        else  // CISCO | Linux PC message
+        {
+            static PriorityParser priorityParser;
+
+            priorityParser.Parse( Message );
+            if( priorityParser.GetFound( ) )
+            {
+                Message = priorityParser.GetOutput( );
+            }
+
+            static TimestampRFC3164Parser timestampRFC3164Parser;
+
+            timestampRFC3164Parser.Parse( Message );
+            if( timestampRFC3164Parser.GetFound( ) )
+            {
+                Message = timestampRFC3164Parser.GetOutput( );
+            }
+
+            static HostnameParser hostnameParser;
+            hostnameParser.Parse( Message );
+            if( hostnameParser.GetFound() )
+            {
+                Message = hostnameParser.GetOutput( );
+            }
+
+            if( parseHostName )
+            {
+                hostName = hostnameParser.GetHostname( );
+            }
+
+            static CiscoDummyCounterParser ciscoDummyCounterParser;
+
+            ciscoDummyCounterParser.Parse( Message );
+            if( ciscoDummyCounterParser.GetFound( ) )
+            {
+                Message = ciscoDummyCounterParser.GetOutput( );
+            }
+
+            static CiscoTimestampParser ciscoTimestampParser;
+
+            ciscoTimestampParser.Parse( Message );
+            if( ciscoTimestampParser.GetFound( ) )
+            {
+                Message = ciscoTimestampParser.GetOutput( );
+            }
+
+            static CiscoFacilityBlockParser ciscoFacilityBlockParser;
+
+            ciscoFacilityBlockParser.Parse( Message );
+            if( ciscoFacilityBlockParser.GetFound( ) )
+            {
+                Message = ciscoFacilityBlockParser.GetOutput( );
+            }
+
+            static ProcessPidParser processPidParser;
+
+            processPidParser.Parse( Message );
+            if( processPidParser.GetFound( ) )
+            {
+                Message = processPidParser.GetOutput( );
+            }
+
+            // Collect Event data
+            static string eventOriginalTimestamp;
+
+            if( ciscoTimestampParser.GetFound( ) ) // CISCO timestamp has higher priority
+            {
+                eventOriginalTimestamp = GetTimestamp( ciscoTimestampParser );
+            }
+            else if( timestampRFC3164Parser.GetFound( ) )
+            {
+                eventOriginalTimestamp = GetTimestamp( timestampRFC3164Parser );
+            }
+            else
+            {
+                eventOriginalTimestamp = GetTimestamp( );
+            }
+
+            static string eventPriority;
+            if( priorityParser.GetFound( ) )
+            {
+                eventPriority = priorityParser.GetPriority( );
+            }
+            else
+            {
+                eventPriority = "0";
+            }
+
+            static string eventFacility;
+            static string eventCode;
+            int    eventSeverity = 0;
+            if( ciscoFacilityBlockParser.GetFound( ) ) // CISCO facility block has higher priority
+            {
+                eventFacility = ciscoFacilityBlockParser.GetFacility( );
+                eventCode = ciscoFacilityBlockParser.GetSubFacility( );
+                eventSeverity = ciscoFacilityBlockParser.GetSeverity( );
+            }
+            else if( processPidParser.GetFound( ) )
+            {
+                eventFacility = processPidParser.GetProcess( );
+                eventCode = processPidParser.GetPid( );
+            }
+            else
+            {
+                eventFacility.clear( );
+                eventCode.clear( );
+            }
+
+            static JunosFacilityParser junosFacilityParser;
+            junosFacilityParser.Parse( Message );
+            if( junosFacilityParser.GetFound( ) )
+            {
+                Message = junosFacilityParser.GetOutput( );
+                eventFacility = junosFacilityParser.GetFacility( );
+                eventCode  = junosFacilityParser.GetCode( );
+            }
+
+            Event event( EventProtocol::SYSLOG, eventPriority, GetTimestamp( ), eventOriginalTimestamp, hostName, eventFacility, eventCode, Message, OriginalMessage, 0, eventSeverity );
+            m_Notifier.Notify( event );
+            return true;
+        }
+    }
+}
+
+bool ParserSyslog::IsNetscreenFormat( string& Text )
+{
+    return Text.find( "NetScreen device_id=" ) != string::npos;
 }
 
 bool ParserSyslog::ProcessEndOfData( )

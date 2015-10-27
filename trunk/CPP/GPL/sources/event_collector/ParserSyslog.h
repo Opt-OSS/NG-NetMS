@@ -55,6 +55,7 @@ class ParserSyslog: public IParser
         void UnregisterListener( ParserListener &Listener );
 
     private:
+        bool   IsNetscreenFormat( string& Text );
         string Time2String( time_t time );
         string GetTimestamp( );
         int    GetCurrentYear( );
