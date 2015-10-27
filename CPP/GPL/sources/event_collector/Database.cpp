@@ -73,7 +73,6 @@ void Database::WritterThread( Database* This )
         }
 
         This->m_CondVarPredicate = false;
-
         string baseQuery = This->m_Debug ? "INSERT INTO events ( priority, severity, origin_ts, receiver_ts, origin, origin_id, facility, code, descr, raw_event ) VALUES " :
                                      "INSERT INTO events ( priority, severity, origin_ts, receiver_ts, origin, origin_id, facility, code, descr ) VALUES ";
 
@@ -85,19 +84,22 @@ void Database::WritterThread( Database* This )
         };
 
         std::unique_lock<std::mutex> locker2( This->m_QueryLock );
-        try
+        if( nullptr != This->m_Connector && This->m_Connector->IsConnected( ) )
         {
-            pqxx::work work( *This->m_Connector->GetConnection() );
-            work.exec( multipleQueries );
-            work.commit();
-        }
-        catch( const exception &e )
-        {
-            cerr << "WritterThread exception = " << e.what( ) << endl;
-        }
-        catch( ... )
-        {
-            cerr << "WritterThread Unknown exception = " << endl;
+            try
+            {
+                pqxx::work work( *This->m_Connector->GetConnection() );
+                work.exec( multipleQueries );
+                work.commit();
+            }
+            catch( const exception &e )
+            {
+                cerr << "WritterThread exception = " << e.what( ) << endl;
+            }
+            catch( ... )
+            {
+                cerr << "WritterThread Unknown exception = " << endl;
+            }
         }
     }
 }
@@ -131,7 +133,13 @@ int Database::RouterIdQuery( const string Query, const string &Hostname )
 {
     std::unique_lock<std::mutex> locker( m_QueryLock );
 
+    if( nullptr == m_Connector || !m_Connector->IsConnected( ) )
+    {
+        return INVALI_ROUTER_ID;
+    }
+
     string routerIdQuery = Query  + "'" + Hostname + "'";
+
     try
     {
         pqxx::work work( *m_Connector->GetConnection() );
