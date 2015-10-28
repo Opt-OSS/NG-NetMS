@@ -1300,14 +1300,14 @@ class NetscreenFacilityParser : public TokenParser
             size_t susbfacEnd   = facilityBLock.find_first_of( ')' );
             if( susbfacEnd > susbfacStart )
             {
-                m_SubFacility = facilityBLock.substr( susbfacStart + 1, susbfacEnd - susbfacStart - 1 );
+                m_Facility = facilityBLock.substr( susbfacStart + 1, susbfacEnd - susbfacStart - 1 );
                 facilityBLock = facilityBLock.substr( 0, susbfacStart  );
             }
 
             size_t facilityMarker = facilityBLock.find_last_of( '-' );
             if( string::npos != facilityMarker )
             {
-                m_Facility =facilityBLock.substr( facilityMarker + 1 );
+                m_SubFacility =facilityBLock.substr( facilityMarker + 1 );
             }
 
             m_Found = true;
@@ -1329,8 +1329,8 @@ class NetscreenFacilityParser : public TokenParser
         }
 
     private:
-        string m_Facility;
         string m_SubFacility;
+        string m_Facility;
 };
 
 bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
@@ -1384,20 +1384,6 @@ bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
         if( priorityParser.GetFound( ) )
         {
             priority = priorityParser.GetPriority( );
-        }
-
-        if( timestampRFC3164Parser.GetFound( ) )
-        {
-            cout << "Time month = " << to_string( timestampRFC3164Parser.GetMonth( ) ) << endl;
-            cout << "Time day = " << to_string( timestampRFC3164Parser.GetDay( ) ) << endl;
-            cout << "Time hours = " << to_string( timestampRFC3164Parser.GetHours( ) ) << endl;
-            cout << "Time minutes = " << to_string( timestampRFC3164Parser.GetMinutes( ) ) << endl;
-            cout << "Time seconds = " << to_string( timestampRFC3164Parser.GetSeconds( ) ) << endl;
-        }
-
-        if( netscreenDeviceIdParser.GetFound( ) )
-        {
-            cout << "Device id = " << netscreenDeviceIdParser.GetDeviceId( ) << endl;
         }
 
         string facility;
