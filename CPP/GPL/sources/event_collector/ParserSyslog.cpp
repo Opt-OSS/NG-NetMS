@@ -1307,7 +1307,30 @@ class NetscreenFacilityParser : public TokenParser
             size_t facilityMarker = facilityBLock.find_last_of( '-' );
             if( string::npos != facilityMarker )
             {
-                m_SubFacility =facilityBLock.substr( facilityMarker + 1 );
+                m_SubFacility = facilityBLock.substr( facilityMarker + 1 );
+            }
+
+            if( m_Facility.empty( ) )
+            {
+                int subFacility = 0;
+                try
+                {
+                    subFacility = stoi( m_SubFacility );
+                }
+                catch( ... )
+                {
+
+                }
+
+                auto it = m_CodeToFacility.find( subFacility );
+                if( it == m_CodeToFacility.end( ) )
+                {
+                    m_Facility = "system";
+                }
+                else
+                {
+                    m_Facility = it->second;
+                }
             }
 
             m_Found = true;
@@ -1329,8 +1352,17 @@ class NetscreenFacilityParser : public TokenParser
         }
 
     private:
-        string m_SubFacility;
-        string m_Facility;
+        string                  m_SubFacility;
+        string                  m_Facility;
+        static map<int,string>  m_CodeToFacility;
+};
+
+map<int,string> NetscreenFacilityParser::m_CodeToFacility =
+{
+    { 257, "traffic" },
+    { 528, "SSH" },
+    { 536, "IKE" },
+    { 518, "ADM" }
 };
 
 bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
