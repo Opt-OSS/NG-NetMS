@@ -1,8 +1,8 @@
 #pragma once 
 
 
-static string BUILD_DATE        = "2015-10-22";
-static string BUILD_TIME        = "15:06:53";
+static string BUILD_DATE        = "2015-11-03";
+static string BUILD_TIME        = "15:04:55";
 static string VERSION_MAJOR     = "3";
 static string VERSION_MINOR     = "4";
 static string DB_CFG_FILE_NAME  = "db.cfg";
