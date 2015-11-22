@@ -168,25 +168,58 @@ class ArchivesController extends Controller
                     $arr2 = explode("=", $val);
                     $arr_attr[$arr2[0]] = $arr2[1];
                 }
-
-                $command1 = 'psql ' . $arr_attr['dbname'] . " -f " . $cur_arc->file_name;
-                $escaped_command1 = escapeshellcmd($command1);
-                $sss = shell_exec($escaped_command1);
+                $filename = $cur_arc->file_name;
+                //check file is gzipped
+                $gzipped = false;
+                if (file_exists($filename.'.gz') ){
+                    $filename .= '.gz';
+                    $gzipped = true;
+                }elseif(substr($filename,-3) === '.gz' && file_exists($filename)) {
+                    $gzipped = true;
+                }
+                $filename = escapeshellarg($filename);
+                if ($gzipped) {
+                    $command1 = 'gunzip -c '. $filename .' 2>&1 | psql ' . $arr_attr['dbname']. ' 2>&1' ;
+                }else{
+                    $command1 = 'psql ' . $arr_attr['dbname'] . " -f " . $filename . ' 2>&1' ;
+                }
+                /**
+                 * We use | to unzip, so escape will break command line.
+                 * BTW we use only filenem as parameter, so its safe not to escape whole command
+                 * and filename is already escaped
+                 */
+                //$escaped_command1 = escapeshellcmd($command1);
+                $escaped_command1 = $command1;
+                exec($escaped_command1,$output,$result);
+                if ($result || count($output)){
+                    Yii::app()->user->setFlash('error', "Command executin failed<br> ".$escaped_command1."<br> Result code: ".$result."<br>".join('<br>',$output));
+                }else{
+                    Yii::app()->user->setFlash('success', "File successfully loaded");
+                    Yii::app()->db->createCommand()
+                                  ->update('archives',
+                                      array(
+                                          'in_db' => 1,
+                                      ),
+                                      'archive_id=:archive_id',
+                                      array(':archive_id' => $_GET['archive_id'])
+                                  );
+                }
             } else {
                 Events::model()->deleteAll(
                     "receiver_ts >= :start_time AND  receiver_ts <= :end_time",
                     array(':start_time' => $cur_arc->start_time, ':end_time' => $cur_arc->end_time)
                 );
+                Yii::app()->db->createCommand()
+                              ->update('archives',
+                                  array(
+                                      'in_db' => 0,
+                                  ),
+                                  'archive_id=:archive_id',
+                                  array(':archive_id' => $_GET['archive_id'])
+                              );
             }
 
-            Yii::app()->db->createCommand()
-                ->update('archives',
-                    array(
-                        'in_db' => $_GET['act'],
-                    ),
-                    'archive_id=:archive_id',
-                    array(':archive_id' => $_GET['archive_id'])
-                );
+
 
         }
 
