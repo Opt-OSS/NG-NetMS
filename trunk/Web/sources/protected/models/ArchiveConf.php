@@ -96,7 +96,7 @@ class ArchiveConf extends CActiveRecord
 		$criteria->compare('log_syslog',$this->log_syslog);
 		$criteria->compare('log_level',$this->log_level);
 		$criteria->compare('arc_gzip',$this->arc_gzip);
-        $criteria->compare('id_conf',$this->arc_gzip);
+        $criteria->compare('id_conf',$this->id_conf);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,

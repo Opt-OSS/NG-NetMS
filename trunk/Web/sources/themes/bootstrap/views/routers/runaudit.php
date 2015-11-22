@@ -90,12 +90,12 @@ if (1) { ?>
                 else {
                     var arr_per = {label: period, scanner_t: scanner_t};
                     $.ajax({
-                        url     : '<?php echo Yii::app() -> createUrl('generalSettings/setperiod'); ?>',
-                        type    : 'POST',
-                        data    : arr_per,
-                        cache   : false,
+                        url: '<?php echo Yii::app() -> createUrl('generalSettings/setperiod'); ?>',
+                        type: 'POST',
+                        data: arr_per,
+                        cache: false,
                         dataType: 'json',
-                        success : function (data) {
+                        success: function (data) {
                             $('#yw2').html('Schedule periodic discovery (current: every ' + period + ')')
                         }
                     });
@@ -113,11 +113,11 @@ if (1) { ?>
         function viewForm(scanner) {
             $('.modal-body').css('height', '300px');
             $.ajax({
-                url     : '<?php echo Yii::app() -> createUrl('generalSettings/getperiod'); ?>',
-                type    : 'POST',
-                cache   : false,
+                url: '<?php echo Yii::app() -> createUrl('generalSettings/getperiod'); ?>',
+                type: 'POST',
+                cache: false,
                 dataType: 'json',
-                success : function (data) {
+                success: function (data) {
                     $('.btn-group').find('.dropdown-toggle').html(data.label + ' <span class="caret"></span>');
                 }
             });

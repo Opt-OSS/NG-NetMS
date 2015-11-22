@@ -28,17 +28,8 @@ class ArchiveConfController extends Controller
                 $model->arc_delete = trim($_POST['del_period']);
                 $model->arc_period = trim($_POST['exp_period']);
                 $model->arc_path = trim($_POST['arc_path']);
-
-                if($_POST['mode'] == 1)
-                {
-                    $regim = 1;
-                }
-                else
-                {
-                    $regim = 0;
-                }
-
-                $model->arc_enable = $regim;
+                $model->arc_enable = $_POST['arc_enable'] == 1 ? 1 : 0;
+                $model->arc_gzip = $_POST['arc_gzip'] == 1 ? 1 : 0;
 
                 if($model->save())
                 {
@@ -64,7 +55,7 @@ class ArchiveConfController extends Controller
                     $arr_attr['password'] = Yii::app()->db->password;
 
 
-                    if($regim > 0)
+                    if( $model->arc_enable > 0)
                     {
                         $command1 = '/usr/bin/perl archive.pl --start';
                     }
