@@ -9,49 +9,38 @@
 #include <mqueue.h>
 #include <string>
 
-namespace ngnms
+//service message
+const int SERVICE = 0;
+//service code
+const int CODE_TS_END = 0;
+const int CODE_MQ_OVERFLOW = 1;
+
+typedef struct
 {
-	//service message
-	const int SERVICE = 0;
-	//service code
-	const int CODE_TS_END = 0;
-	const int CODE_MQ_OVERFLOW = 1;
-	
-	typedef struct {
-		time_t ts;
-		int	originID;
-		int	devSeverity;
-	} P2DBuf;
+    time_t  ts;
+    int     originID;
+    int     devSeverity;
+} P2DBuf;
 
-	
-	enum class LinkType {C2P, P2D};		//Collector to Profiler, Profiler to Detector
-	enum class OpenMode {OMQ_READ, OMQ_WRITE};
+class MQueue
+{
+    public:
+        MQueue(  );
+        ~MQueue( );
+        bool Read( P2DBuf* mBuf );
+        bool Write( const P2DBuf* pBuf );
+        bool IsOpen( );
+        void SetSyncMode( bool flag );
+        void ResetStat();
+        int GetPendingMessages( );
 
-	class MQueue
-	{
-	public:
+        // TOTO delete this both methods!
+        std::string GetStat();
+        void Print();
 
-		MQueue(const LinkType& lt, const OpenMode& om);
-		virtual ~MQueue();
+    private:
+        mqd_t		m_fd;
+        bool		_syncMode;
+        int	        _maxMqCurmsgs;
+};
 
-		bool Read(P2DBuf* mBuf);
-		bool Write(const P2DBuf* pBuf);
-		bool IsOpen();
-		void SetSyncMode(bool flag);
-
-		void Print();
-		std::string GetStat();
-		void ResetStat();
-	private:
-		mqd_t		_mqfd;
-		mq_attr		_mqstat;
-		int			_bufLen;
-		LinkType	_link;
-		bool		_syncMode;
-		
-		long int	_maxMqCurmsgs;
-	};
-
-	void DeleteMQ(const LinkType& lt);
-
-}//namespace
