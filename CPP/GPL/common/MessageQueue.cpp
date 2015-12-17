@@ -10,162 +10,102 @@
 #include <iostream>
 #include <sstream>      // std::stringstream
 
+using namespace std;
 
-namespace ngnms
+#define PMODE   0655
+#define MAXMSG  1000
+
+using std::string;
+const string QFileP2D = "/p2d";
+
+MQueue::MQueue( ) :
+_syncMode(false),
+_maxMqCurmsgs(0)
 {
+    struct mq_attr attr;
+    attr.mq_maxmsg = MAXMSG;
+    attr.mq_msgsize = sizeof( P2DBuf );
 
-	#define PMODE   0655
-	#define MAXMSG  1000
+    m_fd = mq_open( QFileP2D.c_str(), O_RDWR | O_CREAT, PMODE, &attr );
 
-	using std::string;
-	const string QFileC2P = "/c2p";
-	const string QFileP2D = "/p2d";
+    if( IsOpen() )
+    {
+        int count = GetPendingMessages( );
+        for( int i = 0; i < count; ++i )
+        {
+            P2DBuf dummyBuffer;
+            Read( &dummyBuffer );
+        }
+    }
+}
 
+bool MQueue::IsOpen()
+{
+    return ( m_fd != -1 );
+}
 
-	MQueue::MQueue(const LinkType& link, const OpenMode& mode) :
-		_syncMode(false),
-		_maxMqCurmsgs(0)
-	{
-		_bufLen = sizeof(P2DBuf);
-		_link = link;
+MQueue::~MQueue()
+{
+    mq_close( m_fd );
+}
 
-		struct mq_attr attr;
-		attr.mq_maxmsg = MAXMSG;
-		attr.mq_msgsize = _bufLen;
+void MQueue::SetSyncMode(bool flag)
+{
+    _syncMode = flag;
+}
 
-		switch (link)
-		{
-			case LinkType::C2P:
-			{
-				switch (mode)
-				{
-					case OpenMode::OMQ_READ:
-						_mqfd = mq_open(QFileC2P.c_str(), O_RDONLY|O_CREAT, PMODE, &attr);
-						break;
-					case OpenMode::OMQ_WRITE:
-						_mqfd = mq_open(QFileC2P.c_str(), O_WRONLY|O_CREAT, PMODE, &attr);
-						break;
-				}
-			}break;
-			case LinkType::P2D:
-			{
-				switch (mode)
-				{
-					case OpenMode::OMQ_READ:
-						_mqfd = mq_open(QFileP2D.c_str(), O_RDONLY|O_CREAT, PMODE, &attr);
-						break;
-					case OpenMode::OMQ_WRITE:
-						_mqfd = mq_open(QFileP2D.c_str(), O_WRONLY|O_CREAT, PMODE, &attr);
-						break;
-				}
-			}break;
-		}
-	}
+bool MQueue::Read(P2DBuf* mBuf)
+{
+    timespec timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_nsec = 1000;
+    return ( -1 != mq_timedreceive( m_fd, (char*) mBuf, sizeof( P2DBuf ), 0, &timeout ) );
+}
 
+int MQueue::GetPendingMessages( )
+{
+    mq_attr  mqstat;
+    return ( -1 != mq_getattr( m_fd, &mqstat ) ) ? mqstat.mq_curmsgs : 0;
+}
 
-	MQueue::~MQueue() 
-	{
-		mq_close(_mqfd);		//close the connection to the message queue.
-	}
+bool MQueue::Write(const P2DBuf* pBuf)
+{
+    int messageCount = GetPendingMessages( );
+    _maxMqCurmsgs  = max( GetPendingMessages( ), _maxMqCurmsgs );
 
+    if ( !_syncMode )
+    {
+            if (MAXMSG == messageCount )
+            {
+                    return false;
+            }
+            else if ( MAXMSG < messageCount + 2 )
+            {
+                P2DBuf mBuf;
+                mBuf.ts = 0;
+                mBuf.originID = SERVICE;
+                mBuf.devSeverity = CODE_MQ_OVERFLOW;
+                mq_send(m_fd, (char*)&mBuf, sizeof( P2DBuf ), 0);
+                return false;
+            }
+    }
 
-	bool MQueue::IsOpen()
-	{
-		if(_mqfd == -1)
-			return false;
+    return ( -1 != mq_send( m_fd, (char*)pBuf, sizeof( P2DBuf ), 0 ) );
+}
 
-		return true;
-	}
+void MQueue::Print()
+{
+    std::cout << "max: " << _maxMqCurmsgs << " | curr: " << GetPendingMessages( ) << std::endl;
+}
 
-	void MQueue::SetSyncMode(bool flag)
-	{
-		_syncMode = flag;
-	}
-	
-	bool MQueue::Read(P2DBuf* mBuf)
-	{
-		int status = mq_receive(_mqfd, (char*)mBuf, _bufLen, 0);
-		if (status == -1)
-			return false;
+std::string MQueue::GetStat()
+{
+    std::stringstream ss;
+    ss << "max: " << _maxMqCurmsgs << " | curr: " <<  GetPendingMessages( );
+    return ss.str();
+}
 
-		return true;
-	}
-
-
-	bool MQueue::Write(const P2DBuf* pBuf)
-	{
-		if (-1 == mq_getattr(_mqfd, &_mqstat))
-			return false;
-
-		if (_mqstat.mq_curmsgs > _maxMqCurmsgs)
-			_maxMqCurmsgs = _mqstat.mq_curmsgs;
-
-		if (!_syncMode)
-		{
-			if (MAXMSG == _mqstat.mq_curmsgs)
-			{
-				return false;
-			}
-			else if (MAXMSG < _mqstat.mq_curmsgs + 2)
-			{
-				switch (_link)
-				{
-					case LinkType::C2P:
-					{
-						//TODO
-					}break;
-					case LinkType::P2D:
-					{
-						P2DBuf mBuf;
-						mBuf.ts = 0;
-						mBuf.originID = SERVICE;
-						mBuf.devSeverity = CODE_MQ_OVERFLOW;
-						mq_send(_mqfd, (char*)&mBuf, _bufLen, 0);
-					}break;
-				}
-
-				return false;
-			}
-		}
-		
-		if (-1 == mq_send(_mqfd, (char*)pBuf, _bufLen, 0))
-			return false;
-
-		return true;
-	}
-
-	
-	void MQueue::Print()
-	{
-		std::cout << "max: " << _maxMqCurmsgs << " | curr: " << _mqstat.mq_curmsgs << std::endl;
-	}
-	
-	std::string MQueue::GetStat()
-	{
-		std::stringstream ss;
-		ss << "max: " << _maxMqCurmsgs << " | curr: " << _mqstat.mq_curmsgs;
-		
-		return ss.str();
-	}
-	
-	void MQueue::ResetStat()
-	{
-		_maxMqCurmsgs = 0;
-	}
-	
-	void DeleteMQ(const LinkType& lt)
-	{
-		switch (lt)
-		{
-			case LinkType::C2P:
-			{
-				mq_unlink(QFileC2P.c_str());
-			}break;
-			case LinkType::P2D:
-			{
-				mq_unlink(QFileP2D.c_str());
-			}break;
-		}
-	}
-
-}//namespace
+void MQueue::ResetStat()
+{
+    _maxMqCurmsgs = 0;
+}

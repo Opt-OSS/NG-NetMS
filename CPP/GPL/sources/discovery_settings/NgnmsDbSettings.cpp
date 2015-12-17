@@ -19,11 +19,6 @@ using namespace boost::program_options;
 class NgnmsDiscoverySettings
 {
     public:
-        NgnmsDiscoverySettings( )
-        {
-
-        }
-
         void Execute( int argc, char * argv[] )
         {
             cout << "Discovery Settings " << VERSION_MAJOR << "." << VERSION_MINOR << " " << BUILD_DATE  << " "<< BUILD_TIME << endl;
@@ -131,6 +126,12 @@ class NgnmsDiscoverySettings
         {
             static NgnmsDiscoverySettings instance;
             return instance;
+        }
+
+    private:
+        NgnmsDiscoverySettings( )
+        {
+
         }
 
     private:
