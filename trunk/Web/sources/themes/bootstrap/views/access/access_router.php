@@ -11,7 +11,7 @@ $this->breadcrumbs=array(
 
 ?>
 
-<h1>Access for routers</h1>
+<h1>Access to devices</h1>
 
 
 <?php echo CHtml::beginForm($this->createUrl('move'),'post'); ?>
@@ -23,14 +23,27 @@ $this->widget('ext.widgets.multiselects.XMultiSelects',array(
     'leftTitle'=>'<b>Access <i> '.$model->getAccessName().'</i></b>',
     'leftName'=>'Attr[]',
     'leftList'=>$attr_curr,
-    'rightTitle'=>'<b>Routers</b>',
+    'rightTitle'=>'<b>Devices</b>',
     'rightName'=>'Attrn[]',
     'rightList'=>$attr_nocurr,
-    'size'=>20,
+    'size'=>15,
     'width'=>'219px',
 ));
-
+/*
 ?>
     <br />
+<?php
+$this->widget('ext.widgets.multiselects.XMultiSelects',array(
+    'leftTitle'=>'<b>Access <i> '.$model->getAccessName().'</i></b>',
+    'leftName'=>'bgp_Attr[]',
+    'leftList'=>$bgp_attr_curr,
+    'rightTitle'=>'<b>BGB neighbors</b>',
+    'rightName'=>'bgp_Attrn[]',
+    'rightList'=>$bgp_attr_nocurr,
+    'size'=>10,
+    'width'=>'219px',
+));
+*/
+?>
 <?php echo CHtml::submitButton(Yii::t('ui', 'Save'), array('class'=>'btn btn-red')); ?>&nbsp;
 <?php echo CHtml::endForm(); ?>
