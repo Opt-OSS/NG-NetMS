@@ -164,21 +164,36 @@ class AccessController extends Controller
     public function actionRouterjoin()
     {
         $acc_type_id = Yii::app()->getRequest()->getParam('id');
+
+
+
+        //standard devices
         $router_access_model = new RouterAccess('search');
         $router_access_model->unsetAttributes();
         $router_access_model->id_access = $acc_type_id;
-
         $attr_all = CHtml::listData(Routers::getAll(),'router_id','name');
         $attr_curr = CHtml::listData($router_access_model->getRouterByAccess(),'router_id','name');
         natsort($attr_curr);
         $arr_d = array_diff($attr_all,$attr_curr);
         natsort($arr_d);
-
+        //BGP neighbors
+        $bgp_router_access_model = new BgpRouterAccess('search');
+        $bgp_router_access_model->unsetAttributes();
+        $bgp_router_access_model->id_access = $acc_type_id;
+        $bgp_attr_all = CHtml::listData(BgpRouters::getAll(),'id','ip_addr');
+        $bgp_attr_curr = CHtml::listData($bgp_router_access_model->getRouterByAccess(),'id','ip_addr');
+        natsort($bgp_attr_curr);
+        $bgp_arr_d = array_diff($bgp_attr_all,$bgp_attr_curr);
+        natsort($bgp_arr_d);
 
         $this->render('access_router',array(
             'model'=>$router_access_model,
             'attr_nocurr'=>$arr_d,
-            'attr_curr'=>$attr_curr
+            'attr_curr'=>$attr_curr,
+
+            'bgp_model'=>$bgp_router_access_model,
+            'bgp_attr_nocurr'=>$bgp_arr_d,
+            'bgp_attr_curr'=>$bgp_attr_curr
         ));
     }
 
@@ -188,7 +203,7 @@ class AccessController extends Controller
     public function actionMove()
     {
         $acc_id = $_POST['id_access'];
-
+        //standard devices
         if(isset($_POST['Attr']) && count($_POST['Attr']) >0 )
         {
             foreach($_POST['Attr'] as $currattr)
@@ -213,7 +228,31 @@ class AccessController extends Controller
                 }
             }
         }
+        //BGP neighbors
+        if(!empty($_POST['bgp_Attr']) )
+        {
+            foreach($_POST['bgp_Attr'] as $currattr)
+            {
+                if(BgpRouterAccess::checkAttr($acc_id,$currattr) < 1)
+                {
+                    $att_acc = new BgpRouterAccess();
+                    $att_acc->id_access = $acc_id;
+                    $att_acc->id_router = $currattr;
+                    $att_acc->save();
+                }
+            }
+        }
 
+        if(!empty($_POST['bgp_Attrn']))
+        {
+            foreach($_POST['bgp_Attrn'] as $attrn)
+            {
+                if(BgpRouterAccess::checkAttr($acc_id,$attrn) > 0)
+                {
+                    BgpRouterAccess::model()->deleteAll("id_access='" . $acc_id . "' AND id_router='".$attrn."'");
+                }
+            }
+        }
         $this->actionView();
     }
 

@@ -1810,7 +1810,10 @@ class RoutersController extends Controller {
                 if (isset( $_POST['tumbler'] ) && $_POST['tumbler'] > 0) {
                     Routers::model()->deleteAll();
                     BgpRouters::model()->deleteAll();
-                    Events::model()->deleteAll();
+//                    Events::model()->deleteAll();
+                    Yii::app()->db->createCommand()->truncateTable(Events::model()->tableName());
+                    //set all archive as "not in DB'
+                    Archives::model()->updateAll(array('in_db'=>false));
                     Yii::app()->user->setFlash('cleandb', 'DB was cleaned.');
                     $this->refresh();
                 }
@@ -1897,7 +1900,11 @@ class RoutersController extends Controller {
                         $hosttype = GeneralSettings::model()->findByAttributes(array('name' => 'hostType'));
 
                         if (!empty( $hosttype->value )) {
-                            $command1 .= " -t " . trim(Cripto::decrypt($hosttype->value));
+                            $hosttype = trim(Cripto::decrypt($hosttype->value));
+                            if (in_array($hosttype,['Linux','Cisco','Juniper'])){
+                                $command1 .= " -t  $hosttype";
+                            }
+
                         }
 
                         $keypath = GeneralSettings::model()->findByAttributes(array('name' => 'path to key'));
@@ -1945,7 +1952,7 @@ class RoutersController extends Controller {
 
                         $escaped_command1 = escapeshellcmd($command1);
 
-                        //emsgd($command1);
+//                        emsgd($command1);
                         $sss = passthru($escaped_command1);
 
 

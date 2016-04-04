@@ -773,7 +773,7 @@ $this->beginWidget('bootstrap.widgets.TbModal', array('id'=>'gpl3lic','htmlOptio
             Copyright &copy; <?php echo date('Y'); ?> by Opt/Net
         </div>
         <div style="margin-left:220px;float:left">
-            NG-NetMS v3.4
+            NG-NetMS v3.5b
         </div>
         <div id="lic_id" onClick="viewLic()" style="margin-right:69px;float:right">
             Under license GPL-3.0

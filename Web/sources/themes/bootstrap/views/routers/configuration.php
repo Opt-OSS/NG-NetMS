@@ -5,6 +5,7 @@ $this->widget('bootstrap.widgets.TbBreadcrumbs', array(
     'links' => array('Devices' => 'index.php?r=routers/index', 'Device Configuration' => 'index.php?r=routers/viewconf', "Device ".$router->name),
 ));
 ?>
+
 <?php if($config_current){ ?>
 <?php
     $form = $this->beginWidget(
@@ -110,7 +111,7 @@ echo ($config_compare1);
 }
  else 
 {
-     echo "<pre>";
+     echo "<h5>Current:</h5><pre>";
     echo (stream_get_contents($config_current['data']));
     echo "</pre>";
 }

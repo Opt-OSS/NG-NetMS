@@ -1,27 +1,25 @@
 <?php
 
 /**
- * This is the model class for table "bgp_routers".
+ * This is the model class for table "router_access".
  *
- * The followings are the available columns in table 'bgp_routers':
+ * The followings are the available columns in table 'router_access':
  * @property integer $id
- * @property string $bgp_type
- * @property integer $status
- * @property string $autonomous_system
- * @property string $ip_addr
+ * @property integer $id_access
+ * @property integer $id_router
  *
  * The followings are the available model relations:
- * @property BgpLinks[] $bgpLinks
- * @property BgpLinks[] $bgpLinks1
+ * @property Access $idAccess
+ * @property Routers $idRouter
  */
-class BgpRouters extends CActiveRecord
+class BgpRouterAccess extends CActiveRecord
 {
 	/**
 	 * @return string the associated database table name
 	 */
 	public function tableName()
 	{
-		return 'bgp_routers';
+		return 'bgp_router_access';
 	}
 
 	/**
@@ -32,13 +30,10 @@ class BgpRouters extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('status', 'numerical', 'integerOnly'=>true),
-			array('bgp_type', 'length', 'max'=>30),
-			array('autonomous_system', 'length', 'max'=>10),
-			array('ip_addr', 'safe'),
+			array('id_access, id_router', 'numerical', 'integerOnly'=>true),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('id, bgp_type, status, autonomous_system, ip_addr', 'safe', 'on'=>'search'),
+			array('id, id_access, id_router', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -50,8 +45,8 @@ class BgpRouters extends CActiveRecord
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
-			'bgpLinks' => array(self::HAS_MANY, 'BgpLinks', 'side_a'),
-			'bgpLinks1' => array(self::HAS_MANY, 'BgpLinks', 'side_b'),
+			'idAccess' => array(self::BELONGS_TO, 'Access', 'id_access'),
+			'idRouter' => array(self::BELONGS_TO, 'BgpRouters', 'id_router'),
 		);
 	}
 
@@ -62,10 +57,8 @@ class BgpRouters extends CActiveRecord
 	{
 		return array(
 			'id' => 'ID',
-			'bgp_type' => 'Bgp Type',
-			'status' => 'Status',
-			'autonomous_system' => 'Autonomous System',
-			'ip_addr' => 'Ip Addr',
+			'id_access' => 'Id Access',
+			'id_router' => 'Id Router',
 		);
 	}
 
@@ -88,36 +81,63 @@ class BgpRouters extends CActiveRecord
 		$criteria=new CDbCriteria;
 
 		$criteria->compare('id',$this->id);
-		$criteria->compare('bgp_type',$this->bgp_type,true);
-		$criteria->compare('status',$this->status);
-		$criteria->compare('autonomous_system',$this->autonomous_system,true);
-		$criteria->compare('ip_addr',$this->ip_addr,true);
+		$criteria->compare('id_access',$this->id_access);
+		$criteria->compare('id_router',$this->id_router);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
 		));
 	}
+
     /**
-     * Return list of all routers
+     * returns list of routers for access
      *
      * @return mixed
      */
-    public function getAll()
+    public function getRouterByAccess()
     {
         $arr_data  = Yii::app()->db->createCommand()
-                                   ->select('id,ip_addr ')
-                                   ->from(' bgp_routers')
-                                   ->order(' id ')
-                                   ->queryAll();
+            ->select('r.id,r.ip_addr ')
+            ->from(' bgp_router_access ra,bgp_routers r')
+            ->where("ra.id_access ='".$this->id_access."' AND r.id = ra.id_router")
+            ->order(' r.id ')
+            ->queryAll();
 
         return $arr_data;
+    }
+
+    /**
+     * return name of access
+     *
+     * @return mixed
+     */
+    public function getAccessName()
+    {
+        return   Yii::app()->db->createCommand()
+            ->select('name ')
+            ->where(" id ='".$this->id_access ."'")
+            ->from(' access  ')
+            ->queryScalar();
+    }
+
+    /**
+     * check existing record
+     *
+     * @param $id_a
+     * @param $id_r
+     * @return mixed
+     */
+    public function checkAttr($id_a,$id_r)
+    {
+        $count = BgpRouterAccess::Model()->count("id_access=:id_access AND id_router=:id_router",array("id_access" => $id_a,"id_router"=>$id_r));
+        return $count;
     }
 
 	/**
 	 * Returns the static model of the specified AR class.
 	 * Please note that you should have this exact method in all your CActiveRecord descendants!
 	 * @param string $className active record class name.
-	 * @return BgpRouters the static model class
+	 * @return RouterAccess the static model class
 	 */
 	public static function model($className=__CLASS__)
 	{

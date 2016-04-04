@@ -21,6 +21,7 @@ $this->breadcrumbs=array(
     )); ?>
 <input type="hidden" name="tumbler" id="tumbler" value="1">
 <?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'submit', 'label'=>'Clean data in DB','type' => 'danger')); ?>
+    <h5> deletes ALL Events, Assets, Routers, Routers access bindings</h5>
 
 <?php $this->endWidget(); }?>
 
