@@ -18,20 +18,29 @@
 #include <sstream>
 
 #include "Classifier.h"
-#include "CollectorOptions.h"
+#include "Options.h"
 
 // Parsers
 #include "ParserSyslog.h"
-#include "ParserSnmp.h"
+#include "SnmpParser.h"
+#include "NetFlowParser.h"
+#include "ApacheParser.h"
+#include "Custom1Parser.h"
+#include "Custom2Parser.h"
 
 // Logger
 #include "Logger.h"
 
-// Data providers
-#include "FileDataProvider.h"
-#include "FilePollingDataProvider.h"
-#include "TcpDataProvider.h"
-#include "UdpDataProvider.h"
+// Syslog data providers
+#include "SyslogFileDP.h"
+#include "SyslogFilePollingDP.h"
+#include "SyslogTcpDP.h"
+#include "SyslogUdpDP.h"
+#include "NetFlowTcpDP.h"
+#include "NetFlowUdpDP.h"
+#include "ApacheFileDP.h"
+#include "ApacheFilePollingDP.h"
+
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include "Configuration.h"
@@ -51,12 +60,13 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 
         int Execute( int argc, char * argv[] )
         {
-            CollectorOptions options;
-            if( !ParseCmdLineArgs( options, argc, argv ) )
+            Options options;
+            if( !options.Parse( argc, argv  ))
             {
                 return -1;
             }
 
+            m_OriginalTimeStamps = options.GetOriginalTs();
             CreateLogger( );
 
             stringstream ss;
@@ -74,8 +84,6 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             {
                 return -3;
             }
-
-            CreateScriptExecutor( );
 
             if( !CreateClassifier( options ))
             {
@@ -101,6 +109,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 
     private:
         EventCollector( ):
+        m_OriginalTimeStamps(false),
         m_Debug( false )
         {
 
@@ -111,7 +120,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             m_Logger = shared_ptr<Logger>( new Logger( ) );
         }
 
-        void SetupLogFile( CollectorOptions& Options )
+        void SetupLogFile( Options& Options )
         {
             string logFileName = Options.GetLogFileName( );
 
@@ -123,43 +132,35 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             m_Logger->SetLogFileName( logFileName );
         }
 
-        void MessageLoop( CollectorOptions& Options )
+        void MessageLoop( Options& Options )
         {
             // Bind signal to Ctrl-C in order to terminate message loop
             signal( SIGINT, SigIntHandler );
 
             if( !m_DataProvider->Run( ) )
             {
-                switch( Options.GetDataSource() )
-                {
-                    case CollectorOptions::DataSource::FILE:
-                    case CollectorOptions::DataSource::STDIN:
-                    case CollectorOptions::DataSource::FILE_POLLING:
-                        m_Logger->LogError( "Can't open input file!" );
-                    break;
-                    case CollectorOptions::DataSource::UDP:
-                    case CollectorOptions::DataSource::TCP:
-                      m_Logger->LogError( "Permission denied or port busy!" );
-                    break;
-                }
+                switch( Options.GetSourceType() )
+        		{
+        			case Options::SourceType::SYSLOG_FILE:
+        			case Options::SourceType::SYSLOG_FILE_POLLING:
+        			case Options::SourceType::SNMP_FILE:
+        			case Options::SourceType::SNMP_FILE_POLLING:
+    				case Options::SourceType::APACHE_FILE:
+    				case Options::SourceType::APACHE_FILE_POLLING:
+    				case Options::SourceType::CUSTOM1_FILE:
+    				case Options::SourceType::CUSTOM1_FILE_POLLING:
+        				m_Logger->LogError( "Can't open input file!" );
+        			break;
+
+        			break;
+        			case Options::SourceType::SYSLOG_UDP:
+        			case Options::SourceType::SYSLOG_TCP:
+        			case Options::SourceType::NETFLOW_UDP:
+        			case Options::SourceType::NETFLOW_TCP:
+        				m_Logger->LogError( "Permission denied or port busy!" );
+        			break;
+        		}
             }
-        }
-
-        bool ParseCmdLineArgs( CollectorOptions& Options, int argc, char * argv[] )
-        {
-              vector<string> arguments;
-              for( int i = 1; i < argc; ++i )
-              {
-                  arguments.push_back( argv[i] );
-              }
-
-              if( !Options.Parse( arguments ) )
-              {
-                  return false;
-              }
-
-              m_Debug = Options.GetDebug( );
-              return true;
         }
 
         bool ReadNgnmsHomeEnvVariable( )
@@ -213,7 +214,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             return true;
         }
 
-        bool CreateClassifier( CollectorOptions& Options )
+        bool CreateClassifier( Options& Options )
         {
             string RuleFileName = Options.GetRuleFileName( );
             if( '/' != RuleFileName[0]  )
@@ -252,51 +253,96 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             return true;
         }
 
-        void CreateDataProvider( CollectorOptions& Options )
+        void CreateDataProvider( Options& Options )
         {
-            switch( Options.GetDataSource() )
+            switch( Options.GetSourceType() )
             {
-                case CollectorOptions::DataSource::FILE:
-                    m_DataProvider = shared_ptr<IDataProvider>( new FileDataProvider( Options.GetFileName( ) ) );
-                break;
-                case CollectorOptions::DataSource::STDIN:
-                    m_DataProvider = shared_ptr<IDataProvider>( new FileDataProvider( "/dev/stdin" ) );
-                break;
-                case CollectorOptions::DataSource::FILE_POLLING:
-                    m_DataProvider =  shared_ptr<IDataProvider>( new FilePollingDataProvider( Options.GetFileName( ) ) );
-                break;
-                case CollectorOptions::DataSource::UDP:
-                    m_DataProvider = shared_ptr<IDataProvider>( new UdpDataProvider( Options.GetPort( ) ) );
-                break;
-                case CollectorOptions::DataSource::TCP:
-                  m_DataProvider =  shared_ptr<IDataProvider>( new TcpDataProvider( Options.GetPort( ) ) );
-                break;
+				case Options::SourceType::SYSLOG_FILE:
+					 m_DataProvider = shared_ptr<IDataProvider>( new SyslogFileDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::SYSLOG_FILE_POLLING:
+		             m_DataProvider =  shared_ptr<IDataProvider>( new SyslogFilePollingDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::SYSLOG_UDP:
+					 m_DataProvider = shared_ptr<IDataProvider>( new SyslogUdpDP( Options.GetPort( ) ) );
+				break;
+				case Options::SourceType::SYSLOG_TCP:
+					m_DataProvider =  shared_ptr<IDataProvider>( new SyslogTcpDP( Options.GetPort( ) ) );
+				break;
+				case Options::SourceType::SNMP_FILE:
+					 m_DataProvider = shared_ptr<IDataProvider>( new SyslogFileDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::SNMP_FILE_POLLING:
+		             m_DataProvider =  shared_ptr<IDataProvider>( new SyslogFilePollingDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::NETFLOW_UDP:
+					m_DataProvider =  shared_ptr<IDataProvider>( new NetFlowUdpDP( Options.GetPort( ) ) );
+				break;
+				case Options::SourceType::NETFLOW_TCP:
+					m_DataProvider = shared_ptr<IDataProvider>( new NetFlowTcpDP( Options.GetPort( ) ) );
+				break;
+				case Options::SourceType::APACHE_FILE:
+					 m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::APACHE_FILE_POLLING:
+		             m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::CUSTOM1_FILE:
+					 m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::CUSTOM1_FILE_POLLING:
+					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::CUSTOM2_FILE:
+					m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::CUSTOM2_FILE_POLLING:
+					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) ) );
+				break;
             }
 
             m_DataProvider->RegisterListener( *this );
         }
 
-        void CreateParser( CollectorOptions& Options )
+        void CreateParser( Options& Options )
         {
-            switch( Options.GetCollectorType( ) )
-            {
-                case CollectorOptions::CollectorType::SYSLOG:
-                    m_Parser = shared_ptr<IParser>( new ParserSyslog( ) );
-                break;
-                case CollectorOptions::CollectorType::SNMP:
-                    m_Parser = shared_ptr<IParser>( new ParserSnmp( ) );
-                break;
-            }
+            switch( Options.GetSourceType() )
+			{
+				case Options::SourceType::SYSLOG_FILE:
+				case Options::SourceType::SYSLOG_FILE_POLLING:
+				case Options::SourceType::SYSLOG_UDP:
+				case Options::SourceType::SYSLOG_TCP:
+					m_Parser = shared_ptr<IParser>( new ParserSyslog( ) );
+				break;
+				case Options::SourceType::SNMP_FILE:
+				case Options::SourceType::SNMP_FILE_POLLING:
+					m_Parser = shared_ptr<IParser>( new SnmpParser( ) );
+				break;
+				case Options::SourceType::NETFLOW_UDP:
+					m_Parser = shared_ptr<IParser>( new NetFlowParser( ) );
+				break;
+				case Options::SourceType::NETFLOW_TCP:
+					m_Parser = shared_ptr<IParser>( new NetFlowParser( ) );
+				break;
+				case Options::SourceType::APACHE_FILE:
+				case Options::SourceType::APACHE_FILE_POLLING:
+					m_Parser = shared_ptr<IParser>( new ApacheParser( ) );
+				break;
+
+				case Options::SourceType::CUSTOM1_FILE:
+				case Options::SourceType::CUSTOM1_FILE_POLLING:
+					m_Parser = shared_ptr<IParser>( new Custom1Parser( ) );
+				break;
+				case Options::SourceType::CUSTOM2_FILE:
+				case Options::SourceType::CUSTOM2_FILE_POLLING:
+					m_Parser = shared_ptr<IParser>( new Custom2Parser( ) );
+				break;
+			}
 
             m_Parser->RegisterListener( *this );
         }
 
-        void CreateScriptExecutor( )
-        {
-            m_Triggers = shared_ptr<Triggers>( new Triggers( ) );
-        }
-
-        bool CreateDbStorage( CollectorOptions& Options )
+        bool CreateDbStorage( Options& Options )
         {
             m_Database = shared_ptr<Database>( new Database( Options.GetDebug( ) ) );
 
@@ -326,7 +372,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             }
 
             bool connected = false;
-            for( int i = 0; i < 1000; ++i )
+            for( int i = 0; i < dbSettings.GetTimeout(); ++i )
             {
                 if( !m_Database->Connect( dbSettings ) )
                 {
@@ -388,7 +434,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 
                 if( boost::filesystem::exists( actionSctipt ) )
                 {
-                    m_Triggers->Execute( actionSctipt, event.GetEvent( ) );
+                	Triggers::Execute( actionSctipt, event.GetEvent( ) );
                 }
                 else
                 {
@@ -405,7 +451,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             {
                 if( m_Debug )  /* Turn on by debug option */
                 {
-                    if( ! data.GetHasSourceIP( ) )
+                    if( data.GetHasSourceIP( ) )
                     {
                         stringstream ss;
                         ss << "SourceIP = " <<  data.GetSourceIPAddress( ) << endl;
@@ -424,10 +470,31 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             {
                 m_Parser->ProcessEndOfData( );
             }
+
+            if( DataProviderListener::DataProviderEvent::Event::SOURCE_ATTACHED == data.GetEvent() )
+            {
+                if( data.GetHasSourceIP( ) )
+                {
+                	m_Parser->SourceAttached(data.GetSourceIPAddress( ));
+                }
+            }
+
+            if( DataProviderListener::DataProviderEvent::Event::SOURCE_DETTACHED == data.GetEvent() )
+            {
+                if( data.GetHasSourceIP( ) )
+                {
+                	m_Parser->SourceDetached(data.GetSourceIPAddress( ));
+                }
+            }
         }
 
         void Notify( Event& event )
         {
+        	if(m_OriginalTimeStamps)
+        	{
+        		event.setTs( event.getOrign_Ts());
+        	}
+
             m_Classifier->Classify( event );
         }
 
@@ -436,8 +503,8 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
         shared_ptr<IDataProvider> m_DataProvider;
         shared_ptr<IParser>       m_Parser;
         shared_ptr<Database>      m_Database;
-        shared_ptr<Triggers>      m_Triggers;
         shared_ptr<Logger>        m_Logger;
+        bool                      m_OriginalTimeStamps;
         bool                      m_Debug;
         string                    m_NgnmsHomePath;
 };

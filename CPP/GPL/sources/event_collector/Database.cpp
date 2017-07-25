@@ -232,7 +232,7 @@ DbReturnCode Database::WriteEvent( const Event& event )
         severity = DEFAULT_SEVERITY;
     }
 
-    string queryInsertEvent = " ( '" + event.getPriority( ) +  "', '" + to_string( severity ) + "', '" + event.getOrign_Ts( ) + "', 'now();', '" +
+    string queryInsertEvent = " ( '" + event.getPriority( ) +  "', '" + to_string( severity ) + "', '" + event.getOrign_Ts( ) + "', '" + event.getTs() + "', '" +
     event.getOrigin( ) + "', '" + to_string( RouterId ) + "', '" + event.getFacility( ) + "', '" + event.getCode( ) + "', '" +EscapeString( event.getDescr( ) );
 
     if( m_Debug )

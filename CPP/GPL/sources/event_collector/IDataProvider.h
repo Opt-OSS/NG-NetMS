@@ -13,30 +13,20 @@ class DataProviderListener
             public:
                 enum class Event
                 {
-                    DATA,
-                    END_OF_DATA
+                    DATA,			   // Data received.
+                    				   // Data types:
+                    				   // 1. strings for text file
+                                       // 2. PDUs for UDP
+                                       // 3. Stream for TCP
+                    END_OF_DATA,       // File provider only.
+                    SOURCE_ATTACHED,   // TCP provider only. Sends on new client connected to the TCP server
+                    SOURCE_DETTACHED   // TCP provider only. Sends on client disconnected from the TCP server
                 };
 
             public:
-              DataProviderEvent( Event event ):
-              m_Event( event ),
-              m_HasSourceIP( true )
-              {
-
-              }
-
-              DataProviderEvent( Event event, string& Data ):
+              DataProviderEvent( Event event, string Data = string(), string SourceIpAddress = string()):
               m_Event( event ),
               m_String( Data ),
-              m_HasSourceIP( true )
-              {
-
-              }
-
-              DataProviderEvent( Event event, string& Data, string SourceIpAddress ):
-              m_Event( event ),
-              m_String( Data ),
-              m_HasSourceIP( false ),
               m_SourceIPAddress( SourceIpAddress )
               {
 
@@ -54,7 +44,7 @@ class DataProviderListener
 
               bool GetHasSourceIP( )
               {
-                  return m_HasSourceIP;
+                  return !m_SourceIPAddress.empty();
               }
 
               const string& GetSourceIPAddress( ) const
@@ -65,7 +55,6 @@ class DataProviderListener
             private:
               Event  m_Event;
               string m_String;
-              bool   m_HasSourceIP;
               string m_SourceIPAddress;
         };
 

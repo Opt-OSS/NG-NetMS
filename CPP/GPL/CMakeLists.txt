@@ -5,7 +5,7 @@ project (NG-NetMS)
 
 # Project version
 set( VERSION_MAJOR 3)
-set( VERSION_MINOR 4)
+set( VERSION_MINOR 623)
 
 # Project settings
 set( DB_CFG_FILE_NAME "db.cfg")
@@ -52,25 +52,48 @@ set (DISCOVERY_SETTINGS_SRC
 sources/discovery_settings/NgnmsDbSettings.cpp
 sources/discovery_settings/Database.cpp )
 
+set (EVENT_COLLECTOR_INC 
+sources/event_collector/SyslogDPs/
+sources/event_collector/NetFlowDPs/ 
+sources/event_collector/ApacheDPs/
+sources/event_collector/SnmpParser/
+sources/event_collector/SyslogParser/
+sources/event_collector/RuleParser/
+sources/event_collector/NetFlowParser/
+sources/event_collector/ApacheParser/
+sources/event_collector/Custom1Parser/
+sources/event_collector/Custom2Parser/)
+
 # Sources Event collector
 set (EVENT_COLLECTOR_SRC 
-sources/event_collector/ParserSnmp.cpp
-sources/event_collector/RulesFileParser.cpp
-sources/event_collector/TcpDataProvider.cpp
-sources/event_collector/CollectorOptions.cpp
+sources/event_collector/SyslogDPs/SyslogFileDP.cpp
+sources/event_collector/SyslogDPs/SyslogFilePollingDP.cpp
+sources/event_collector/SyslogDPs/SyslogTcpDP.cpp
+sources/event_collector/SyslogDPs/SyslogUdpDP.cpp
+sources/event_collector/SyslogParser/JunosFacilityGroups.cpp
+sources/event_collector/SyslogParser/ParserSyslog.cpp
+sources/event_collector/SnmpParser/SnmpParser.cpp
+sources/event_collector/NetFlowDPs/TcpServer.cpp
+sources/event_collector/NetFlowDPs/NetFlowTcpDP.cpp
+sources/event_collector/NetFlowDPs/NetFlowUdpDP.cpp
+sources/event_collector/NetFlowParser/NetFlowParser.cpp
+sources/event_collector/NetFlowParser/NetFlowV5Parser.cpp
+sources/event_collector/ApacheDPs/ApacheFileDP.cpp
+sources/event_collector/ApacheDPs/ApacheFilePollingDP.cpp
+sources/event_collector/ApacheParser/ApacheParser.cpp
+sources/event_collector/Custom1Parser/Custom1Parser.cpp
+sources/event_collector/Custom2Parser/Custom2Parser.cpp
+sources/event_collector/RuleParser/RulesFileParser.cpp
+sources/event_collector/RuleParser/RulesYacc.tab.c
+sources/event_collector/RuleParser/lex.yy.c
+sources/event_collector/Options.cpp
 sources/event_collector/Triggers.cpp
-sources/event_collector/FilePollingDataProvider.cpp
-sources/event_collector/JunosFacilityGroups.cpp
 sources/event_collector/Classifier.cpp
-sources/event_collector/ParserSyslog.cpp
-sources/event_collector/UdpDataProvider.cpp
 sources/event_collector/Database.cpp
 sources/event_collector/EventCollector.cpp
 sources/event_collector/Logger.cpp
 sources/event_collector/EventType.cpp
-sources/event_collector/FileDataProvider.cpp
-sources/event_collector/RulesYacc.cpp
-sources/event_collector/RulesLex.cpp )
+sources/event_collector/FilePollReader.cpp)
 
 #Compiler settings
 add_definitions("-std=c++0x")
@@ -93,23 +116,39 @@ link_directories(${PQXX_LIBRARY_DIRS})
 add_definitions(${PQXX_CFLAGS_OTHER})
 
 # CRYPTO++
-pkg_check_modules(CRYPTOPP REQUIRED libcrypto++)
+pkg_check_modules(CRYPTOPP libcrypto++ QUIET)
+IF( CRYPTOPP_FOUND )
 include_directories(${CRYPTOPP_INCLUDE_DIRS})
 link_directories(${CRYPTOPP_LIBRARY_DIRS})
 add_definitions(${CRYPTOPP_CFLAGS_OTHER})
-#include_directories(/usr/include/crypto++)
+ELSE()
+pkg_check_modules(CRYPTOPP REQUIRED cryptopp)
+include_directories(${CRYPTOPP_INCLUDE_DIRS})
+link_directories(${CRYPTOPP_LIBRARY_DIRS})
+add_definitions(${CRYPTOPP_CFLAGS_OTHER})
+ENDIF()
 
 #POCO C++ for Event generator only!!!
 include_directories(/usr/local/Poco/include)
 link_directories(/usr/local/Poco/lib)
 
 # Boost
-FIND_PACKAGE(Boost 1.43 COMPONENTS system thread filesystem program_options regex REQUIRED)
-INCLUDE_DIRECTORIES(${BOOST_INCLUDE_DIR})
-LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+set(Boost_USE_STATIC_LIBS ON)
+FIND_PACKAGE(Boost 1.43 COMPONENTS system thread filesystem program_options regex QUIET)
+IF( Boost_FOUND )
+   INCLUDE_DIRECTORIES(${BOOST_INCLUDE_DIR})
+   LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+ELSE()
+   set( Boost_LIBRARIES boost_system boost_thread boost_filesystem boost_program_options boost_regex)
+   INCLUDE_DIRECTORIES(/usr/include)
+   LINK_DIRECTORIES(/usr/lib64)
+ENDIF()
 
 #Common Includes
 include_directories(common)
+include_directories(sources/event_collector/SyslogDPs/)
+include_directories(sources/event_collector/NetFlowDPs/)
+include_directories(sources/event_collector)
 
 # Common sources static library
 add_library( CommonStatLib STATIC ${COMMON_SRC} )
@@ -130,9 +169,12 @@ target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${Boost_LIBRARIES} )
 
 # Binary EventCollector
 add_executable( ${NGNETMS_BIN_COLLECTOR} ${EVENT_COLLECTOR_SRC} ) 
+
 target_link_libraries( ${NGNETMS_BIN_COLLECTOR} CommonStatLib )
 target_link_libraries( ${NGNETMS_BIN_COLLECTOR} ${PQXX_LIBRARIES} )
 target_link_libraries( ${NGNETMS_BIN_COLLECTOR} ${CRYPTOPP_LIBRARIES} )
 target_link_libraries( ${NGNETMS_BIN_COLLECTOR} ${Boost_LIBRARIES} )
-target_link_libraries( ${NGNETMS_BIN_COLLECTOR} pcre fl )
+target_link_libraries( ${NGNETMS_BIN_COLLECTOR} pcre fl pthread)
+target_include_directories( ${NGNETMS_BIN_COLLECTOR} PUBLIC ${EVENT_COLLECTOR_INC} )
+
 

@@ -51,6 +51,10 @@ IClassifier::ResultCodes Classifier::Initialize( string RuleFile )
                 {
                     return "SNMP";
                 }
+                else if( EventProtocol::NETFLOW == protocol )
+                {
+                    return "NETFLOW";
+                }
                 else
                 {
                     return "";

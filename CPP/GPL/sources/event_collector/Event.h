@@ -37,11 +37,6 @@ class Event
 
         }
 
-        ~Event()
-        {
-
-        }
-
         EventProtocol getProtocol() const
         {
             return  m_Protocol;
@@ -50,6 +45,11 @@ class Event
         const string& getPriority() const
         {
             return m_Priority;
+        }
+
+        void setTs(const string& Timestamp)
+        {
+        	m_Timestamp = Timestamp;
         }
 
         const string& getTs() const
