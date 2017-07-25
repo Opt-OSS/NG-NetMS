@@ -1,0 +1,18 @@
+prompt generic
+    match /[\/a-zA-Z0-9._:-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/
+
+prompt basic
+    match /: ?$/
+
+prompt user
+    match /login as: ?$/
+
+macro enable_paging
+    send page
+
+macro disable_paging
+    send no page
+
+# legacy support
+prompt prompt
+    match /[\/a-zA-Z0-9._:-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/

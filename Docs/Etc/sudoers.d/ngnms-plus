@@ -1,0 +1,27 @@
+# This is NGNMS-PLUS extension to the /etc/sudoers file
+#
+# Please place in /etc/sudoers.d/ 
+# See the man page for details on how to write a sudoers file.
+# See sudoers(5) for more information on "#include" directives:
+#
+# Experimental, some files do not need these permissions
+
+# NGNMS portion
+
+ngnms ALL=(ALL:ALL) NOPASSWD:/home/ngnms/NGREADY/bin/masscan 
+ngnms ALL=(ALL:ALL) NOPASSWD:/usr/bin/nmap
+ngnms ALL=(ALL) NOPASSWD: /usr/bin/killall
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_collector
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_observer
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_opt_prf
+ngnms ALL= NOPASSWD:SETENV: /bin/pwd
+
+# NGNMS Plus portion
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/service_manager.sh
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_profiler
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_detector
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_feature_extractor
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_feature_preprocessor
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_clusterer
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_classifier
+ngnms ALL= NOPASSWD:SETENV: /home/ngnms/NGREADY/bin/ngnetms_gui

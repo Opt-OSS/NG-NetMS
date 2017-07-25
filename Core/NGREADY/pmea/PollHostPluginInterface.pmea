@@ -1,0 +1,45 @@
+use strict;
+use warnings;
+package NGNMS::App::PollHostPluginInterface;
+#@method
+sub checkCanPollHost;
+
+#@method
+sub prepare_connection;
+
+#@method
+sub beforeProcessing;
+
+#@method
+sub checkSNMPsysObjectID;
+
+#@method
+sub checkDeviceSupported;
+
+#@method
+sub getModel;
+
+#@method
+sub getVendor;
+
+#@method
+sub getHostName;
+
+#@method
+sub getHardware;
+
+#@method
+sub getSoftware;
+
+#@method
+sub getLocation;
+
+#@method
+sub getInterfaces;
+
+#@method
+sub getIpLayer;
+
+#@method
+sub getConfig;
+

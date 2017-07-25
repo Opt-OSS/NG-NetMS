@@ -1,0 +1,49 @@
+## LF Only!!! Last empty line required
+## ssh key prompt
+prompt ssh_key
+	match /[Ee]nter passphrase for key.+: $/
+
+prompt wake_up_on_banner
+    match  /Press any key to continue ?$/
+
+#prompt generic
+#    match /> ?$/
+
+
+prompt basic
+    match /> ?$/
+
+prompt privileged
+    match /# ?$/
+
+prompt logout
+    match /Do you want to log out \[y\/\n]\?/
+
+macro set_terminal_width
+    send terminal width 511
+
+
+macro end_privileged
+    send exit
+    match basic
+
+macro disconnect
+    send exit
+    match logout
+    send y
+    match generic
+
+
+macro getSoftware
+    send show system-information
+
+macro getHardware
+    send walkMib entPhysicalDescr entPhysicalModelName entPhysicalFirmwareRev entPhysicalSerialNum
+
+macro getConfig
+    send show running-config
+
+macro getPhysicalInterfaces
+	send show interfaces brief
+
+#EOF

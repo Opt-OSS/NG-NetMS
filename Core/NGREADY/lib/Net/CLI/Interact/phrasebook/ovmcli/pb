@@ -1,0 +1,10 @@
+# Oracle VM Manager CLI
+
+prompt pass
+    match /password(?: for \w+)?: $/
+
+prompt generic
+    match /OVM> $/
+
+macro disconnect
+    send exit

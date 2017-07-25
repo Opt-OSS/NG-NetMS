@@ -1,0 +1,73 @@
+package Net::Appliance::Session;
+use strict;
+use warnings FATAL => 'all';
+
+#@method
+#@returns integer
+sub logged_in;
+
+#@method
+#@returns integer
+sub in_privileged_mode;
+
+#@method
+#@returns integer
+sub in_configure_mode;
+
+#@method
+#@returns integer
+sub privileged_paging;
+
+#@method
+#@returns integer
+sub close_called;
+
+#@mthod
+#@returns Net::CLI::Interact
+sub nci;
+
+
+#@mthod
+sub nci_options;
+
+#@mthod
+sub host;
+
+#@mthod
+sub has_host;
+
+#@mthod
+sub app;
+
+#@mthod
+sub has_app;
+
+#@mthod
+sub add_library;
+
+#@mthod
+sub has_add_library;
+
+
+#@mthod
+sub timeout;
+
+#@mthod
+sub has_timeout;
+
+#@mthod
+sub connect_options;
+
+#@method
+sub macro;
+
+#@method
+sub do_paging
+#@method
+sub     do_login;
+#@method
+sub        do_privileged_mode;
+#@method
+sub           do_configure_mode;
+#@method
+sub               wake_up;

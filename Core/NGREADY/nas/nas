@@ -1,0 +1,146 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings FATAL => 'all';
+
+use lib './lib';
+use Net::Appliance::Session::Scripting;
+
+Net::Appliance::Session::Scripting::run();
+
+# ABSTRACT: Create Reusable Session Scripts
+# PODNAME: nas
+
+
+
+__END__
+=pod
+
+=head1 NAME
+
+nas - Create Reusable Session Scripts
+
+=head1 VERSION
+
+version 4.142720
+
+=head1 SYNOPSIS
+
+ $ nas --help
+
+  nas [options] [hostname or IP]
+
+  -p, --personality  Device <personality> (default: "ios")
+  -t, --transport    <transport> method (Serial, Telnet, default: SSH)
+  -u, --username     <username> to connect as on device (default: $USER)
+                     
+  -R, --record       Record session
+  -P, --playback     Play back session
+  -s, --script       When recording, save playback script to this <filename>
+  -l, --cmdlog       NAS <file> to record commands to, or play them back from
+                     
+  -e, --exit-last    Num. of output lines from last command is program exit status
+  -c, --cloginrc     RANCID cloginrc <file> with device credentials
+  -z, --nopassword   Do not ask for device password (if not using cloginrc)
+  -o, --echo         Echo commands sent, when playing back the recorded script/cmdlog
+  -M, --paging       Do not attempt to disable command output paging
+  -B, --nobanner     Suppress display of any login banner received from the device
+                     
+  -q, --quiet        Hide informational messages
+  -v, --verbose      NCI log <level> ("debug", "notice", "info", etc)
+  -V, --version      Display this program's version number
+  -h, --help         Display this help text
+
+=head1 DESCRIPTION
+
+Use this program to help write reusable L<Net::Appliance::Session> scripts,
+play them back, and also to more easily connect to network devices.
+
+=over 4
+
+=item *
+
+Start a connection to a network device using CLI switches, and prompts for
+credentials. This is easier than writing short Perl programs.
+
+=item *
+
+Record a set of commands issued to one network device into a command log, then
+replay that log against other devices (C<< -R -l <log> >> and C<< -P -l <log>
+>>).
+
+=item *
+
+Record a session and produce a Perl script which when run, replays the session
+to the same host, or overridable to other devices (C<< -R -s <script> >> and
+then run the script).
+
+=back
+
+Once connected to the device you can enter any command and it will be run.
+
+=head1 GENERAL USAGE NOTES
+
+Please see the C<SYNOPSIS> section and the command line help for the available
+options. In the future more documentation will be forthcoming, I promise. Here
+are some highlights:
+
+The C<exit-last> option can be useful for creating a session script which
+checks for some error condition. Assuming the last command should have no
+output on success, then the exit status of the script will be non-zero when
+there's a problem. Use this with C<-R> to make a reuseable script.
+
+To play a script with no output other than that returned from the device in
+response to sent commands, use the switch combination C<-Bqoz>. Note that you
+will need to be able to login automatically, and RANCID config isn't yet
+supported.
+
+If you don't provide a hostname or IP then the script goes into a loop waiting
+for the hostname on standard input. This way, you can pipe a list of device
+names to the script and it will execute the commands on each one.
+
+In case you didn't know, the library has support for connecting to linux boxes
+using the C<-p bash> setting to chose the Bash shell personality.
+
+Getting to be a super-user is a little clunky at the moment. I need to work on
+that a little more. Take care that your scripts don't contain any passwords!
+
+=head1 SPECIAL FEATURES
+
+The methods of L<Net::Appliance::Session> are available by using the command
+C<< !s <method-name> >>. The best use of this is to gracefully disconnect, by
+issuing:
+
+ !s close
+
+You can also enter the command C<!m> to see a list of available Macros. If you
+don't know what a Macro is, please move a long, there's nothing to see here.
+You run a Macro with the C<< !m <macro-name> [params] >> command.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item *
+
+https://github.com/aol/trigger
+
+=item *
+
+http://www.shrubbery.net/rancid/
+
+=back
+
+=head1 AUTHOR
+
+Oliver Gorwits <oliver@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2014 by Oliver Gorwits.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
+

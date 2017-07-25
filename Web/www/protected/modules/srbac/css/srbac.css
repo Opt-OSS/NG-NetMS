@@ -1,0 +1,448 @@
+
+/**
+ * CSS styles for form and input fields.
+ *
+ * These styles are used with form and input fields generated via yiic script.
+ *
+ * @author Qiang Xue <qiang.xue@gmail.com>
+ * @link http://www.yiiframework.com/
+ * @copyright Copyright &copy; 2008-2009 Yii Software LLC
+ * @license http://www.yiiframework.com/license/
+*/
+
+/* FORM ELEMENTS*/
+
+div.srbacForm
+{
+  border: 2px solid #B7DDF2;
+  background: #EBF4FB;
+  margin: 0;
+  padding: 5px;
+}
+
+div.srbacForm label.required
+{
+}
+
+div.srbacForm span.required
+{
+  color: red;
+}
+
+div.errorSummary
+{
+  border: 2px solid #C00;
+  padding: 7px 7px 12px 7px;
+  margin: 0 0 20px 0;
+  background: #FEE;
+  font-size: 0.9em;
+}
+
+div.errorSummary p
+{
+  margin: 0;
+  padding: 5px;
+}
+
+div.errorSummary ul
+{
+  margin: 0;
+  padding: 0 0 0 20px;
+}
+
+div.errorSummary ul li
+{
+  list-style: square;
+}
+
+div.srbacForm p.hint
+{
+  color: gray;
+  font-size: 90%;
+  margin: 0 0 0 110px;
+}
+
+div.srbacForm fieldset
+{
+  border: #DDD 1px solid;
+  margin: 10px 0;
+  padding: 10px;
+}
+
+div.srbacForm legend
+{
+  font-weight: bold;
+}
+
+div.srbacForm label
+{
+}
+
+div.srbacForm div.action
+{
+  clear: left;
+  margin-left: 110px;
+  padding: 0.25em 0;
+}
+
+div.srbacForm div.simple,
+div.srbacForm div.complex
+{
+  clear: left;
+  padding: 0.25em 0;
+}
+
+div.srbacForm div.simple label,
+div.srbacForm div.complex span
+{
+  display: block;
+  float: left;
+  margin-right: 10px;
+  position: relative;
+  text-align: right;
+  width: 100px;
+}
+
+div.srbacForm label.error,
+div.srbacForm span.error
+{
+  color: #C00;
+}
+
+div.srbacForm input.error,
+div.srbacForm textarea.error,
+div.srbacForm select.error
+{
+  background: #FEE;
+  border-color: #C00;
+}
+
+div.srbacForm div.simple div,
+div.srbacForm div.complex div
+{
+  margin-left: 110px;
+}
+
+
+/* SRBAC ELEMENTS*/
+.iconSet {
+  border:#dddddd solid 1px;
+  background: #EBF4FB;
+  padding:0.4em;
+  -moz-border-radius:0.7em;
+  height:54px;
+}
+
+.iconBox a {
+  color:#222222;
+  text-decoration:none;
+  font-weight:normal;
+}
+
+.controlPanel a {
+  color:#222222;
+  text-decoration:none;
+  font-weight:normal;
+}
+
+.icon{
+  vertical-align:middle;
+  border:0;
+}
+
+.controlPanel{
+  background: #EBF4FB;
+  padding:0.4em;
+  -moz-border-radius:0.7em;
+  border:#dddddd solid 1px;
+}
+
+.marginBottom{
+  margin-bottom:0.5em;
+}
+
+.reset{
+  clear:both;
+}
+
+.controlPanel a{
+  margin-right:0.5em;
+}
+
+div.iconBox{
+  float:left;
+  padding:0.2em;
+  -moz-border-radius:0.7em;
+  margin:0.6em;
+  border:1px outset #666666;
+  background-color:white;
+}
+
+.iconBox:hover{
+  background-color:#EEEEEE;
+  cursor:pointer;
+}
+
+.controlPanel .iconBox {
+  margin: 0px;
+}
+
+div.srbac
+{
+  border: 2px solid #B7DDF2;
+  background: #EBF4FB;
+  margin: 0;
+  padding: 5px;
+  /*width: 600px;*/
+}
+div.srbac .dropdown{
+  width: 100%;
+}
+
+div.srbac div.message{
+  color:red;
+  text-align:center;
+  font-weight:bold;
+}
+
+
+/* begin data grid style */
+table.srbacDataGrid
+{
+  background: white;
+  border-collapse: collapse;
+  width: 99%;
+}
+
+table.srbacDataGrid th, table.srbacDataGrid td
+{
+  font-size: 0.9em;
+  border: 1px #4F81BD solid;
+  padding: 0.5em;
+  text-align:left;
+}
+
+table.srbacDataGrid th
+{
+  background: #d3dfee;
+  text-align: center;
+}
+
+table.srbacDataGrid th.label
+{
+  width: 150px;
+}
+
+table.srbacDataGrid tr.odd
+{
+  background: #E6F2FF;
+}
+/* end of data grid style */
+
+div.error {
+  color:red;
+}
+
+div.title {
+
+  font-weight: bold;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+table.roles {
+  background:white;
+  width:100%;
+}
+
+table.tasks {
+
+  float:right;
+  width:75%;
+  vertical-align:top;
+  background-color: #66ffff;
+}
+
+table.operations {
+  float:right;
+  width:60%;
+  background-color: #9999ff;
+}
+
+/* TABVIEW ELEMENTS */
+.horTab .yiiTab ul.tabs
+{
+  padding: 2px 0;
+  margin: 0;
+  border-bottom: 1px solid #4F81BD;
+  font: bold 12px Verdana, sans-serif;
+  text-align:left;
+}
+
+.horTab .yiiTab ul.tabs li
+{
+  list-style: none;
+  margin: 0;
+  display: inline;
+}
+
+.horTab .yiiTab ul.tabs a
+{
+  -moz-border-radius-topleft:5px;
+  -moz-border-radius-topright:5px;
+  padding: 2px 0.5em;
+  margin: 0 0 0 3px;
+  border: 1px solid #4F81BD;
+  border-bottom: none;
+  background: #d3dfee;
+  text-decoration: none;
+}
+
+.horTab .yiiTab ul.tabs a:link
+{
+  color: #667;
+}
+
+.horTab .yiiTab ul.tabs a:visited
+{
+  color: #667;
+}
+
+.horTab .yiiTab ul.tabs a:hover
+{
+  color: #000;
+  background: #E6F2FF;
+  border-color: #227;
+}
+
+.horTab .yiiTab ul.tabs a.active
+{
+  background: white;
+  border-bottom: 1px solid white;
+}
+
+.horTab .yiiTab div.view
+{
+  border-left: 1px solid #4F81BD;
+  border-right: 1px solid #4F81BD;
+  border-bottom: 1px solid #4F81BD;
+  padding: 8px;
+  margin: 0;
+}
+
+/* VERT TAB */
+
+.vertTab {
+  width:90%;
+}
+
+.vertTab .yiiTab ul.tabs
+{
+  padding: 2px 0;
+  margin: 0;
+  font: bold 12px Verdana, sans-serif;
+  text-align:left;
+  float:left;
+
+}
+
+.vertTab .yiiTab ul.tabs li
+{
+  list-style: none;
+  display: inline;
+   margin: 0;
+}
+
+
+.vertTab .yiiTab ul.tabs a{
+  display:block;
+   -moz-border-radius-topleft:5px;
+  -moz-border-radius-bottomleft:5px;
+  -moz-border-radius-topright:0px;
+  -moz-border-radius-bottomright:0px;
+  padding:6px;
+  margin: 0;
+  border: 1px solid #4F81BD;
+  border-right: 1px solid #4F81BD;
+  background: #d3dfee;
+  text-decoration: none;
+}
+
+.vertTab .yiiTab ul.tabs a:link
+{
+  color: #667;
+}
+
+.vertTab .yiiTab ul.tabs a:visited
+{
+  color: #667;
+}
+
+.vertTab .yiiTab ul.tabs a:hover
+{
+  color: #000;
+  background: #E6F2FF;
+  border-color: #227;
+}
+
+.vertTab .yiiTab ul.tabs a.active
+{
+  background: white;
+  border-right: 1px solid white;
+}
+
+
+.vertTab .yiiTab div.view
+{
+  border-right:1px solid #4F81BD;
+  border-top:1px solid #4F81BD;
+  border-bottom:1px solid #4F81BD;
+  border-left:0;
+  padding: 8px;
+  margin: 0;
+  text-align:left;
+  float:none;
+  /*height:200px;*/
+  overflow:scroll;
+}
+
+/* LOADING INDICATORS */
+div.srbacLoading {
+  background-position:  center center;
+  background-repeat: no-repeat;
+  opacity: 1;
+  background-image: url('process-working.gif');
+}
+div.srbacLoading * {
+  opacity: .2;
+}
+
+/*Installing srbac styles*/
+
+div.installNoError{
+  color:green;
+  }
+div.installError{
+  color:red;
+  font-weight:bold;
+}
+div.installNoError {
+  background-image: url(noError.png);
+  background-repeat:no-repeat;
+
+  background-position: right;
+}
+div.installError {
+  background-image: url(error.png);
+  background-repeat:no-repeat;
+  background-position: right;
+}
+
+#srbacError{
+  color:red;
+  font-weight: bold;
+  font-size: 110%;
+  padding-top: 10px;
+}
+

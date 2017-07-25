@@ -1,0 +1,252 @@
+=head1 NAME
+
+Net::CLI::Interact::Manual::Phrasebook - List of Supported CLIs
+
+=head1 INTRODUCTION
+
+The bundled phrasebook includes support for a variety of network device CLIs.
+Many were contributed by users of the module. If you set up a new CLI
+dictionary, please consider contributing it back! The phrasebook specification
+is given in L<Net::CLI::Interact::Phrasebook>.
+
+For each supported CLI, there is a name which must be passed in the
+C<personality> option to L<Net::CLI::Interact>'s C<new()> method. After that,
+you can call the included Macros, and the module will use the included Prompt
+to match the current state of the CLI. More information is available in the
+L<Tutorial|Net::CLI::Interact::Manual::Tutorial> and
+L<Cookbook|Net::CLI::Interact::Manual::Cookbook>.
+
+Below is a list of all current bundled CLI dictionaries. Each lists its name,
+the available Prompts, Macros and Continuations, and from which other CLI
+dictionaries it inherits.
+
+ IOS       # Cisco IOS
+ CatOS     # for older, pre-IOS Cisco devices
+ 
+ PIXOS     # for PIX OS-based devices
+ PIXOS7    # Slightly different commands from other PIXOS versions
+ FWSM      # currently the same as 'PIXOS'
+ FWSM3     # for FWSM Release 3.x devices (slightly different to FWSM 2.x)
+ 
+ JunOS     # Juniper JUNOS support
+ HP        # HP support
+ Nortel    # Nortel support
+ ExtremeOS # Extreme Networks support
+ Foundry   # Foundry/Brocade device support
+ 
+ Bash      # GNU Bourne-Again SHell (i.e. most linux systems)
+
+ OVMCLI    # Oracle VM Manager CLI
+
+=head1 PERSONALITIES
+
+=head2 Bash
+
+This personality goes by the name of C<bash>.
+
+Prompts are C<prompt>, C<privileged>, C<user> and C<pass>. The C<pass>
+prompt works either for an initial SSH connection, or a C<sudo> request.
+
+Macros are C<begin_privileged>, C<end_privileged>, and C<disconnect>. The
+C<begin_privileged> macro issues a C<sudo> request to become the root user.
+
+=head2 Cisco
+
+This personality goes by the name of C<cisco> and provides a basis for many
+other CLI dictionaries.
+
+Prompts are C<basic>, C<privileged>, C<configure>, C<user>, and C<pass>.
+
+Macros are C<begin_privileged>, C<end_privileged>, C<begin_configure>,
+C<end_configure>, and C<disconnect>.
+
+=head2 CatOS
+
+This personality goes by the name of C<catos> and inherits from the C<cisco>
+dictionary.
+
+Additionally it provides the C<privileged> Prompt.
+
+Additionally it also provides the C<paging> Macro to set the terminal page
+size.
+
+=head2 ExtremeOS
+
+This personality goes by the name of C<extremeos> and inherits from the
+C<cisco> dictionary.
+
+Additional Prompts are C<basic>, C<privileged>, C<configure>, C<user>, and
+C<pass>.
+
+Additional Macros are C<begin_privileged>, C<end_privileged>, and
+C<disconnect>.
+
+=head2 Foundry / Brocade
+
+This personality goes by the name of C<foundry> and inherits from the C<cisco>
+dictionary. Before connecting to the device you probably want to set the
+output separator to be:
+
+ $nci->transport->ors("\r\n");
+
+For users of L<Net::Appliance::Session> this should be:
+
+ $session_obj->nci->transport->ors("\r\n");
+
+=head2 IOS
+
+This personality goes by the name of C<ios> and inherits from the C<cisco>
+dictionary.
+
+Additionally it provides the C<paging> Macro to set the terminal page size.
+
+=head2 HP
+
+This personality goes by the name of C<hp> and inherits from the C<cisco>
+dictionary.
+
+Additionally it provides the C<basic> and C<user> Prompts.
+
+Additionally it provides C<enable_paging> and C<disable_paging> Macros.
+
+=head2 JunOS
+
+This personality goes by the name of C<junos> and inherits from the C<cisco>
+dictionary.
+
+Additionally it provides the C<privileged>, C<configure>, and C<user> Prompts.
+
+Additionally it also provides the C<begin_configure> and C<paging> Macros.
+
+=head2 Nortel
+
+This personality goes by the name of C<nortel> and inherits from the C<cisco>
+dictionary.
+
+Additionally it provides the C<user> Prompt.
+
+=head2 PIXOS
+
+This personality goes by the name of C<pixos> and inherits from the C<cisco>
+dictionary.
+
+Additionally it provides the C<paging> Macro to set the terminal page size.
+
+It can be used in its own right for Cisco PIX firewalls, but is
+also used as a base for other dictionaries.
+
+=head2 PIXOS 7
+
+This personality goes by the name of C<pixos7> and inherits from the C<pixos>
+dictionary.
+
+Additionally it provides the C<paging> Macro to set the terminal page size.
+
+=head2 FWSM
+
+This personality goes by the name of C<fwsm> and inherits from the C<pixos>
+dictionary.
+
+It provides no further functionality, as Cisco FWSM software version 1 and 2
+was the same as the PIX OS.
+
+=head2 FWSM 3
+
+This personality goes by the name of C<fwsm3> and inherits from the C<pixos>
+dictionary.
+
+Additionally it provides the C<paging> Macro to set the terminal page size.
+
+=head2 OVMCLI
+
+This personality goes by the name of C<ovmcli>.
+
+Prompts are C<prompt> and C<privileged>.
+
+There is one macro named C<disconnect>.
+
+=head1 SUPPORTING A NEW DEVICE
+
+In order to support a new device, particularly for the L<Net::Appliance::Session>
+module, there is a basic set of prompts and macros you must create.
+
+=head2 Required Prompts
+
+With SSH, no C<user> prompt is required, but for other transports you should
+include a prompt named C<user> which matches the "C<Username:>" prompt
+presented by the device.
+
+ # example only!
+ prompt user
+     match /[Uu]sername/
+
+With all transports you must provide a C<pass> prompt which matches the
+"C<password:>" prompt presented by the device.
+
+ # example only!
+ prompt pass
+     match /[Pp]assword: ?$/
+
+The last essential prompt is of course a simple command line prompt match, and
+this should be named C<generic>.
+
+ # example only!
+ prompt generic
+     match /> ?$/
+
+=head2 Desirable Prompt and Macros
+
+To cleanly disconnect from your device session, you might want to include a
+macro named C<disconnect> with the relevant command. Note there is no need for
+a C<match> statement in this macro, as the device should have detached!
+
+ # example only!
+ macro disconnect
+     send exit
+
+For paging support, include either only a C<prompt> macro, or two macros named
+C<enable_paging> and C<disable_paging>, depending on what the device requires.
+In all cases, there must be one substitution ("C<%s>") which is where the
+number of page lines will be inserted into the command.
+
+ # example only!
+ macro paging
+     send terminal length %s
+
+For privileged mode (super-user) support, include a prompt named C<privileged>
+first, and then include macros named C<begin_privileged> and C<end_privileged>
+to enter and leave the mode, respectively. Note that both macros will require
+explicit match statements, because the prompt encountered I<after> issuing the
+command will be different to that encountered before.
+
+ # example only!
+ prompt privileged
+     match /# ?$/
+ 
+ macro begin_privileged
+     send enable
+     match user or pass or privileged
+ 
+ macro end_privileged
+     send disable
+     match generic
+
+Similarly for configure mode, include a prompt named C<configure> first, and
+then include macros named C<begin_configure> and C<end_configure> to enter and
+leave the mode, respectively. Note that both macros will require explicit
+match statements, because the prompt encountered I<after> issuing the command
+will be different to that encountered before.
+
+ # example only!
+ prompt configure
+     match /\(config[^)]*\)# ?$/
+ 
+ macro begin_configure
+     send configure terminal
+     match configure
+ 
+ macro end_configure
+     send exit
+     match privileged
+
+=cut

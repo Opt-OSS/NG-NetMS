@@ -1,0 +1,2 @@
+macro pager
+    send terminal pager lines %s

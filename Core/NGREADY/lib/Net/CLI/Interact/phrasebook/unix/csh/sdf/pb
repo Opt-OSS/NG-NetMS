@@ -1,0 +1,10 @@
+prompt generic
+    match /\$ $/
+
+prompt shell
+    match /^\$/
+
+macro sdf_login
+    send %s\n
+    match shell
+

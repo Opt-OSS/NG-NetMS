@@ -1,0 +1,5 @@
+# prompt err_string
+#     match /% ?(?:Error|Type "[^?]+\?"|(?:Incomplete|Unknown) command|Invalid input)/
+
+macro paging
+    send terminal length %s

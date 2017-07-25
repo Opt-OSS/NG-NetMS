@@ -1,0 +1,46 @@
+prompt generic
+    match /[\/a-zA-Z0-9._\[\]-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/
+
+prompt basic
+    match /> ?$/
+
+prompt privileged
+    match /# ?$/
+
+prompt configure
+    match /\(config[^)]*\)# ?$/
+
+prompt user
+    match /[Uu]sername/
+
+prompt pass
+    match /[Pp]assword: ?$/
+
+# MACROS
+
+macro begin_privileged
+    send enable
+    match user or pass or privileged
+
+macro end_privileged
+    send disable
+    match basic
+
+macro begin_configure
+    send configure terminal
+    match configure
+
+macro end_configure
+    send exit
+    match privileged
+
+macro disconnect
+    send exit
+    match generic
+
+# macro completion
+#     send ?
+
+# legacy support
+prompt prompt
+    match /[\/a-zA-Z0-9._\[\]-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/

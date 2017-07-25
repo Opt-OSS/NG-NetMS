@@ -1,0 +1,3 @@
+User_Alias ADMINS = ngnms
+Cmnd_Alias NMAP = /usr/bin/nmap
+ADMINS ALL=(root) NOPASSWD:NMAP

@@ -1,0 +1,196 @@
+=head1 NAME
+
+Net::CLI::Interact::Manual::Tutorial - Guide for new users
+
+=head1 Introduction
+
+Automating command line interface (CLI) interactions is not a new idea, but
+can be tricky to implement. Net::CLI::Interact aims to provide a simple and
+manageable interface to CLI interactions, supporting:
+
+=over 4
+
+=item *
+
+SSH, Telnet and Serial-Line connections
+
+=item *
+
+Unix and Windows support
+
+=item *
+
+Reusable device command phrasebooks
+
+=back
+
+The module exists to support developers of applications and libraries which
+must interact with a command line interface. The SYNOPSIS section of
+L<Net::CLI::Interact> has an overview of the commands demonstrated in this
+document.
+
+=head1 Getting Started
+
+Like many other Perl modules, you need to load the module and then create a
+new Net::CLI::Interact instance (which is C<$s> in the example, below):
+
+ use Net::CLI::Interact;
+ 
+ my $s = Net::CLI::Interact->new({
+     transport   => 'Serial',
+     personality => 'cisco',
+ });
+
+Your application can have multiple independent instances (that is, connect to
+different devices at the same time); simply repeat the above example more
+times for variables other than C<$s>.
+
+Note that at the time you create the instance, as in the example above, the
+module I<does not> connect to the device. That comes later.
+
+There were two options provided to the C<new> call, above, both of which are
+required for all new instances. Let's look at them in turn:
+
+=over 4
+
+=item transport
+
+How do you want to connect to your CLI? The current choices are
+L<Telnet|Net::CLI::Interact::Transport::Telnet>,
+L<SSH|Net::CLI::Interact::Transport::SSH> and a
+L<Serial|Net::CLI::Interact::Transport::Serial> line (that is, a console
+cable). In this option you need to tell the module which underlying transport
+is to be used.
+
+Some of the transports have additional options that are either required, or
+optional. For example, the Telnet and SSH transports both need to know which
+post name or IP address should be contacted. You pass this in another option
+to C<new>, like so:
+
+ my $s = Net::CLI::Interact->new({
+     transport       => 'Telnet',
+     connect_options => { host => 'my.server.example.com' },
+ 
+     personality     => 'cisco',
+ });
+
+See the manual page of the transport module for the option details.
+
+=item personality
+
+What language does the connected device speak?  In this option you need to
+pass the name of a personality that's used to load a I<Phrasebook>.  For
+instance one common format is Cisco's IOS, which is widely cloned on other
+vendor equipment CLIs.
+
+A phrasebook is simply a library, or dictionary, of pre-configured phrases you
+can use on the CLI. This makes life simple, because Net::CLI::Interact then
+can automate some of the more difficult tasks. For example, if you issue a
+command and the output is "paged" so you hit Space or Return to see the next
+page, the phrasebook can tell Net::CLI::Interact how to slurp all these pages
+into one body of output before returning it to you.
+
+This module ships with many phrasebooks which have been contributed by other
+users over the years. You can also write and use your own phrasebooks, which
+might replace, or add to, those shipped with the module. See the
+L<Phrasebook|Net::CLI::Interact::Manual::Phrasebook> user guide for a list of
+phrasebooks shipped with this distribution, and their corresponding
+C<personality> names. See also the C<add_library> option to C<new()> for
+specifying a path to your own phrasebooks.
+
+=back
+
+=head1 Connecting
+
+This is done automatically for you the first time you send a command to the
+device, so skip this step and move on!
+
+=head1 Sending Commands
+
+=head2 But first, Prompts
+
+The idea of sending a command is, usually, to see some output. The most
+important part of this process is knowing when the output has all been sent,
+otherwise the module would sit forever, waiting to gather more text!
+
+Between each command sent, the connected device prints a CLI I<Prompt>. This
+prompt is where you type commands, and it's what tells us that all the output
+has been sent from our last command. Prompts are loaded in the phrasebook, and
+given friendly names.
+
+If your personality's phrasebook is sufficiently mature, then the prompts
+might be fully automated, and just like the Connecting step above, you can
+skip doing anything manually. Consult the
+L<Phrasebook|Net::CLI::Interact::Manual::Phrasebook> user guide for details.
+
+However if you need to set it manually, do the following:
+
+ $s->set_prompt('friendly_name');
+
+Sometimes you might not know what state the CLI is in; typically this applies
+to Serial lines. In that case you can ask to find the matching prompt:
+
+ $s->find_prompt($wake_up);
+
+This method gets some output from the connected session and then tries to
+match it against any loaded prompts, returning if successful. If not
+successful, and the C<$wake_up> value is non-zero, then C<find_prompt> will
+"hit the return key" to try to get some output. This process is retried
+according to the value of C<$wake_up> (i.e. 1, 2, 3, etc), and of not
+successful will die.
+
+=head2 Literal Commands
+
+There's not a lot to it. Remember that with a mature personality loaded, you
+were probably able to skip the previous prompt step and go straight to:
+
+ my $output = $s->cmd('show ip interfaces brief');
+
+Here you will get all the output from the command together in one variable,
+C<$output>. If you prefer an array where each item is one line of output,
+simply use C<@output> instead in the above example.
+
+=head2 Macros
+
+Life gets more complicated when your command has things like confirmation
+steps (e.g. reboot), other prompts (e.g. extended ping), etc. For these
+situations we have I<Macros> in the phrasebook.
+
+A macro is simply a sequence of commands we could issue using C<< $s->cmd()
+>>, bundled together and given a friendly name. Macros are also smart enough
+either to handle simple confirmation steps themselves, or to allow you to pass
+in parameters. Some examples probably help:
+
+ # saves config, accepting the default "startup-config" when prompted
+ $s->macro('write_mem');
+ 
+ # logs in, passing a username and password at the prompts
+ $s->macro('to_user_exec', {
+     params => ['my_username', 'my_password'],
+ });
+ 
+ # simply a parameterized command
+ $s->macro('show_interfaces_x', {
+     params => ['GigabitEthernet 3/4'],
+ });
+
+=head1 Slurping Output
+
+As mentioned above, output at the CLI is often "paged" with the user hitting
+Space or Return to show the next page. Most macros can deal with this
+automatically if well implemented.
+
+If the L<Phrasebook|Net::CLI::Interact::Manual::Phrasebook> user guide says
+your personality has a named default I<Continuation> for handling paged
+output, then set it like so:
+
+ $s->set_default_continuation('friendly_name');
+
+=head1 Disconnecting
+
+This is nothing more fancy than issuing the appropriate CLI commands to close
+the network connection. In the case of the Serial line transport you can
+usually only log out, and not fully disconnect. Simply end your application
+and the module will tidy things up as best it can.
+
+=cut

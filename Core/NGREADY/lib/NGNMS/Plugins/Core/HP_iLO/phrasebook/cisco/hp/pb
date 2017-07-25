@@ -1,0 +1,60 @@
+## LF Only!!! Last empty line required
+## ssh key prompt
+prompt ssh_key
+	match /[Ee]nter passphrase for key.+: $/
+
+prompt wake_up_on_banner
+    match  /Press any key to continue ?$/
+
+
+prompt user
+    match /[Ll]ogin [Nn]ame:\s+$/
+
+prompt pass
+    match /[Pp]assword:\s+$/
+
+prompt basic
+    match /> ?$/
+
+prompt privileged
+    match /# ?$/
+
+macro getMap
+    send show /map1
+
+macro getSystem
+    send show /system1
+
+macro getEnetport
+    send show /map1/enetport1 -a
+
+macro getCpu
+    send show /system1/cpu%s
+
+macro getMemory
+    send show /system1/memory%s
+
+macro getFan
+    send show /system1/fan%s
+
+macro getSlot
+    send show /system1/slot%s
+
+macro getPowersupply
+    send show /system1/powersupply%s
+
+macro getSensor
+    send show /system1/sensor%s
+
+macro getSystemFirmware
+    send show /system1/firmware%s
+
+macro getMapFirmware
+    send show /map1/firmware%s
+
+macro getSettings
+    send show /map1/settings1 -a
+
+macro getConfig
+    send show /map1/config1
+#EOF

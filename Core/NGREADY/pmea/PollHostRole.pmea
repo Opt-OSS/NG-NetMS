@@ -1,0 +1,12 @@
+package NGNMS::App::PollHostRole;
+use Moo;
+use MooX::Options;
+
+with "NGNMS::App::CommandLineOptions";
+
+#@method
+#@returns NGNMS::App::PollHostPluginInterface[]
+sub plugins;
+
+
+

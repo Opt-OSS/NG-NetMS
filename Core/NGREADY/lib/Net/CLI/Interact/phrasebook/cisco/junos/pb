@@ -1,0 +1,22 @@
+prompt generic
+    match /[\/a-zA-Z0-9._\@-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/
+
+prompt privileged
+    match /> ?$/
+
+prompt configure
+    match /# ?$/
+
+prompt user
+    match /(?:[Ll]ogin|[Uu]sername)/
+
+macro begin_configure
+    send configure
+    match configure
+
+macro paging
+    send set cli screen-length %s
+
+# legacy support
+prompt prompt
+    match /[\/a-zA-Z0-9._\@-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/
