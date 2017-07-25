@@ -1,0 +1,103 @@
+
+    OSPF database, Area 0.0.0.0
+ Type       ID               Adv Rtr           Seq      Age  Opt  Cksum  Len 
+Router  *10.3.3.3         10.3.3.3         0x800019f0  1854  0x22 0x1faa  72
+  bits 0x2, link count 4
+  id 10.20.2.2, data 10.20.2.1, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  id 192.168.3.200, data 192.168.3.200, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  id 10.20.4.2, data 10.20.4.1, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  id 10.3.3.3, data 255.255.255.255, Type Stub (3)
+    Topology count: 0, Default metric: 0
+  Gen timer 00:10:46
+  Aging timer 00:29:06
+  Installed 00:30:54 ago, expires in 00:29:06, sent 00:30:52 ago
+  Last changed 3w3d 08:28:43 ago, Change count: 41, Ours
+Router   10.4.4.4         10.4.4.4         0x800019dd  1917  0x22 0x6464  84
+  bits 0x0, link count 5
+  id 10.4.4.4, data 255.255.255.255, Type Stub (3)
+    Topology count: 0, Default metric: 0
+  id 10.20.2.2, data 10.20.2.2, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  id 192.168.4.0, data 255.255.255.0, Type Stub (3)
+    Topology count: 0, Default metric: 1
+  id 10.254.254.253, data 10.254.254.253, Type Transit (2)
+    Topology count: 0, Default metric: 1000
+  id 10.20.4.2, data 10.20.4.2, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  Aging timer 00:28:02
+  Installed 00:31:54 ago, expires in 00:28:03, sent 00:31:52 ago
+  Last changed 3w3d 08:28:35 ago, Change count: 59
+Router   192.168.3.1      192.168.3.1      0x80002a74  1789  0x22 0xf1fd  48
+  bits 0x2, link count 2
+  id 192.168.3.200, data 192.168.3.1, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  id 10.254.254.253, data 10.254.254.254, Type Transit (2)
+    Topology count: 0, Default metric: 10
+  Aging timer 00:30:10
+  Installed 00:29:48 ago, expires in 00:30:11, sent 00:29:46 ago
+  Last changed 3w3d 08:28:33 ago, Change count: 18
+Network  10.20.2.2        10.4.4.4         0x80001564  2667  0x22 0xd191  32
+  mask 255.255.255.252
+  attached router 10.4.4.4
+  attached router 10.3.3.3
+  Aging timer 00:15:32
+  Installed 00:44:24 ago, expires in 00:15:33, sent 00:44:22 ago
+  Last changed 27w1d 01:43:31 ago, Change count: 1
+Network  10.20.4.2        10.4.4.4         0x80001565   417  0x22 0xbca3  32
+  mask 255.255.252.0
+  attached router 10.4.4.4
+  attached router 10.3.3.3
+  Aging timer 00:53:02
+  Installed 00:06:54 ago, expires in 00:53:03, sent 00:06:52 ago
+  Last changed 27w1d 01:43:35 ago, Change count: 1
+Network  10.254.254.253   10.4.4.4         0x800002be  1167  0x22 0x30aa  32
+  mask 255.255.255.0
+  attached router 10.4.4.4
+  attached router 192.168.3.1
+  Aging timer 00:40:32
+  Installed 00:19:24 ago, expires in 00:40:33, sent 00:19:22 ago
+  Last changed 3w3d 08:28:35 ago, Change count: 1
+Network *192.168.3.200    10.3.3.3         0x8000034b  1354  0x22 0xba69  32
+  mask 255.255.255.0
+  attached router 10.3.3.3
+  attached router 192.168.3.1
+  Gen timer 00:19:06
+  Aging timer 00:37:26
+  Installed 00:22:34 ago, expires in 00:37:26, sent 00:22:32 ago
+  Last changed 3w3d 08:28:43 ago, Change count: 1, Ours
+    OSPF AS SCOPE link state database
+ Type       ID               Adv Rtr           Seq      Age  Opt  Cksum  Len 
+Extern   0.0.0.0          192.168.3.1      0x80002a5b  1799  0x22 0xfcd   36
+  mask 0.0.0.0
+  Topology default (ID 0)
+    Type: 1, Metric: 100, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:30:00
+  Installed 00:29:58 ago, expires in 00:30:01, sent 00:29:56 ago
+  Last changed 27w1d 01:44:15 ago, Change count: 1
+Extern  *10.1.1.1         10.3.3.3         0x8000034b   354  0x22 0x261f  36
+  mask 255.255.255.255
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:44:06
+  Aging timer 00:54:06
+  Installed 00:05:54 ago, expires in 00:54:06, sent 00:05:52 ago
+  Last changed 3w3d 08:29:22 ago, Change count: 1, Ours
+Extern  *10.2.2.2         10.3.3.3         0x8000034b   854  0x22 0x916f  36
+  mask 255.255.255.255
+  Topology default (ID 0)
+    Type: 2, Metric: 65, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:27:26
+  Aging timer 00:45:46
+  Installed 00:14:14 ago, expires in 00:45:46, sent 00:14:12 ago
+  Last changed 3w3d 08:29:22 ago, Change count: 1, Ours
+Extern  *20.0.1.0         10.3.3.3         0x8000034a  2354  0x22 0xa997  36
+  mask 255.255.255.252
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:02:26
+  Aging timer 00:20:46
+  Installed 00:39:14 ago, expires in 00:20:46, sent 00:39:12 ago
+  Last changed 3w3d 08:29:22 ago, Change count: 1, Ours

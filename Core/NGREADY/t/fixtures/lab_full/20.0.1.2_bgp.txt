@@ -1,0 +1,10 @@
+BGP router identifier 10.2.2.2, local AS number 500
+BGP table version is 69, main routing table version 69
+8 network entries and 9 paths using 1000 bytes of memory
+3 BGP path attribute entries using 352 bytes of memory
+BGP activity 36/28 prefixes, 39/30 paths
+
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd
+20.0.1.1        4   100  239405  239335       69    0    0 23w5d           7
+                         ^
+% Invalid input detected at '^' marker.

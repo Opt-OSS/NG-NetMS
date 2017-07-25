@@ -1,0 +1,286 @@
+ngnms@optoss:~$ ssh ngnms@185.24.48.178
+Password:
+Last login: Wed Mar 30 12:39:05 2016 from 185.24.48.187
+--- JUNOS 14.2R5.8 built 2015-11-25 01:08:18 UTC
+ngnms@TEST01> show isis database extensive 
+IS-IS instance is not running
+
+ngnms@TEST01> show ospf database extensive 
+
+    OSPF database, Area 0.0.0.0
+ Type       ID               Adv Rtr           Seq      Age  Opt  Cksum  Len 
+Router  *185.24.48.0      185.24.48.0      0x80000008   964  0x22 0x36d0  48
+  bits 0x2, link count 2
+  id 185.24.48.5, data 185.24.48.4, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  id 185.24.48.0, data 255.255.255.255, Type Stub (3)
+    Topology count: 0, Default metric: 0
+  Topology default (ID 0)
+    Type: Transit, Node ID: 185.24.48.5
+      Metric: 1, Bidirectional
+  Gen timer 00:33:55
+  Aging timer 00:43:56
+  Installed 00:16:04 ago, expires in 00:43:56, sent 00:16:02 ago
+  Last changed 02:46:04 ago, Change count: 3, Ours
+Router   185.24.48.1      185.24.48.1      0x80000008   965  0x22 0x4ab8  48
+  bits 0x2, link count 2
+  id 185.24.48.5, data 185.24.48.5, Type Transit (2)
+    Topology count: 0, Default metric: 1
+  id 185.24.48.1, data 255.255.255.255, Type Stub (3)
+    Topology count: 0, Default metric: 0
+  Topology default (ID 0)
+    Type: Transit, Node ID: 185.24.48.5
+      Metric: 1, Bidirectional
+  Aging timer 00:43:55
+  Installed 00:16:02 ago, expires in 00:43:55
+  Last changed 02:46:02 ago, Change count: 2
+Network  185.24.48.5      185.24.48.1      0x80000004  1179  0x22 0x3fe9  32
+  mask 255.255.255.254
+  attached router 185.24.48.1
+  attached router 185.24.48.0
+  Topology default (ID 0)
+    Type: Transit, Node ID: 185.24.48.0
+      Metric: 0, Bidirectional
+    Type: Transit, Node ID: 185.24.48.1
+      Metric: 0, Bidirectional
+  Aging timer 00:40:20
+  Installed 00:19:36 ago, expires in 00:40:21
+  Last changed 02:46:07 ago, Change count: 1
+OpaqArea*1.0.0.1          185.24.48.0      0x80000005   750  0x22 0x1116  28
+  Area-opaque TE LSA
+  RtrAddr (1), length 4: 185.24.48.0
+  Gen timer 00:37:30
+  Aging timer 00:47:30
+  Installed 00:12:30 ago, expires in 00:47:30, sent 00:12:28 ago
+  Last changed 02:48:57 ago, Change count: 1, Ours
+OpaqArea 1.0.0.1          185.24.48.1      0x80000005   751  0x22 0x1510  28
+  Area-opaque TE LSA
+  RtrAddr (1), length 4: 185.24.48.1
+  Aging timer 00:47:29
+  Installed 00:12:28 ago, expires in 00:47:29
+  Last changed 02:46:09 ago, Change count: 1
+OpaqArea*1.0.0.3          185.24.48.0      0x80000004  1178  0x22 0x2cab 124
+  Area-opaque TE LSA
+  Link (2), length 100:
+    Linktype (1), length 1:
+      2
+    LinkID (2), length 4:
+      185.24.48.5
+    LocIfAdr (3), length 4:
+      185.24.48.4
+    RemIfAdr (4), length 4:
+      0.0.0.0
+    TEMetric (5), length 4:
+      1
+    MaxBW (6), length 4:
+      1000Mbps
+    MaxRsvBW (7), length 4:
+      1000Mbps
+    UnRsvBW (8), length 32:
+        Priority 0, 1000Mbps
+        Priority 1, 1000Mbps
+        Priority 2, 1000Mbps
+        Priority 3, 1000Mbps
+        Priority 4, 1000Mbps
+        Priority 5, 1000Mbps
+        Priority 6, 1000Mbps            
+        Priority 7, 1000Mbps
+    Color (9), length 4:
+      0
+  Gen timer 00:30:21
+  Aging timer 00:40:22
+  Installed 00:19:38 ago, expires in 00:40:22, sent 00:19:36 ago
+  Last changed 02:46:09 ago, Change count: 1, Ours, TE Link ID: 2147483650
+OpaqArea 1.0.0.3          185.24.48.1      0x80000004  1394  0x22 0x4491 124
+  Area-opaque TE LSA
+  Link (2), length 100:
+    Linktype (1), length 1:
+      2
+    LinkID (2), length 4:
+      185.24.48.5
+    LocIfAdr (3), length 4:
+      185.24.48.5
+    RemIfAdr (4), length 4:
+      0.0.0.0
+    TEMetric (5), length 4:
+      1
+    MaxBW (6), length 4:
+      1000Mbps
+    MaxRsvBW (7), length 4:
+      1000Mbps
+    UnRsvBW (8), length 32:
+        Priority 0, 1000Mbps
+        Priority 1, 1000Mbps
+        Priority 2, 1000Mbps
+        Priority 3, 1000Mbps
+        Priority 4, 1000Mbps
+        Priority 5, 1000Mbps
+        Priority 6, 1000Mbps
+        Priority 7, 1000Mbps
+    Color (9), length 4:
+      0
+  Aging timer 00:36:46
+  Installed 00:23:11 ago, expires in 00:36:46
+  Last changed 02:46:07 ago, Change count: 1
+    OSPF AS SCOPE link state database
+ Type       ID               Adv Rtr           Seq      Age  Opt  Cksum  Len 
+Extern  *10.111.23.0      185.24.48.0      0x80000004  2679  0x22 0xa775  36
+  mask 255.255.255.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:05:21
+  Aging timer 00:15:21
+  Installed 00:44:39 ago, expires in 00:15:21, sent 00:44:37 ago
+  Last changed 02:47:22 ago, Change count: 1, Ours
+Extern   10.111.23.0      185.24.48.1      0x80000004  2894  0x22 0xa17a  36
+  mask 255.255.255.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:11:46
+  Installed 00:48:11 ago, expires in 00:11:46
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.24.48.0      185.24.48.0      0x80000005   536  0x22 0xaefe  36
+  mask 255.255.252.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:41:04
+  Aging timer 00:51:04
+  Installed 00:08:56 ago, expires in 00:51:04, sent 00:08:54 ago
+  Last changed 02:48:57 ago, Change count: 1, Ours
+Extern   185.24.48.0      185.24.48.1      0x80000005   537  0x22 0xa804  36
+  mask 255.255.252.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:51:03
+  Installed 00:08:54 ago, expires in 00:51:03
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.24.48.144    185.24.48.0      0x80000004  2464  0x22 0xbf6a  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:08:55
+  Aging timer 00:18:56
+  Installed 00:41:04 ago, expires in 00:18:56, sent 00:41:02 ago
+  Last changed 02:47:22 ago, Change count: 1, Ours
+Extern   185.24.48.144    185.24.48.1      0x80000004  2679  0x22 0xb96f  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:15:20
+  Installed 00:44:36 ago, expires in 00:15:21
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.24.48.160    185.24.48.0      0x80000004  2250  0x22 0x1ffa  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:12:30
+  Aging timer 00:22:30
+  Installed 00:37:30 ago, expires in 00:22:30, sent 00:37:28 ago
+  Last changed 02:47:22 ago, Change count: 1, Ours
+Extern   185.24.48.160    185.24.48.1      0x80000004  2465  0x22 0x19ff  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:18:55
+  Installed 00:41:02 ago, expires in 00:18:55
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.24.48.176    185.24.48.0      0x80000004  2036  0x22 0x7e8b  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:16:04
+  Aging timer 00:26:04
+  Installed 00:33:56 ago, expires in 00:26:04, sent 00:33:54 ago
+  Last changed 02:47:22 ago, Change count: 1, Ours
+Extern   185.24.48.176    185.24.48.1      0x80000004  2251  0x22 0x7890  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:22:29
+  Installed 00:37:28 ago, expires in 00:22:29
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.24.48.192    185.24.48.0      0x80000004  1821  0x22 0xdd1c  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:19:38
+  Aging timer 00:29:38
+  Installed 00:30:21 ago, expires in 00:29:39, sent 00:30:19 ago
+  Last changed 02:47:22 ago, Change count: 1, Ours
+Extern   185.24.48.192    185.24.48.1      0x80000004  2037  0x22 0xd721  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:26:03
+  Installed 00:33:54 ago, expires in 00:26:03
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.24.50.232    185.24.48.0      0x80000005   322  0x22 0x8f93  36
+  mask 255.255.255.255
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.2.154
+  Gen timer 00:44:38
+  Aging timer 00:54:38
+  Installed 00:05:22 ago, expires in 00:54:38, sent 00:05:20 ago
+  Last changed 02:48:57 ago, Change count: 1, Ours
+Extern  *185.58.148.0     185.24.48.0      0x80000005   107  0x22 0xc462  36
+  mask 255.255.252.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:48:12
+  Aging timer 00:58:12
+  Installed 00:01:47 ago, expires in 00:58:13, sent 00:01:45 ago
+  Last changed 02:48:57 ago, Change count: 1, Ours
+Extern   185.58.148.0     185.24.48.1      0x80000005   322  0x22 0xbe67  36
+  mask 255.255.252.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:54:37
+  Installed 00:05:19 ago, expires in 00:54:38
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.58.148.32    185.24.48.0      0x80000004  1607  0x22 0xd94a  36
+  mask 255.255.255.224
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:23:12
+  Aging timer 00:33:13
+  Installed 00:26:47 ago, expires in 00:33:13, sent 00:26:45 ago
+  Last changed 02:47:22 ago, Change count: 1, Ours
+Extern   185.58.148.32    185.24.48.1      0x80000004  1822  0x22 0xd34f  36
+  mask 255.255.255.224
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:29:37
+  Installed 00:30:19 ago, expires in 00:29:38
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.58.148.64    185.24.48.0      0x80000004  1393  0x22 0xf8fa  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:26:47
+  Aging timer 00:36:47
+  Installed 00:23:13 ago, expires in 00:36:47, sent 00:23:11 ago
+  Last changed 02:47:22 ago, Change count: 1, Ours
+Extern   185.58.148.64    185.24.48.1      0x80000004  1608  0x22 0xf2ff  36
+  mask 255.255.255.240
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:33:12
+  Installed 00:26:45 ago, expires in 00:33:12
+  Last changed 02:46:09 ago, Change count: 1
+Extern  *185.107.40.0     185.24.48.0      0x80000004  2893  0x22 0x2142  36
+  mask 255.255.252.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Gen timer 00:01:47
+  Aging timer 00:11:47
+  Installed 00:48:13 ago, expires in 00:11:47, sent 00:48:11 ago
+  Last changed 02:48:57 ago, Change count: 1, Ours
+Extern   185.107.40.0     185.24.48.1      0x80000005   108  0x22 0x1948  36
+  mask 255.255.252.0
+  Topology default (ID 0)
+    Type: 2, Metric: 0, Fwd addr: 0.0.0.0, Tag: 0.0.0.0
+  Aging timer 00:58:12
+  Installed 00:01:45 ago, expires in 00:58:12
+  Last changed 02:46:09 ago, Change count: 1
+
+ngnms@TEST01> exit

@@ -1,0 +1,35 @@
+# if using Net::Appliance::Session, call this before connect():
+#   $session_obj->nci->transport->ors("\r\n");
+
+prompt generic
+    match /[\/a-zA-Z0-9._-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/
+
+prompt basic
+    match /# ?$/
+
+prompt privileged
+    match /> ?$/
+
+prompt configure
+    match /\(config[^)]*\)# ?$/
+
+prompt user
+    match /Login Name: ?$/
+
+prompt pass
+    match /Password: ?$/
+
+macro begin_configure
+    send 'configure terminal'
+    match /configure terminal/
+
+macro paging
+    send 'skip-page-display'
+
+macro disconnect
+    send exit
+    match generic
+
+# legacy support
+prompt prompt
+    match /[\/a-zA-Z0-9._-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/

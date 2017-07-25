@@ -1,0 +1,33 @@
+use strict;
+use warnings;
+package NGNMS::App::CommandLineOptions{
+
+#MooXOprion hack
+sub option;
+
+sub mode;
+sub record;
+sub record_dir;
+sub play;
+sub verbose_level;
+sub host;
+sub host_type;
+sub host_user;
+sub host_password;
+sub host_priveleged_password;
+sub host_transport;
+sub host_community;
+sub inject;
+}
+
+package NGNMS::DB::CommandLineOptions{
+
+    #MooXOprion hack
+    sub option;
+
+    sub dbname;
+    sub dbuser;
+    sub dbpassword;
+    sub dbhost;
+    sub dbport;
+}

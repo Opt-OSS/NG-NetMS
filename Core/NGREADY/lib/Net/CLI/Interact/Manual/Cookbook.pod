@@ -1,0 +1,251 @@
+=head1 NAME
+
+Net::CLI::Interact::Manual::Cookbook - Miscellaneous recipes
+
+=head1 Windows Support
+
+The library works just fine under native windows (i.e use something like
+Strawberry Perl - no need for cygwin), for Telnet, Serial and SSH connections.
+However one additional step is required for you to have success:
+
+You B<must> download the C<plink.exe> application, and pass its filesystem
+location in the C<app> parameter to C<new()>. Do not try to use any other
+Telnet or SSH programs (for instance the Windows bundled C<telnet>) - they
+I<will not work>. Here's an example, if C<plink.exe> is on your Desktop:
+
+ my $s = Net::CLI::Interact->new(
+     personality => "cisco",
+     transport => "Telnet",
+     (Net::CLI::Interact::Transport::is_win32() ?
+         (app => "$ENV{HOMEPATH}\\Desktop\\plink.exe") : () ),
+ );
+
+=head1 Unix Support
+
+The library works fine on most Unix platforms. It will try to use the native
+C<telnet>, C<ssh> (openssh) and C<cu> programs for Telnet, SSH and Serial
+connections, respectively. If you want to use another application, pass it in
+the C<app> parameter to C<new>.
+
+In some Unix environments there can be zombie child processes left around
+after running your script. If this happens, set the C<reap> option, like so:
+
+ my $s = Net::CLI::Interact->new(
+     personality => "cisco",
+     transport => "Telnet",
+     connect_options => {
+        reap => 1,
+    },
+ );
+
+=head1 Running Commands
+
+=head2 Simple Commands
+
+Simply send the command you wish to execute to the session. If not already
+done, a connection to the device will be established automatically:
+
+ $s->cmd('show ip int br');
+
+Normally this matches against a default prompt, which has been discovered
+automatically, or set by you:
+
+ $s->set_prompt('user_prompt');
+
+It's also possible to pass in a custom prompt for this command only:
+
+ $s->cmd('show ip int br', { match => qr/special prompt>$/ });
+
+However be aware that a side effect of this is that the custom prompt
+becomes the new default prompt for subsequent commands or macros.
+
+=head2 Macro Commands
+
+Call a predefined Macro from the phrasebook using this method:
+
+ $s->macro('write_mem');
+
+Sometimes the Macro needs parameters:
+
+ $s->macro('to_priv_exec', { params => ['my_password'] });
+
+You can't really create a Macro on the fly very easily, but with suitable use
+of C<cmd()>, C<set_prompt()>, and the C<match> option to C<cmd()> it's
+possible to achieve some simple flexibility.
+
+=head1 Reconfiguring On-the-Fly
+
+=head2 Phrasebook
+
+It's possible to load a new phrasebook by the following method, which must be
+passed at least the name of the personality:
+
+ $s->set_phrasebook({ personality => 'ios' });
+
+You can pass any options which the
+L<Phrasebook|Net::CLI::Interact::Phrasebook> module itself would take.
+
+=head2 Prompt
+
+The current prompt can be changed by passing the name of the new Prompt as it
+is known by the phrasebook:
+
+ $s->set_prompt('name');
+
+If you want to test whether the current prompt matches a different named Prompt
+from the phrasebook, this method can be used:
+
+ $s->prompt_looks_like('name');
+
+=head1 Logging
+
+A generic logging service is available through the C<< $session->logger >>
+object, which is based on L<Log::Dispatch>. You can configure the logger at
+startup quite easily. See the L<Net::CLI::Interact::Logger> manual page for
+details of the interface (config for any option can simply be passed to
+C<< Net::CLI::Interact->new() >>).
+
+=head2 Destinations
+
+The default configuration sends logging messages to standard output. Let's say
+you also want to append them to a log file:
+
+ my $s = Net::CLI::Interact->new({
+     log_config => {
+         dispatchers => ['screen','file'],
+         screen => {
+             class => 'Log::Dispatch::Screen',
+             min_level => 'warning',
+         },
+         file => {
+             class => 'Log::Dispatch::File',
+             min_level => 'debug',
+             filename => '/var/log/myapp.log',
+             mode => 'append',
+             format => '[%d] %m',
+         },
+     },
+     # etc...
+ });
+
+Note that some keys are required, such as the C<class> and C<min_level> but
+others depend on the particular class being used. See L<Log::Dispatch::Config>
+for more details.
+
+=head2 Log Levels and Categories
+
+Each log message has a standard log level (C<debug>, C<warning>, etc) but also
+a I<category> which is a concept local to this module. Categories allow more
+filtering of what is logged. Each time a message is logged through C<<
+$s->logger->log(...) >> it has a level and category.
+
+Messages are only emitted if they pass the specific level set for that
+category. In this way we can suppress messages about the transport but, for
+example, show messages about prompt-matching at a debug level.
+
+You can very easily set the log level for all categories using either the
+C<set_global_log_at> option to C<new()>, or the C<NCI_LOG_AT> environment
+variable.
+
+To configure these filters, use the C<log_flags> option together with the list
+of default log categories used by C<Net::CLI::Interact>. For example:
+
+ my $s = Net::CLI::Interact->new({
+     log_flags => {
+         (map {$_ => 'notice'} Net::CLI::Interact->default_log_categories()),
+         dialogue => 'info',
+     },
+     # etc...
+ });
+
+This example would set all categories to C<notice> level except for the
+C<dialogue> category, which is set to C<info> level to get more output (on
+what is sent and received by each command).
+
+=head1 Phrasebook Libraries
+
+You can override or add to the device command phrasebooks which ship with this
+distribution. To start with, check the shipped dictionary for your device's
+current level of support, at L<Net::CLI::Interact::Manual::Phasebook>.
+
+If you want to add either some prompts or macros, first read the documentation
+for these systems at L<Net::CLI::Interact::Phrasebook>.
+
+All phrasebooks can inherit from others, and this is based on their location
+in a filesystem tree. See the phrasebooks bundled with the
+L<Net::CLI::Interact> distribution for an example of this in action.
+
+If you wish to override a phrasebook entry, simply set C<add_library> in your
+code, and then create a file at the same relative point beneath that library
+directory as the original version shipped with the C<Net::CLI::Interact>
+module, for example "C<< <add_library>/cisco/pixos/pixos7/my_phrases >>".
+
+The file itself (C<my_phrases>) does not have to be the same name as the
+original, and you can have more than one file if it helps. Only the directory
+is matched against your chosen C<personality> and then all files in there, and
+higher in the C<add_library> tree, and distribution C<library> tree, are
+loaded.
+
+To check what phrasebooks and prompts/macros are loaded, run your script with
+debug level set to C<notice>. The easiest way to do this is by setting the
+environment variable C<NCI_LOG_AT=notice>.
+
+=head1 Phrasebook Entries
+
+=head2 Prompts
+
+These are nothing more than named regular expressions:
+
+ prompt configure
+     match /\(config[^)]*\)# ?$/
+
+=head2 Macros
+
+This example waits for the device to ask "[startup-config]?" and then responds
+with the text C<startup-config>. Remember, there is an implicit C<match>
+statement added at the end, which is the current prompt.
+
+ macro copy_run_start
+     send copy running-config startup-config
+     match /Destination filename \[startup-config\]\?$/
+     send startup-config
+
+To send instead a "press" of the Return key (I<output record separator>), use:
+
+ macro write_mem
+     send copy running-config startup-config
+     match /Destination filename \[startup-config\]\?$/
+     send ''
+
+To instead allow the user to pass in the file name, use a C<sprintf> format.
+
+ macro save_to_file
+     send copy running-config startup-config
+     match /Destination filename \[startup-config\]\?$/
+     send %s
+
+The user I<must> then pass a parameter to the C<macro> call, even if it's an
+empty string:
+
+ $s->macro('save_to_file', { params => ['file_name'] });
+ # or
+ $s->macro('save_to_file', { params => [''] });
+
+=head2 Continuations
+
+These are Macros which start with a match instead of a send:
+
+ macro more_pages
+     match / --More-- /
+     send ' '
+
+Note that the parameter of the C<send> is I<not> sent with a Return character
+(I<output record separator>) appended.
+
+When included in a macro, the continuation can be in-line, like this:
+
+ macro show_ip_route
+     send show ip route
+     follow / --More-- / with ' '
+
+=cut

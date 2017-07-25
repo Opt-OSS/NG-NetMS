@@ -1,0 +1,16 @@
+use warnings FATAL => 'all';
+use strict;
+package NGNMS::Log4Role;
+sub info;
+sub error;
+sub warn;
+sub debug;
+sub trace;
+sub fatal;
+sub logdie;
+#@method
+#@returns NGNMS::Log4Role
+sub log;
+#@method
+#@returns NGNMS::Log4Role
+sub logger;

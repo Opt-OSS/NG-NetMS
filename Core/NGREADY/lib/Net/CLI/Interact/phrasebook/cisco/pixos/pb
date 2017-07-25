@@ -1,0 +1,5 @@
+prompt err_string
+    match /(?:Type help|(?:Error|ERROR|Usage|usage):|not allowed)/
+
+macro paging
+    send pager lines %s

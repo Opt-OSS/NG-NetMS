@@ -1,0 +1,1 @@
+ALTER TABLE router_configuration DROP checksum;

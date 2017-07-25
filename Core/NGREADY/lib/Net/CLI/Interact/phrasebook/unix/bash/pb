@@ -1,0 +1,22 @@
+prompt user
+    match /[Uu]sername: $/
+
+prompt pass
+    match /password(?: for \w+)?: $/
+
+prompt generic
+    match /(?:\[)?\w+@.+(?:\])?\$ $/
+
+prompt privileged
+    match /^(?:\[)?root@.+(?:\])?# $/
+
+macro begin_privileged
+    send sudo su -
+    match pass or privileged
+
+macro end_privileged
+    send exit
+    match generic
+
+macro disconnect
+    send logout

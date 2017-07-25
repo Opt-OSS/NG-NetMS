@@ -1,0 +1,26 @@
+use strict;
+use warnings;
+
+package NGNMS::Net::SessionRole;
+
+#@method
+sub record;
+
+#@method
+sub record_dir;
+
+#@method
+#@returns Net::Appliance::Session
+sub connection;
+
+#@method
+sub reply;
+
+#@method
+sub reply_dir;
+
+#@method
+sub option;
+
+#@method
+sub macro;

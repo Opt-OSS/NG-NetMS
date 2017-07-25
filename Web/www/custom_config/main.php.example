@@ -1,0 +1,94 @@
+<?php
+/** ****************************************************************************
+ *
+ * DOCKER mode - web-server runs in docker container
+ * HOST mode - web-server runs on host
+ *
+ * !!!!! In HOST mode you should either set apache enviromet variasbles or set actual values!!!!
+ * ***************************************************************************** */
+
+
+/** =============================================================================
+ * stream log to console in runs in DOCKER mode
+ * set to FALSE if web-frontend runs in HOST mode
+ * also edit section 'components'=>'log' below
+ * =============================================================================*/
+defined('YII_USE_DOCKER_STREAM_LOG') or define('YII_USE_DOCKER_STREAM_LOG', TRUE);
+
+
+/**   =============================================================================
+ * when web-frontend runs in DOCKER container use ENV variables
+ * set variables with database credentials if application runs in HOST mode
+ * =============================================================================*/
+$database_host = getenv('NGNMS_DB_HOST') ?: 'localhost';
+$database_port = getenv('NGNMS_DB_PORT') ?: '5432';
+$database_name = getenv('NGNMS_DB') ?: 'ngnms';
+$database_user = getenv('NGNMS_DB_USER') ?: 'ngnms';
+$database_pass = getenv('NGNMS_DB_PASSWORD') ?: 'ngnms';
+
+
+/** ==============================================================================
+ * set debug level
+ * comment the following lines when in production mode
+ ===============================================================================*/
+defined('YII_DEBUG') or define('YII_DEBUG', TRUE);
+// specify how many levels of call stack should be shown in each log message
+defined('YII_TRACE_LEVEL') or define('YII_TRACE_LEVEL', 3);
+
+
+// application components
+return array(
+    /** =================================
+    * Set/Override desired audit environment options
+    */
+    'params'    => [
+        'ngnms' => [
+            'home' => getenv('NGNMS_HOME') ?: '/home/ngnms/NGREADY',
+            'config' => getenv('NGNMS_CONFIGS') ?: '/home/ngnms/NGREADY/configs',
+            'log' => [
+                'level' => getenv('NGNMS_DEBUG') ?: 1,
+                'file' => getenv('NGNMS_LOGFILE') ?: '/home/ngnms/NGREADY/logs/all-php-'.date('%YY-%MM-%DD').'.log'
+            ]
+        ]
+    ],
+
+'components' => array(
+
+    'log' => [
+
+        'class'  => 'CLogRouter',
+        'routes' => [
+            /**   =============================================================================
+             * comment the following lines when  in HOST mode
+             *
+             * when web-frontend runs in DOCKER container
+             * redirect application logs to STDOUT
+             * =============================================================================*/
+            [
+                'class'  => '\neam\yii_streamlog\LogRoute',
+                'levels' => 'error, warning',
+            ],
+            /**  =============================================================================
+             * UNCOMMENT the following lines when  in HOST mode
+             *
+             * put application logs to apache-log
+             * =============================================================================*/
+            /*
+            [
+                'class'=>'CFileLogRoute',
+                'levels'=>'error, warning',
+            ],
+            */
+        ],
+    ],
+    'db'  => [
+        'connectionString' => 'pgsql:host=' . $database_host . ';port=' . $database_port . ';dbname=' . $database_name . '',
+        //			'emulatePrepare' => true,
+        'username'         => $database_user,
+        'password'         => $database_pass,
+        'charset'          => 'utf8',
+    ],
+
+),
+
+);

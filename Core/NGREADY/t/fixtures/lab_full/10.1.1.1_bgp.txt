@@ -1,0 +1,148 @@
+BGP router identifier 10.1.1.1, local AS number 100
+BGP table version is 107, main routing table version 107
+8 network entries using 776 bytes of memory
+10 path entries using 360 bytes of memory
+7 BGP path attribute entries using 420 bytes of memory
+2 BGP AS-PATH entries using 48 bytes of memory
+0 BGP route-map cache entries using 0 bytes of memory
+0 BGP filter-list cache entries using 0 bytes of memory
+BGP using 1604 total bytes of memory
+BGP activity 33/25 prefixes, 50/40 paths, scan interval 60 secs
+
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd
+20.0.1.2        4   500  271204  271274      107    0    0 26w6d           2
+192.168.3.200   4 64512  602665  542432      107    0    0 3w1d            4
+BGP neighbor is 20.0.1.2,  remote AS 500, external link
+  BGP version 4, remote router ID 10.2.2.2
+  BGP state = Established, up for 26w6d
+  Last read 00:00:19, hold time is 180, keepalive interval is 60 seconds
+  Neighbor capabilities:
+    Route refresh: advertised
+    Address family IPv4 Unicast: advertised and received
+  Message statistics:
+    InQ depth is 0
+    OutQ depth is 0
+                         Sent       Rcvd
+    Opens:                  1          1
+    Notifications:          0          0
+    Updates:               69          1
+    Keepalives:        271204     271202
+    Route Refresh:          0          0
+    Total:             271274     271204
+  Default minimum time between advertisement runs is 30 seconds
+
+ For address family: IPv4 Unicast
+  BGP table version 107, neighbor version 107
+  Index 1, Offset 0, Mask 0x2
+  Private AS number removed from updates to this neighbor
+                                 Sent       Rcvd
+  Prefix activity:               ----       ----
+    Prefixes Current:               8          2 (Consumes 72 bytes)
+    Prefixes Total:                56          2
+    Implicit Withdraw:             18          0
+    Explicit Withdraw:             30          0
+    Used as bestpath:             n/a          0
+    Used as multipath:            n/a          0
+
+                                   Outbound    Inbound
+  Local Policy Denied Prefixes:    --------    -------
+    Bestpath from this peer:              1        n/a
+    Total:                                1          0
+  Number of NLRIs in the update sent: max 3, min 0
+
+  Connections established 1; dropped 0
+  Last reset never
+Connection state is ESTAB, I/O status: 1, unread input bytes: 0
+Local host: 20.0.1.1, Local port: 179
+Foreign host: 20.0.1.2, Foreign port: 11000
+
+Enqueued packets for retransmit: 0, input: 0  mis-ordered: 0 (0 bytes)
+
+Event Timers (current time is 0x3C9E5027E):
+Timer          Starts    Wakeups            Next
+Retrans        272294       1030             0x0
+TimeWait            0          0             0x0
+AckHold        271204     264572             0x0
+SendWnd             0          0             0x0
+KeepAlive           0          0             0x0
+GiveUp              0          0             0x0
+PmtuAger            0          0             0x0
+DeadWait            0          0             0x0
+
+iss: 2360730796  snduna: 2365886614  sndnxt: 2365886614     sndwnd:  16270
+irs: 1350879665  rcvnxt: 1356032591  rcvwnd:      16156  delrcvwnd:    228
+
+SRTT: 300 ms, RTTO: 303 ms, RTV: 3 ms, KRTT: 0 ms
+minRTT: 4 ms, maxRTT: 1527 ms, ACK hold: 200 ms
+Flags: passive open, nagle, gen tcbs
+
+Datagrams (max data segment is 1460 bytes):
+Rcvd: 539254 (out of order: 0), with data: 271204, total data bytes: 5152925
+Sent: 539785 (retransmit: 1030, fastretransmit: 0), with data: 271263, total data bytes: 5155817
+
+BGP neighbor is 192.168.3.200,  remote AS 64512, external link
+  BGP version 4, remote router ID 10.3.3.3
+  BGP state = Established, up for 3w1d
+  Last read 00:00:18, hold time is 90, keepalive interval is 30 seconds
+  Neighbor capabilities:
+    Route refresh: advertised and received(old & new)
+    Address family IPv4 Unicast: advertised and received
+  Message statistics:
+    InQ depth is 0
+    OutQ depth is 0
+                         Sent       Rcvd
+    Opens:                  7          7
+    Notifications:          5          0
+    Updates:               15         77
+    Keepalives:        542405     602581
+    Route Refresh:          0          0
+    Total:             542432     602665
+  Default minimum time between advertisement runs is 30 seconds
+
+ For address family: IPv4 Unicast
+  BGP table version 107, neighbor version 107
+  Index 2, Offset 0, Mask 0x4
+                                 Sent       Rcvd
+  Prefix activity:               ----       ----
+    Prefixes Current:               4          4 (Consumes 144 bytes)
+    Prefixes Total:                 4          6
+    Implicit Withdraw:              0          1
+    Explicit Withdraw:              0          1
+    Used as bestpath:             n/a          4
+    Used as multipath:            n/a          0
+
+                                   Outbound    Inbound
+  Local Policy Denied Prefixes:    --------    -------
+    Bestpath from this peer:              5        n/a
+    Total:                                5          0
+  Number of NLRIs in the update sent: max 3, min 0
+
+  Connections established 7; dropped 6
+  Last reset 3w1d, due to BGP Notification sent, hold time expired
+Connection state is ESTAB, I/O status: 1, unread input bytes: 0
+Local host: 192.168.3.202, Local port: 11005
+Foreign host: 192.168.3.200, Foreign port: 179
+
+Enqueued packets for retransmit: 0, input: 0  mis-ordered: 0 (0 bytes)
+
+Event Timers (current time is 0x3C9E5038F):
+Timer          Starts    Wakeups            Next
+Retrans         66293       1071             0x0
+TimeWait            0          0             0x0
+AckHold         72460      70214             0x0
+SendWnd             0          0             0x0
+KeepAlive           0          0             0x0
+GiveUp              0          0             0x0
+PmtuAger            0          0             0x0
+DeadWait            0          0             0x0
+
+iss: 3946571821  snduna: 3947811162  sndnxt: 3947811162     sndwnd:  16384
+irs:  787271080  rcvnxt:  788648116  rcvwnd:      16042  delrcvwnd:    342
+
+SRTT: 300 ms, RTTO: 303 ms, RTV: 3 ms, KRTT: 0 ms
+minRTT: 4 ms, maxRTT: 790 ms, ACK hold: 200 ms
+Flags: higher precedence, nagle
+
+Datagrams (max data segment is 1460 bytes):
+Rcvd: 138410 (out of order: 0), with data: 72460, total data bytes: 1377035
+Sent: 136378 (retransmit: 1071, fastretransmit: 0), with data: 65221, total data bytes: 1239340

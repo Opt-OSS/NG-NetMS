@@ -1,0 +1,12 @@
+prompt generic
+    match /[\/a-zA-Z0-9._-]+ ?[#>] ?(?:\(enable[^)]*\))? ?$/
+
+prompt privileged
+    match /> \(enable\) ?$/
+
+macro paging
+    send set length %s
+
+# legacy support
+prompt prompt
+    match /[\/a-zA-Z0-9._-]+ ?[#>] ?(?:\(enable[^)]*\))? ?$/

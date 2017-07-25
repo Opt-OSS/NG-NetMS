@@ -1,0 +1,604 @@
+VLAN Interface with name ACCESS created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 30 
+    Description:	 SIMULATED ACCESS 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Enabled
+    Primary IP:		 129.192.44.129/26
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   2. 	  (Number of active ports=0)
+       Untag:      29,     30
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name BACKEND_EDGE_INT created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 421 
+    Description:	 BACKEND FOR EDGE REALM 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Enabled
+    Primary IP:		 192.168.21.1/24
+	Secondary IPs:	 81.22.140.1/24, 93.185.208.1/24, 109.72.117.1/24,
+	                109.72.119.1/24, 109.72.120.1/24
+
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name BACKEND_INT created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 42 
+    Description:	 BACKEND FOR ALL REALMS 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Enabled
+    Primary IP:		 192.168.2.1/24
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name Default created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 1 
+    Description:	 None
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Disabled
+    IPv4 MC Forwarding:  Disabled
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 s0(Disabled,Auto-bind) 
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   44. 	  (Number of active ports=16)
+       Untag:      *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16,     17,     18,     19,     20,     21,
+                   22,     23,     24,     25,     26,     27,     28,
+                   49,     50,     51,     52,     53,     54,     55,
+                   56,     57,     58,     59,     60,     61,     62,
+                   63,     64
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name Mgmt created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 4095 
+    Description:	 Management VLAN 
+    Virtual router:	 VR-Mgmt
+    IPv4 Forwarding:	 Disabled
+    IPv4 MC Forwarding:  Disabled
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   1. 	  (Number of active ports=0)
+     Untag: Mgmt-port on Mgmt is down
+
+
+#
+#
+VLAN Interface with name MULTICAST created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 60 
+    Description:	 MULTICAST SEGMENT 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Enabled
+    Primary IP:		 192.168.100.1/24
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name OAM_EDGE_INT created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 411 
+    Description:	 OAM_EDGE_INT privately 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 192.168.11.1/24
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name OAM_EXT created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 10 
+    Description:	 OAM COMMON FOR ALL REALMS 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 129.192.44.65/26
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name OAM_INT created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 41 
+    Description:	 OAM_INT PRIVATE COMMON FOR ALL REALMS 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 192.168.1.1/24
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name OOB_EXT created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 9 
+    Description:	 OOB SEGMENT 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 129.192.44.1/26
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   15. 	  (Number of active ports=14)
+       Untag:     *31,    *32,    *33,    *34,    *35,    *36,    *37,
+                  *38,    *39,    *40,    *41,    *42,    *43,    *44,
+                   45
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name TRAFFIC_CORE created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 40 
+    Description:	 TRAFFIC-CORE-INTERNAL 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 129.192.45.1/25
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name TRAFFIC_DMZ created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 20 
+    Description:	 TRAFFIC-DMZ-ORIGINS 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 129.192.45.129/25
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name TRAFFIC_EDGE created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 50 
+    Description:	 TRAFFIC-EDGE-INTERNAL 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 129.192.44.193/26
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   16. 	  (Number of active ports=16)
+       Tag:        *1,     *2,     *3,     *4,     *5,     *6,     *7,
+                   *8,     *9,    *10,    *11,    *12,    *13,    *14,
+                  *15,    *16
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name TRAFFIC_EXT_CORE created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 1805 
+    Description:	 TRAFFIC-CORE-EXT 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 77.243.174.102/30
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   1. 	  (Number of active ports=1)
+       Tag:       *48
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name TRAFFIC_EXT_EDGE created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 1804 
+    Description:	 TRAFFIC-EDGE-EXT 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Enabled
+    IPv4 MC Forwarding:  Disabled
+    Primary IP:		 77.243.174.54/30
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   1. 	  (Number of active ports=1)
+       Tag:       *48
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+#
+#
+VLAN Interface with name TRAFFIC_EXT_MCAST created by user
+    Admin State:	 Enabled     Tagging:	802.1Q Tag 1806 
+    Description:	 TRAFFIC_EXT_MULTICAST 
+    Virtual router:	 VR-Default
+    IPv4 Forwarding:	 Disabled
+    IPv4 MC Forwarding:  Disabled
+    IPv6 Forwarding:	 Disabled
+    IPv6 MC Forwarding:  Disabled
+    IPv6:                None
+    STPD:      		 None
+    Protocol:            Match all unfiltered protocols
+    Loopback:            Disabled
+    NetLogin:            Disabled
+    OpenFlow:            Disabled
+    TRILL:               Disabled
+    QosProfile:     	 None configured
+    Egress Rate Limit Designated Port: None configured
+    Flood Rate Limit QosProfile:       None configured
+    Ports:   2. 	  (Number of active ports=2)
+       Tag:        *2,    *48
+	Flags:    (*) Active, (!) Disabled, (g) Load Sharing port
+                  (b) Port blocked on the vlan, (m) Mac-Based port
+                  (a) Egress traffic allowed for NetLogin
+                  (u) Egress traffic unallowed for NetLogin
+                  (t) Translate VLAN tag for Private-VLAN
+                  (s) Private-VLAN System Port, (L) Loopback port
+                  (x) VMAN Tag Translated port
+                  (G) Multi-switch LAG Group port
+                  (H) Dynamically added by MVRP
+                  (D) TRILL Designated, (A) TRILL Appointed Forwarder
+                  (I) Dynamically added by IDM
+                  (U) Dynamically added uplink port
+                  (V) Dynamically added by VM Tracking
+
+MDN-KPN POC X670V.4 # 

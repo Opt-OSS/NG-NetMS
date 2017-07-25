@@ -1,0 +1,11 @@
+prompt after_banner
+    match /Press any key to continue/
+
+prompt pass
+    match /[Pp]assword/
+
+macro enable_paging
+    send page
+
+macro disable_paging
+    send no page

@@ -1,0 +1,33 @@
+
+SysName:          MDN-KPN POC X670V
+SysLocation:      Mediacity-KPN
+SysContact:       taras.matselyukh@ericsson.com
+System MAC:       00:04:96:9A:8D:4B
+System Type:      X670G2-48x-4q
+
+SysHealth check:  Enabled (Normal)
+Recovery Mode:    All
+System Watchdog:  Enabled
+
+Current Time:     Thu Sep 22 23:42:30 2016
+Timezone:         [Auto DST Enabled] GMT Offset: 120 minutes, name is AMS.
+                  DST of 60 minutes is currently in effect, name is not set.
+                  DST begins every second Sunday March at 2:00
+                  DST ends every first Sunday November at 2:00
+
+Boot Time:        Tue Jun  7 13:36:57 2016
+Boot Count:       3
+Next Reboot:      None scheduled
+System UpTime:    107 days 10 hours 5 minutes 32 seconds
+
+Current State:    OPERATIONAL
+Image Selected:   primary
+Image Booted:     primary
+Primary ver:      15.6.2.12
+Secondary ver:    15.6.2.12
+
+Config Selected:  primary.cfg
+Config Booted:    Factory Default
+
+primary.cfg       Created by ExtremeXOS version 15.6.2.12
+                  344397 bytes saved on Fri Jul 29 11:39:57 2016 

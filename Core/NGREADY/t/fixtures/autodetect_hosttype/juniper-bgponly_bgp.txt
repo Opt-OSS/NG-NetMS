@@ -1,0 +1,68 @@
+Peer: 192.168.3.202+11005 AS 100 Local: 192.168.3.200+179 AS 64512
+  Type: External    State: Established    Flags: <Sync>
+  Last State: OpenConfirm   Last Event: RecvKeepAlive
+  Last Error: Cease
+  Export: [ import-into-bgp ]
+  Options: <Preference PeerAS Refresh>
+  Holdtime: 90 Preference: 170
+  Number of flaps: 6
+  Last flap event: Stop
+  Error: 'Cease' Sent: 6 Recv: 0
+  Peer ID: 10.1.1.1         Local ID: 10.3.3.3         Active Holdtime: 90
+  Keepalive Interval: 30         Peer index: 0
+  BFD: disabled, down
+  Local Interface: fe-1/0/0.0
+  NLRI for restart configured on peer: inet-unicast
+  NLRI advertised by peer: inet-unicast
+  NLRI for this session: inet-unicast
+  Peer supports Refresh capability (2)
+  Restart time configured on the peer: 120
+  Stale routes from peer are kept for: 300
+  Peer does not support Restart capability
+  Peer does not support 4 byte AS extension
+  Table inet.0 Bit: 10000
+    RIB State: BGP restart is complete
+    Send state: in sync
+    Active prefixes:              3
+    Received prefixes:            4
+    Accepted prefixes:            4
+    Suppressed due to damping:    0
+    Advertised prefixes:          4
+  Last traffic (seconds): Received 6    Sent 28   Checked 36
+  Input messages:  Total 7382   Updates 2       Refreshes 0     Octets 140361
+  Output messages: Total 8201   Updates 7       Refreshes 0     Octets 156057
+  Output Queue[0]: 0
+Peer: 20.0.1.2+11005 AS 100 Local: 192.168.3.200+179 AS 64512
+  Type: External    State: Established    Flags: <Sync>
+  Last State: OpenConfirm   Last Event: RecvKeepAlive
+  Last Error: Cease
+  Export: [ import-into-bgp ]
+  Options: <Preference PeerAS Refresh>
+  Holdtime: 90 Preference: 170
+  Number of flaps: 6
+  Last flap event: Stop
+  Error: 'Cease' Sent: 6 Recv: 0
+  Peer ID: 10.2.2.2         Local ID: 10.3.3.3         Active Holdtime: 90
+  Keepalive Interval: 30         Peer index: 0
+  BFD: disabled, down
+  Local Interface: fe-1/0/0.0
+  NLRI for restart configured on peer: inet-unicast
+  NLRI advertised by peer: inet-unicast
+  NLRI for this session: inet-unicast
+  Peer supports Refresh capability (2)
+  Restart time configured on the peer: 120
+  Stale routes from peer are kept for: 300
+  Peer does not support Restart capability
+  Peer does not support 4 byte AS extension
+  Table inet.0 Bit: 10000
+    RIB State: BGP restart is complete
+    Send state: in sync
+    Active prefixes:              3
+    Received prefixes:            4
+    Accepted prefixes:            4
+    Suppressed due to damping:    0
+    Advertised prefixes:          4
+  Last traffic (seconds): Received 6    Sent 28   Checked 36
+  Input messages:  Total 7382   Updates 2       Refreshes 0     Octets 140361
+  Output messages: Total 8201   Updates 7       Refreshes 0     Octets 156057
+  Output Queue[0]: 0

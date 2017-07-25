@@ -1,0 +1,11 @@
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+PERL5LIB="/home/ngnms/NGREADY/bin:/home/ngnms/NGREADY/lib:/home/ngnms/NGREADY/lib/Net"
+NGNMS_HOME="/home/ngnms/NGREADY"
+MIBDIRS="/home/ngnms/NGREADY/mibs"
+NGNMS_CONFIGS="/home/ngnms/NGREADY/configs"
+NGNMS_LOGFILE=/home/ngnms/NGREADY/logs/ngnms.log
+NGNMS_DB_HOST=localhost
+NGNMS_DB_PORT=5432
+NGNMS_DB_USER=ngnms
+NGNMS_DB_PASSWORD=ngnms
+NGNMS_DB=ngnms

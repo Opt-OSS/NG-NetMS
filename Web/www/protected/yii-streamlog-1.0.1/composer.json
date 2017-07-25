@@ -1,0 +1,23 @@
+{
+    "name": "neam/yii-streamlog",
+    "description": "Send Yii 1 logs to stdout/stderr - created to be used with the php-fpm/nginx Docker stack available at http://github.com/neam/docker-stack",
+    "keywords": ["yii", "docker", "stdout", "stderr", "log", "stack", "php-fpm"],
+    "homepage": "https://github.com/neam/yii-streamlog",
+    "type": "yii-extension",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Fredrik Wollsén",
+            "email": "fredrik@neam.se",
+            "homepage": "http://neamlabs.com"
+        },
+        {
+            "name": "Open Source Community"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "neam\\yii_streamlog\\": "src"
+        }
+    }
+}
