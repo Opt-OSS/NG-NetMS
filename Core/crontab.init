@@ -1,1 +1,0 @@
-*/5 * * * *  ${NGNMS_HOME}/bin/scheduler.pl 2>&1 | /usr/bin/logger -t ngnms

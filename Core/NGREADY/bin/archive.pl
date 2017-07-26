@@ -28,7 +28,8 @@ use constant LOG_INFO => (6, 'info');
 use constant LOG_DEBUG => (7, 'debug');
 use constant LOG_USER => scalar 'user';
 
-
+#TODO create archive record even if 0 records archived, cause sql-file created
+#TODO add preview of 'archive_tables' table for archive
 
 # Paths
 #my $_crontab = "/usr/bin/crontab";
@@ -595,17 +596,17 @@ EOF
         $sth->execute( $time_delete );
         #        $dbh->commit;
 
-        $logger->debug( "<< Archives deleted" );
+        $logger->debug( "Old archive files deleted" );
 
         close DUMP || die "cannot close dump file $fileName : $!";
 
         # Gzip if needed
         if ($_ArcGzip)
         {
-            $logger->debug( ">> Gzipping dump" );
+            $logger->debug( "Gzipping dump $_ArcPath/$fileName" );
             `gzip -9 $_ArcPath/$fileName`;
             $fileName .= ".gz";
-            $logger->debug( "<< Gzipping complete" );
+            $logger->debug( "Gzipping complete" );
         }
     };
 
@@ -629,6 +630,7 @@ sub _clean_tables($) {
         my $t_config = $arcive_tables->{$arc_data->{table_name}};
 
         my $sql = "delete from  ".$arc_data->{table_name}." where ".$t_config->{timestamp_field}." >= ? and  ".$t_config->{timestamp_field}." < ?";
+        $logger->debug("About to delete data :$sql with params ( $arc_data->{start_time}, $arc_data->{end_time})");
         my $ev_count = $dbh->do( $sql, undef, ( $arc_data->{start_time}, $arc_data->{end_time}) );
         $ev_count_total += $ev_count;
 
@@ -644,7 +646,7 @@ sub _clean_tables($) {
             "<< archive #$arc_id table ".$arc_data->{table_name}." clenup: $ev_count rows deleted  in ".tv_interval($t1)." seconds" );
     }
     $logger->debug(
-        "<< archive #$arc_id clenup: total $ev_count_total rows deleted in  ".tv_interval($t0)." seconds" );
+        "#$arc_id clenup: total $ev_count_total rows deleted in  ".tv_interval($t0)." seconds" );
 
 }
 sub doLoad {
@@ -720,18 +722,18 @@ sub doUnLoad {
     &dbDisconnect;
 
 }
-=for debug
-
-$delete from  events where receiver_ts >=? and  receiver_ts <= ? = {
-                                                                     'start_time' => '2016-07-14 22:03:50.686886+00',
-                                                                     'table_name' => 'events',
-                                                                     'end_time' => '2016-07-22 07:48:49.956489+00',
-                                                                     'archive_id' => 1049,
-                                                                     'id' => 16,
-                                                                     'microsecounds' => '0.19725',
-                                                                     'records_count' => 59112
-                                                                   };
-=cut
+#=for debug
+#
+#$delete from  events where receiver_ts >=? and  receiver_ts <= ? = {
+#                                                                     'start_time' => '2016-07-14 22:03:50.686886+00',
+#                                                                     'table_name' => 'events',
+#                                                                     'end_time' => '2016-07-22 07:48:49.956489+00',
+#                                                                     'archive_id' => 1049,
+#                                                                     'id' => 16,
+#                                                                     'microsecounds' => '0.19725',
+#                                                                     'records_count' => 59112
+#                                                                   };
+#=cut
 
 # ------------------------------------------------------------------------------
 # Database utilities

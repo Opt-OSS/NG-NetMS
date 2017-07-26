@@ -1,4 +1,5 @@
 package NGNMS::Scheduler::SchedulerRole;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -6,7 +7,7 @@ use Config::Crontab;
 use Digest::MD5 qw(md5_hex);
 use File::Slurp;
 
-use Emsgd qw/diag/;
+use Emsgd qw/diag ss/;
 with "NGNMS::Log4Role";
 #@returns NGNMS::DB
 has DB => (            is => 'ro'    );
@@ -22,7 +23,7 @@ has crontab => (is => 'ro', lazy => 1, builder => 1);
 
 sub _build_crontab {
     my $self = shift;
-    return Config::Crontab->new( -owner => $self->ngnms_user );
+    return Config::Crontab->new();
 }
 sub _get_current_schedule{
     my $self = shift;
@@ -47,6 +48,8 @@ sub __save{
         ## write out crontab file
         $self->crontab->write;
     }
+    $self->logger->fatal($self->crontab->error) if $self->crontab->error;
+
 }
 sub save{
     my $self = shift;
@@ -97,3 +100,4 @@ sub update_file{
 
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

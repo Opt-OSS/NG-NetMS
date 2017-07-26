@@ -1,4 +1,5 @@
 package NGNMS::Scheduler::Archive;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo;
@@ -10,20 +11,20 @@ with "NGNMS::Scheduler::SchedulerRole";
 
 has   '+crontab_key' => (default => '## archive');
 has '+exec_file' => (default =>  $ENV{NGNMS_HOME}."/bin/archive_run.sh");
-=for config record
-
-  {
-     'arc_expire' => '6h',
-     'arc_gzip' => 1,
-     'arc_delete' => '7d',
-     'arc_period' => '30 2 * * *',
-     'log_syslog' => 1,
-     'arc_enable' => 1,
-     'arc_path' => 'archive',
-     'log_level' => 1
-   };
-
-=cut
+#=for config record
+#
+#  {
+#     'arc_expire' => '6h',
+#     'arc_gzip' => 1,
+#     'arc_delete' => '7d',
+#     'arc_period' => '30 2 * * *',
+#     'log_syslog' => 1,
+#     'arc_enable' => 1,
+#     'arc_path' => 'archive',
+#     'log_level' => 1
+#   };
+#
+#=cut
 
 sub __schedule_archiver {
     my $self = shift;
@@ -73,3 +74,4 @@ END_MESSAGE
     return $s;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

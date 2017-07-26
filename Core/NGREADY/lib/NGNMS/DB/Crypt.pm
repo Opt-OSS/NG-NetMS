@@ -1,4 +1,5 @@
 package NGNMS::DB::Crypt;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -7,10 +8,10 @@ use Crypt::TripleDES;
 use Emsgd qw(diag);
 with "NGNMS::DB::Base";
 # -----------------------------------      CRYPT           --------------------------------------------------------
-=for getSettings ($attr_name)
-returns  encrypted value for general $attr_name
-
-=cut
+#=for getSettings ($attr_name)
+#returns  encrypted value for general $attr_name
+#
+#=cut
 
 sub getSettings {
     my $self = shift;
@@ -57,11 +58,11 @@ sub decode_val_from_DB($){
     return $self->decryptAttrvalue( $criptokey, $val );
 
 }
-=for DB_getRouterAccess
-    GET data to access router
-    Param : router name
-
-=cut
+#=for DB_getRouterAccess
+#    GET data to access router
+#    Param : router name
+#
+#=cut
 sub getRouterAccess($) {
     my $self = shift;
     my $rt_id = shift;
@@ -89,3 +90,4 @@ sub getRouterAccess($) {
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

@@ -1,4 +1,5 @@
 package NGNMS::DB::CommandLineOptions;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -39,3 +40,4 @@ option dbport => (
         doc     => "Database port"
     );
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

@@ -1,4 +1,5 @@
 package NGNMS::App::Database;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -47,3 +48,4 @@ sub setup_database {
     $self->DB( $self->get_db );
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

@@ -1,4 +1,5 @@
 package NGNMS::Plugins::Core::Cisco::PollHost;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo;
@@ -345,3 +346,4 @@ sub _getSNMPsysObjectID0_asString{
        } );
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

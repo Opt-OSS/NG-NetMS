@@ -1,4 +1,5 @@
 package NGNMS::Net::SNMPSessionRole;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -58,3 +59,4 @@ sub _run($) {
     return `$cmd`;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

@@ -1,4 +1,5 @@
 package NGNMS::Plugins::Core::HP_ProCurve::PollHost;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo;
@@ -275,3 +276,5 @@ sub getModuleName {
     return __PACKAGE__;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+

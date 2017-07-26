@@ -1,0 +1,1 @@
+*/5 * * * * NGNMS_HOME=@NGNMS_INSTALL_DIR@ @NGNMS_INSTALL_DIR@/bin/scheduler.sh 2>&1 | /usr/bin/logger -t ngnms

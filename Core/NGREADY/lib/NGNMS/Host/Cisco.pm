@@ -545,5 +545,6 @@ sub cisco_parse_interfaces {
 # END { print "deleting NGNMS_Cisco\n" };
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
 
 __END__

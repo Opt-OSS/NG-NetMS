@@ -1,5 +1,7 @@
 <?php
 
+use NGNMS\Emsgd;
+
 class ArchivesController extends Controller
 {
     /**
@@ -157,72 +159,82 @@ class ArchivesController extends Controller
     {
         if (isset($_GET['act']) && isset($_GET['archive_id'])) {
             $cur_arc = $this->loadModel($_GET['archive_id']);
-            chdir('/home/ngnms/NGREADY/archive/');
-            #TODO Move archive restore to worker
-            throw new \Exception("Web/www/protected/controllers/ArchivesController.php: Unimplemented");
             if ($_GET['act'] > 0) {
-                $arr_attr = array();
-                $str_1 = substr(Yii::app()->db->connectionString, 6);
-                $arr1 = explode(";", $str_1);
-
-                foreach ($arr1 as $key => $val) {
-                    $arr2 = explode("=", $val);
-                    $arr_attr[$arr2[0]] = $arr2[1];
-                }
-                $filename = $cur_arc->file_name;
-                //check file is gzipped
-                $gzipped = false;
-                if (file_exists($filename.'.gz') ){
-                    $filename .= '.gz';
-                    $gzipped = true;
-                }elseif(substr($filename,-3) === '.gz' && file_exists($filename)) {
-                    $gzipped = true;
-                }
-                $filename = escapeshellarg($filename);
-                if ($gzipped) {
-                    $command1 = 'gunzip -c '. $filename .' 2>&1 | psql ' . $arr_attr['dbname']. ' 2>&1' ;
-                }else{
-                    $command1 = 'psql ' . $arr_attr['dbname'] . " -f " . $filename . ' 2>&1' ;
-                }
-                /**
-                 * We use | to unzip, so escape will break command line.
-                 * BTW we use only filenem as parameter, so its safe not to escape whole command
-                 * and filename is already escaped
-                 */
-                //$escaped_command1 = escapeshellcmd($command1);
-                $escaped_command1 = $command1;
-                exec($escaped_command1,$output,$result);
-                if ($result || count($output)){
-                    Yii::app()->user->setFlash('error', "Command executin failed<br> ".$escaped_command1."<br> Result code: ".$result."<br>".join('<br>',$output));
-                }else{
-                    Yii::app()->user->setFlash('success', "File successfully loaded");
-                    Yii::app()->db->createCommand()
-                                  ->update('archives',
-                                      array(
-                                          'in_db' => 1,
-                                      ),
-                                      'archive_id=:archive_id',
-                                      array(':archive_id' => $_GET['archive_id'])
-                                  );
-                }
+                $jm = new JobMachineClient('archive.load', false);
+                $jm->send(['action' => 'load', 'archive_id' => $cur_arc->archive_id]);
             } else {
-                Events::model()->deleteAll(
-                    "receiver_ts >= :start_time AND  receiver_ts <= :end_time",
-                    array(':start_time' => $cur_arc->start_time, ':end_time' => $cur_arc->end_time)
-                );
-                Yii::app()->db->createCommand()
-                              ->update('archives',
-                                  array(
-                                      'in_db' => 0,
-                                  ),
-                                  'archive_id=:archive_id',
-                                  array(':archive_id' => $_GET['archive_id'])
-                              );
+                $jm = new JobMachineClient('archive.unload', false);
+                $jm->send(['action' => 'unload', 'archive_id' => $cur_arc->archive_id]);
             }
 
 
-
+            Yii::app()->request->redirect(Yii::app()->createUrl("archives/admin"));
         }
+//            #TODO Move archive restore to worker
+//            throw new \Exception("Web/www/protected/controllers/ArchivesController.php: Unimplemented");
+//            chdir('/home/ngnms/NGREADY/archive/');
+//            if ($_GET['act'] > 0) {
+//                $arr_attr = array();
+//                $str_1 = substr(Yii::app()->db->connectionString, 6);
+//                $arr1 = explode(";", $str_1);
+//
+//                foreach ($arr1 as $key => $val) {
+//                    $arr2 = explode("=", $val);
+//                    $arr_attr[$arr2[0]] = $arr2[1];
+//                }
+//                $filename = $cur_arc->file_name;
+//                //check file is gzipped
+//                $gzipped = false;
+//                if (file_exists($filename.'.gz') ){
+//                    $filename .= '.gz';
+//                    $gzipped = true;
+//                }elseif(substr($filename,-3) === '.gz' && file_exists($filename)) {
+//                    $gzipped = true;
+//                }
+//                $filename = escapeshellarg($filename);
+//                if ($gzipped) {
+//                    $command1 = 'gunzip -c '. $filename .' 2>&1 | psql ' . $arr_attr['dbname']. ' 2>&1' ;
+//                }else{
+//                    $command1 = 'psql ' . $arr_attr['dbname'] . " -f " . $filename . ' 2>&1' ;
+//                }
+//                /**
+//                 * We use | to unzip, so escape will break command line.
+//                 * BTW we use only filenem as parameter, so its safe not to escape whole command
+//                 * and filename is already escaped
+//                 */
+//                //$escaped_command1 = escapeshellcmd($command1);
+//                $escaped_command1 = $command1;
+//                exec($escaped_command1,$output,$result);
+//                if ($result || count($output)){
+//                    Yii::app()->user->setFlash('error', "Command executin failed<br> ".$escaped_command1."<br> Result code: ".$result."<br>".join('<br>',$output));
+//                }else{
+//                    Yii::app()->user->setFlash('success', "File successfully loaded");
+//                    Yii::app()->db->createCommand()
+//                                  ->update('archives',
+//                                      array(
+//                                          'in_db' => 1,
+//                                      ),
+//                                      'archive_id=:archive_id',
+//                                      array(':archive_id' => $_GET['archive_id'])
+//                                  );
+//                }
+//
+//            }
+//            else {
+//                Events::model()->deleteAll(
+//                    "receiver_ts >= :start_time AND  receiver_ts <= :end_time",
+//                    array(':start_time' => $cur_arc->start_time, ':end_time' => $cur_arc->end_time)
+//                );
+//                Yii::app()->db->createCommand()
+//                              ->update('archives',
+//                                  array(
+//                                      'in_db' => 0,
+//                                  ),
+//                                  'archive_id=:archive_id',
+//                                  array(':archive_id' => $_GET['archive_id'])
+//                              );
+//            }
+
 
         $model = new Archives('search');
         $model->unsetAttributes(); // clear any default values
@@ -235,28 +247,30 @@ class ArchivesController extends Controller
         ));
     }
 
-    /**
-     * Returns the data model based on the primary key given in the GET variable.
-     * If the data model is not found, an HTTP exception will be raised.
-     * @param integer the ID of the model to be loaded
-     */
-    public function loadModel($id)
-    {
-        $model = Archives::model()->findByPk($id);
-        if ($model === null)
-            throw new CHttpException(404, 'The requested page does not exist.');
-        return $model;
-    }
+/**
+ * Returns the data model based on the primary key given in the GET variable.
+ * If the data model is not found, an HTTP exception will be raised.
+ * @param integer the ID of the model to be loaded
+ */
+public
+function loadModel($id)
+{
+    $model = Archives::model()->findByPk($id);
+    if ($model === null)
+        throw new CHttpException(404, 'The requested page does not exist.');
+    return $model;
+}
 
-    /**
-     * Performs the AJAX validation.
-     * @param CModel the model to be validated
-     */
-    protected function performAjaxValidation($model)
-    {
-        if (isset($_POST['ajax']) && $_POST['ajax'] === 'archives-form') {
-            echo CActiveForm::validate($model);
-            Yii::app()->end();
-        }
+/**
+ * Performs the AJAX validation.
+ * @param CModel the model to be validated
+ */
+protected
+function performAjaxValidation($model)
+{
+    if (isset($_POST['ajax']) && $_POST['ajax'] === 'archives-form') {
+        echo CActiveForm::validate($model);
+        Yii::app()->end();
     }
+}
 }

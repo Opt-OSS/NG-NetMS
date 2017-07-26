@@ -1,4 +1,5 @@
 package NGNMS::Net::Session;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo;
@@ -50,15 +51,15 @@ sub execute_chained_macro {
     }
     return $res;
 }
-=head2 macro
-
-executes macro on remote host.
-it returns cached responce by default if $params == undef
-it use cache
-    - if $params undefined
-    - if $params->{cached} = 1
-
-=cut
+#=head2 macro
+#
+#executes macro on remote host.
+#it returns cached responce by default if $params == undef
+#it use cache
+#    - if $params undefined
+#    - if $params->{cached} = 1
+#
+#=cut
 
 sub macro{
     my $self = shift;
@@ -94,10 +95,10 @@ sub close() {
     $self->connection->close();
 }
 
-=for
- write executed commands into directory if App mode is 'record'
-
-=cut
+#=for
+# write executed commands into directory if App mode is 'record'
+#
+#=cut
 
 sub __record {
 
@@ -111,3 +112,5 @@ sub __record {
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+

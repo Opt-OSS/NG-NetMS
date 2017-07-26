@@ -1,5 +1,6 @@
 package NGNMS::Net::Connect;
 
+
 use strict;
 use warnings FATAL => 'all';
 no warnings qw(redefine);  # !!! SUPPRESS Subroutine new redefined at warniongs
@@ -138,4 +139,6 @@ sub connect {
 #
 #    }
 
-1
+1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+

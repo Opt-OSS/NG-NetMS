@@ -1,0 +1,66 @@
+name    = NGREADY
+author  = T.Matselyukh, V. Zaitsev, A. Jaropud, M.Golov
+license = GPL_3
+copyright_holder = Opt/Net BV
+copyright_year   = 2017
+
+ main_module=lib/NGREADY.pm
+
+
+version = @PROJECT_VERSION@
+
+[GatherDir / Core]
+follow_symlinks=1
+root=@PROJECT_SOURCE_PERL_DIR@
+;keep binaries - we need them for AutoPrereqs
+
+[@Filter]
+-bundle = @Basic
+-remove = ShareDir
+-remove = UploadToCPAN
+-remove = GatherDir
+-remove = MetaYAML
+-remove = MetaJSON
+option = for_basic
+
+
+
+
+
+
+
+[FileFinder::Filter / FilesToVersion]
+finder= :InstallModules ; find files from :InstallModules
+;finder= :ExecFiles      ; or :ExecFiles
+skip= lib\/Job           ; that don't have "ignore" in the path
+skip= lib\/Net           ; that don't have "ignore" in the path
+skip= lib\/Crypt           ; that don't have "ignore" in the path
+
+
+
+
+[PkgVersion]
+finder=FilesToVersion
+
+[AutoPrereqs]
+skip=DBD::SQLite
+skip=NGNMS_Extreme
+skip= Net::CLI::Interact::Transport::Options
+skip=  Net::CLI::Interact::Transport::Platform::Options
+skip=  Net::CLI::Interact::Transport::Wrapper::Base::Options
+skip=  Net::CLI::Interact::Transport::Wrapper::Options
+
+[PodWeaver]
+finder=FilesToVersion
+
+[PruneFiles]
+;remove binaries AFTER AutoPrereqs - they will instlled via cmake
+match = ^bin\/
+
+
+[Prereqs]
+Log::Dispatch::FileRotate=0
+JSON=0
+Config::General=0
+[CPANFile]
+

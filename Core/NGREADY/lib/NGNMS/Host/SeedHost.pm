@@ -1,8 +1,6 @@
 use strict;
 use warnings FATAL => 'all';
-package
-
-NGNMS::Host::SeedHost;
+package  NGNMS::Host::SeedHost;
 
 use Emsgd;
 use Moo;
@@ -162,3 +160,4 @@ sub parse_isis {
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

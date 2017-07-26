@@ -1,4 +1,5 @@
 package NGNMS::Plugins::Core::Juniper::PollHost;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo;
@@ -258,3 +259,4 @@ sub get_version {
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

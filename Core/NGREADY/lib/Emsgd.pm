@@ -1,8 +1,9 @@
 package Emsgd;
+
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $timeout);
 @ISA = qw(Exporter);
-@EXPORT_OK  = qw(diag);
+@EXPORT_OK  = qw(diag pp ss);
 
 use strict;
 use warnings;
@@ -13,10 +14,8 @@ sub ss {
     my @text = shift;
     my $title= shift;
     my $backtrace = shift;
-    my $out = CYAN."\n";
 
-    $out .= Data::Dumper->Dump([@text],[$title || 'message']);
-    $out .= RESET;
+   my $out = Data::Dumper->Dump([@text],[$title || 'message']);
     return $out;
 
 }
@@ -63,3 +62,4 @@ print Data::Dumper->Dump([@text],[qw(message)]);
 
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

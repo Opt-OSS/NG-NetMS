@@ -1,4 +1,5 @@
 package NGNMS::DB::Migration;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo;
@@ -90,3 +91,4 @@ sub version() {
     return $self->mirate_handler->version();
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

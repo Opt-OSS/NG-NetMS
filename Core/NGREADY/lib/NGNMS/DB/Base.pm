@@ -1,4 +1,5 @@
 package NGNMS::DB::Base;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -50,3 +51,4 @@ sub open{
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

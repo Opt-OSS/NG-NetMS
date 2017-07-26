@@ -467,5 +467,6 @@ sub ssg5_parse_interfaces {
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
 
 __END__

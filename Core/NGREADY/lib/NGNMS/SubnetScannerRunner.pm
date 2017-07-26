@@ -1,4 +1,5 @@
 package NGNMS::SubnetScannerRunner;
+
 use strict;
 use warnings FATAL => 'all';
 
@@ -174,3 +175,4 @@ sub finalize{
     return 1;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

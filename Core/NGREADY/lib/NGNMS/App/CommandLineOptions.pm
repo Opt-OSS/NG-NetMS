@@ -1,4 +1,5 @@
 package NGNMS::App::CommandLineOptions;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -95,3 +96,4 @@ option "inject"=>(
         doc =>"Inject router in DB on PollHost mode if router  not exsists, used  only with  --host-type and --play"
     );
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

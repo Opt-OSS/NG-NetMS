@@ -1,4 +1,5 @@
 package NGNMS::DB;
+
 use strict;
 use warnings FATAL => 'all';
 use Digest::MD5 qw(md5_hex);
@@ -10,9 +11,9 @@ with "NGNMS::DB::Base", "NGNMS::DB::Crypt", "NGNMS::App::Helpers";
 with "NGNMS::Log4Role";
 #TODO Simplify one-value SQL by : As your SQL never returns more than one row with one field, you are probably rather looking for selectrow_array:
 # -------------------------------------------------------------------------------------------
-=head2 getSeqNextVal($sequence_name)
-    retuns Postgress nextval for given sequence name
-=cut
+#=head2 getSeqNextVal($sequence_name)
+#    retuns Postgress nextval for given sequence name
+#=cut
 
 sub getSeqNextVal {
     my $self = shift;
@@ -22,9 +23,9 @@ sub getSeqNextVal {
 
 
 #----------------------------------------  SNMP Community ----------------------------------------------------
-=head2 getCommunity($router_id)
-    retuns ecripted community for router_id
-=cut
+#=head2 getCommunity($router_id)
+#    retuns ecripted community for router_id
+#=cut
 
 sub getCommunity {
     my $self = shift;
@@ -56,13 +57,13 @@ sub isDueCommunity{
     return $self->dbh->selectall_arrayref( $SQL );
 }
 # -------------------------------------------------------------------------------------------
-=for getRouterId ($router_ip_or_name)
-returns router id or undef if not found
-
-  if $router_ip_or_name match the IP patterd, return router with either name or ip_addr match
-  if $router_ip_or_name  is a host name, searched by name only
-
-=cut
+#=for getRouterId ($router_ip_or_name)
+#returns router id or undef if not found
+#
+#  if $router_ip_or_name match the IP patterd, return router with either name or ip_addr match
+#  if $router_ip_or_name  is a host name, searched by name only
+#
+#=cut
 sub getRouterId {
     my $self = shift;
     my $router_ip_or_name = shift;
@@ -98,16 +99,16 @@ sub getRouterInfo {
 }
 
 # -------------------------------------------------------------------------------------------
-=head2 addRouter($hostname,$ip,$status)
-
-adds new router to DB
-
-    if hostname match IP pattern, will try to get host name by reverse DNS lookp
-    returns new router ID
-    no ANY checks if router exists
-
-
-=cut
+#=head2 addRouter($hostname,$ip,$status)
+#
+#adds new router to DB
+#
+#    if hostname match IP pattern, will try to get host name by reverse DNS lookp
+#    returns new router ID
+#    no ANY checks if router exists
+#
+#
+#=cut
 sub addRouter {
     my $self = shift;
     my ($hostname, $ip, $stat) = @_[0 .. 2];
@@ -276,21 +277,21 @@ sub addConfig
 
 # -------------------------------------------------------------------------------------------
 
-=for
-    Mark interfaces (descr = PollNotFound ) by router_id before poll-host;
-    call to DB_writeInterface will update descr field at least to empty state
-    After router polled we could delete logical interfaces with PollNotFound
-
-    THis should be done this way cause IP for same interface could be changed
-    NGNMS_DB::DB_writeInterface do checks by if_name && if_ip so old interace will not be updated
-    (we could have multihomed interfaces, so this is OK for now)
-    and NGNMS_DB::DB_dropInterfaces do deletion by interface name only
-    so we will have in DB 2 interfaces with same name but diffirent IP
-    and we can not delete not-found by name.
-
-    after poll-host prsed interfaces, call to DB_markInterfacesToBePolled
-    to delete interfaces not touched by  NGNMS_DB::DB_writeInterface
-=cut
+#=for
+#    Mark interfaces (descr = PollNotFound ) by router_id before poll-host;
+#    call to DB_writeInterface will update descr field at least to empty state
+#    After router polled we could delete logical interfaces with PollNotFound
+#
+#    THis should be done this way cause IP for same interface could be changed
+#    NGNMS_DB::DB_writeInterface do checks by if_name && if_ip so old interace will not be updated
+#    (we could have multihomed interfaces, so this is OK for now)
+#    and NGNMS_DB::DB_dropInterfaces do deletion by interface name only
+#    so we will have in DB 2 interfaces with same name but diffirent IP
+#    and we can not delete not-found by name.
+#
+#    after poll-host prsed interfaces, call to DB_markInterfacesToBePolled
+#    to delete interfaces not touched by  NGNMS_DB::DB_writeInterface
+#=cut
 sub markInterfacesToBePolled {
     my $self = shift;
     my $rt_id = shift;
@@ -303,10 +304,10 @@ sub markPhInterfacesToBePolled {
     #@inject PGSQL
     $self->dbh->do( "UPDATE  ph_int SET descr='#PollNotFound#' WHERE router_id = ?", undef, $rt_id );
 }
-=for
- see DB_markInterfacesToBePolled for usage
-
-=cut
+#=for
+# see DB_markInterfacesToBePolled for usage
+#
+#=cut
 sub deleteInterfacesPolledButNotFound {
     my $self = shift;
     my $rt_id = shift;
@@ -320,11 +321,11 @@ sub deletePhInterfacesPolledButNotFound {
     $self->dbh->do( "DELETE FROM ph_int WHERE  descr='#PollNotFound#'  AND  router_id = ?", undef, $rt_id );
 }
 # -------------------------------------------------------------------------------------------
-=for getPhInterfaceId($router_id,$interface_name)
-get the Physical interface ID of the $router_id with given $interface_name
-returns id or undef
-
-=cut
+#=for getPhInterfaceId($router_id,$interface_name)
+#get the Physical interface ID of the $router_id with given $interface_name
+#returns id or undef
+#
+#=cut
 sub getPhInterfaceId {
     my $self = shift;
     my $rt_id = shift;
@@ -339,17 +340,17 @@ sub getPhInterfaceId {
     return;
 }
 # -------------------------------------------------------------------------------------------
-=for setPhInterface($router_id, $ifc)
- insert new Physical interfase of the $router_id or update existed with the same name
-
- $ifc = {
-    name => 'eth0', #interface name
-    state => 'enabled,   #admin status
-    condition=>'up',     #link sate
-    speed=> '100Mb/s' ,  #string with human readable speed
-    description => 'Descr' #descriptionn or additional info, for ex. MAC for Linux
- }
-=cut
+#=for setPhInterface($router_id, $ifc)
+# insert new Physical interfase of the $router_id or update existed with the same name
+#
+# $ifc = {
+#    name => 'eth0', #interface name
+#    state => 'enabled,   #admin status
+#    condition=>'up',     #link sate
+#    speed=> '100Mb/s' ,  #string with human readable speed
+#    description => 'Descr' #descriptionn or additional info, for ex. MAC for Linux
+# }
+#=cut
 sub setPhInterface {
     my $self = shift;
     my $rt_id = shift;
@@ -373,16 +374,16 @@ sub setPhInterface {
     return $ifc_id;
 }
 # -------------------------------------------------------------------------------------------
-=for getInterfaceId($router_id,$interface_params)
-get Logical interface ID of $router_id with $interface_params
-
-    $interface_params = {
-        ph_int_id => 4,       # phisical interface ID to which logical interface belongs
-        name => 'eth0:1',     # name of  logical interface to search
-        ip => 'eth0:1',  # ip address of logical interface
-    }
-
-=cut
+#=for getInterfaceId($router_id,$interface_params)
+#get Logical interface ID of $router_id with $interface_params
+#
+#    $interface_params = {
+#        ph_int_id => 4,       # phisical interface ID to which logical interface belongs
+#        name => 'eth0:1',     # name of  logical interface to search
+#        ip => 'eth0:1',  # ip address of logical interface
+#    }
+#
+#=cut
 
 # Get ifc id by rt_id and name
 sub getInterfaceId {
@@ -398,19 +399,19 @@ sub getInterfaceId {
     return defined( $rref ) ? $rref->[0] : undef;
 }
 
-=for setInterface($router_id, $ifc)
- insert new Logical  interfase or update existed with the same name
- to $router_id
-
- $ifc = {
-    ph_int_id +> 4,         #Physocal interface ID  interface belongs to
-    name => 'eth0:0',       #interface name
-    ip=> '192.168.1.1',     #interface IP
-    mask=>'255.255.255.0'   #Network mask
-    description => 'Descr', #descriptionn or additional info, for ex. MAC for Linux
- }
-
-=cut
+#=for setInterface($router_id, $ifc)
+# insert new Logical  interfase or update existed with the same name
+# to $router_id
+#
+# $ifc = {
+#    ph_int_id +> 4,         #Physocal interface ID  interface belongs to
+#    name => 'eth0:0',       #interface name
+#    ip=> '192.168.1.1',     #interface IP
+#    mask=>'255.255.255.0'   #Network mask
+#    description => 'Descr', #descriptionn or additional info, for ex. MAC for Linux
+# }
+#
+#=cut
 
 sub setInterface {
     my $self = shift;
@@ -464,7 +465,25 @@ sub updateDiscoveryStatus {
     #@inject PGSQL
     $self->dbh->do( "UPDATE discovery_status SET percent = ?,lastchange=now(),ended=? WHERE ended = 0", undef, ( $percent, $finish ));
 }
+#---------------------------- ARCHIVE ---------------------------------
+sub getArchiveData{
+    my $self = shift;
+    my ($archive_id) = @_;
+    #@inject PGSQL
+    return $self->dbh->selectrow_hashref("SELECT * FROM archives WHERE archive_id =?", undef, ($archive_id));
 
+}
+sub clearArchiveData{
+
+}
+
+sub markArchiveLoaded {
+    my $self = shift;
+    my ($archive_id,$mark) = @_;
+    my $state = $mark ? 'true' : 'false';
+    #@inject PGSQL
+    $self->dbh->do( "UPDATE archives SET in_db = ? WHERE archive_id= ?", undef, ( $state, $archive_id ));
+}
 #---------------------------- TOPOLOGY ---------------------------------
 
 sub writeLink {
@@ -486,5 +505,5 @@ sub writeLink {
 }
 1;
 
-
+# ABSTRACT: This file is part of open source NG-NetMS tool.
 

@@ -1,9 +1,12 @@
 <?php
+//error_reporting(E_ALL);
+//ini_set('display_errors',1);
 include_once '../protected/extensions/Emsgd.php';
 // change the following paths if necessary
 $yii=dirname(__FILE__).'/../framework/yii.php';
 $base=require dirname(__FILE__).'/../protected/config/main.php';
 $local = include dirname(__FILE__).'/../custom_config/main.php';
+
 
 // remove the following lines when in production mode
 defined('YII_DEBUG') or define('YII_DEBUG',true);
@@ -12,6 +15,11 @@ defined('YII_TRACE_LEVEL') or define('YII_TRACE_LEVEL',3);
 
 require_once($yii);
 $config=array_replace_recursive($base, $local);
+
+$config['params']['NGNMS_VERSION'] = '3.62-custom';
+if ($ngnms_version = @include dirname(__FILE__).'/../protected/VERSION.php'){
+    $config['params']['NGNMS_VERSION'] = $ngnms_version['NGNMS_VERSION'];
+}
 if (defined('YII_USE_DOCKER_STREAM_LOG') && YII_USE_DOCKER_STREAM_LOG){
     require_once dirname(__FILE__).'/../protected/yii-streamlog-1.0.1/src/LogRoute.php';
 }

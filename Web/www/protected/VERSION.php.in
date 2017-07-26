@@ -1,0 +1,8 @@
+<?php
+/**
+ * Created by IntelliJ IDEA.
+ * User: VLZ
+ * Date: 01.07.2017
+ * Time: 17:43
+ */
+return ['NGNMS_VERSION'=>"@PROJECT_VERSION@"];

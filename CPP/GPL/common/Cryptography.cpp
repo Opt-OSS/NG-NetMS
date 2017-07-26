@@ -6,14 +6,28 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wunused-function"
-#include <crypto++/modes.h>
-#include <crypto++/aes.h>
-#include <crypto++/des.h>
-#include <crypto++/osrng.h>
-#include <crypto++/hex.h>
-#include <crypto++/camellia.h>
-#include <crypto++/filters.h>
-#include <crypto++/base64.h>
+
+#ifdef WITH_CRYPTOPP_PP
+    #include <cryptopp/modes.h>
+    #include <cryptopp/aes.h>
+    #include <cryptopp/des.h>
+    #include <cryptopp/osrng.h>
+    #include <cryptopp/hex.h>
+    #include <cryptopp/camellia.h>
+    #include <cryptopp/filters.h>
+    #include <cryptopp/base64.h>
+#else
+    #include <crypto++/modes.h>
+    #include <crypto++/aes.h>
+    #include <crypto++/des.h>
+    #include <crypto++/osrng.h>
+    #include <crypto++/hex.h>
+    #include <crypto++/camellia.h>
+    #include <crypto++/filters.h>
+    #include <crypto++/base64.h>
+
+#endif
+
 #include <memory>
 
 using namespace CryptoPP;

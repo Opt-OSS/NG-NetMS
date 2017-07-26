@@ -71,18 +71,23 @@ $cur_disc = trim($model1->arc_period);
 <link type="text/css" href="<?php echo Yii::app()->baseUrl; ?>/js/libs/jquery-cron/cron/jquery-cron.css"
       rel="stylesheet"/>
 <div class="form-group" style="overflow: auto;margin-bottom: 1em;">
+    <style>
+        .bootstrap-switch{
+            height:2em;
+        }
+    </style>
     <?php
     $val = $model1->arc_enable > 0 ? 1 : 0 ?>
     <div style="float:left; width: 39%;padding-left:70px;">
         <label class="nav-header" for="arc_enable">Enable Archivation</label>
-        <input id="arc_enable" type="checkbox" class="BSswitch" name="arc_enable" data-on-text="Archives Enabled"
-               data-off-text=" Archives Disabled" data-off-color="danger" data-on-color="success">
+        <input id="arc_enable" type="checkbox" class="BSswitch" name="arc_enable" data-on-text="Enabled"
+               data-off-text="Disabled" data-off-color="danger" data-on-color="success">
     </div>
     <div style="float:right; width: 39%">
         <label class="nav-header" for="archive-gzip">Use gzip compression for archives</label>
         <?php $val = $model1->arc_gzip > 0 ? 1 : 0 ?>
-        <input id="arc_gzip" type="checkbox" class="BSswitch" name="arc_gzip" data-on-text=" Gzip Enabled"
-               data-off-text=" Gzip Disabled" data-off-color="danger" data-on-color="success">
+        <input id="arc_gzip" type="checkbox" class="BSswitch" name="arc_gzip" data-on-text=" Enabled"
+               data-off-text="Disabled" data-off-color="danger" data-on-color="success">
 
     </div>
 </div>

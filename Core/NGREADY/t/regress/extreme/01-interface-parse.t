@@ -20,7 +20,7 @@ ERROR:
 use strict;
 use warnings;
 use Test::Spec ;
-use NGNMS_Extreme;
+#use NGNMS_Extreme;
 use Emsgd qw (diag);
 my $FixturesDir = 't/fixtures';
 
