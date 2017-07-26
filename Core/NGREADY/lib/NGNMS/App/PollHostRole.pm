@@ -1,4 +1,5 @@
 package NGNMS::App::PollHostRole;
+
 use strict;
 use warnings FATAL => 'all';
 use File::Path qw(make_path);
@@ -23,13 +24,13 @@ has nmap_status => (is => 'rw');
 has override_hosttype => (is => 'rw');
 has sysObjIdResult => (is => 'rw');
 # ------------------------------------------------------
-=for runPollHost()
-check arguments,
-get and instantiate plugins,
-check host exists in DB
-if any fails, stop host processing
-
-=cut
+#=for runPollHost()
+#check arguments,
+#get and instantiate plugins,
+#check host exists in DB
+#if any fails, stop host processing
+#
+#=cut
 
 
 sub find_plugins{
@@ -164,12 +165,12 @@ sub setHostStatus {
     return;
 }
 # ------------------------------------------------------
-=for start_poll_processing()
-get  connect credentials for session
-find plugin for host (if host_type given in cmd arguments, force command line argument, else try to find host type via SNMP)
-if no plugin found, stop host processing
-
-=cut
+#=for start_poll_processing()
+#get  connect credentials for session
+#find plugin for host (if host_type given in cmd arguments, force command line argument, else try to find host type via SNMP)
+#if no plugin found, stop host processing
+#
+#=cut
 
 sub start_poll_processing {
     my $self = shift;
@@ -186,10 +187,10 @@ sub start_poll_processing {
     return $self->ssh_status;
 }
 # ------------------------------------------------------
-=for processPollHost($credentials)
-connect to host with $credentials, inject session into plugin and process host data
-
-=cut
+#=for processPollHost($credentials)
+#connect to host with $credentials, inject session into plugin and process host data
+#
+#=cut
 sub processPollHost {
     my $self = shift;
     my $credentials = shift;
@@ -302,13 +303,13 @@ sub processConfig {
     my $config = $plugin_module->getConfig();
     $self->DB->addConfig( $rt_id, $config ) if ($config);
 }
-=for setSession($credentials)
-Try to connect to host using $credentials
-and plugin personality
-if success inject session into plugin and continue
-if fails, stop host processing
-
-=cut
+#=for setSession($credentials)
+#Try to connect to host using $credentials
+#and plugin personality
+#if success inject session into plugin and continue
+#if fails, stop host processing
+#
+#=cut
 
 sub setSession {
     my $self = shift;
@@ -358,12 +359,12 @@ sub setSession {
 
 }
 
-=for getPollHostPluginByHostType()
-if a $self->host_type option is set in the command line, returns plugin to process the host
-by searching a plugin that support the $self->host_type
-if no plugin found returns 0
-
-=cut
+#=for getPollHostPluginByHostType()
+#if a $self->host_type option is set in the command line, returns plugin to process the host
+#by searching a plugin that support the $self->host_type
+#if no plugin found returns 0
+#
+#=cut
 
 sub getPollHostPluginByHostType {
     my $self = shift;
@@ -374,13 +375,13 @@ sub getPollHostPluginByHostType {
     return undef;
 }
 
-=for getPollHostPluginBySNMP($community)
-If $self->host_type option is NOT set in the command line, returns plugin to process the host
-by request a host type via SNMP and searching the plugin that supports returned sysObjectID.0.
-If SNMP request fails, get a vendor from DB, set $self->host_type and try to find plugin via  getPollHostPluginByHostType().
-If no plugin found returns 0
-
-=cut
+#=for getPollHostPluginBySNMP($community)
+#If $self->host_type option is NOT set in the command line, returns plugin to process the host
+#by request a host type via SNMP and searching the plugin that supports returned sysObjectID.0.
+#If SNMP request fails, get a vendor from DB, set $self->host_type and try to find plugin via  getPollHostPluginByHostType().
+#If no plugin found returns 0
+#
+#=cut
 
 sub getTypeBySNMP{
     my $self = shift;
@@ -424,3 +425,4 @@ sub getPluginModule {
     return $plugin_module;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

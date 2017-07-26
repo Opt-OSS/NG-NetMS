@@ -1,4 +1,5 @@
 package NGNMS::Scheduler;
+
 use strict;
 use warnings FATAL => 'all';
 use Emsgd qw/diag/;
@@ -32,3 +33,5 @@ sub run{
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+

@@ -1,4 +1,5 @@
 package NGNMS::App::Crypt;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -94,13 +95,13 @@ sub get_default_credentials {
     };
 
 }
-=for credentials_override($credentials, $command_line)
-
-Make priority for command line options
-$credentials, $command_line =: hashref of $access type in decode_router_access_method
-
-
-=cut
+#=for credentials_override($credentials, $command_line)
+#
+#Make priority for command line options
+#$credentials, $command_line =: hashref of $access type in decode_router_access_method
+#
+#
+#=cut
 sub credentials_override($$) {
     my $self = shift;
     my $credetials = shift; #defaults
@@ -115,22 +116,22 @@ sub credentials_override($$) {
     };
 }
 
-=for decode_router_access_method($host,$access)
-
-$host = host IP or name
-$access  hash with current connect options
-        {
-            username=>'root',
-            password=>'secret',
-            privileged_password=>'enable',
-            transport=>'SSHv2',
-            community=>'public'
-            connect_options=>[' -i',' ./id_rsa']
-        };
-
-priopity is command_line -> router specific -> defaults
-
-=cut
+#=for decode_router_access_method($host,$access)
+#
+#$host = host IP or name
+#$access  hash with current connect options
+#        {
+#            username=>'root',
+#            password=>'secret',
+#            privileged_password=>'enable',
+#            transport=>'SSHv2',
+#            community=>'public'
+#            connect_options=>[' -i',' ./id_rsa']
+#        };
+#
+#priopity is command_line -> router specific -> defaults
+#
+#=cut
 sub decode_router_access_method($$) {
     my $self = shift;
     my $host = shift;
@@ -191,3 +192,4 @@ sub decode_router_access_method($$) {
     return $credetials;;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

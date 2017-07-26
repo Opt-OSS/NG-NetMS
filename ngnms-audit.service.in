@@ -1,0 +1,17 @@
+[Unit]
+Description=NGNMS audit starter daemon
+After=syslog.target network.target postgresql.service
+
+
+[Service]
+User=ngnms
+EnvironmentFile=@NGNMS_INSTALL_DIR@/env.list
+Type=simple
+#PIDFile=/var/run/ngnms-audit.pid
+ExecStart=@PERL_EXECUTABLE@ @NGNMS_INSTALL_DIR@/bin/jm-worker.pl
+Restart=on-failure
+RestartSec=3
+
+
+[Install]
+WantedBy=multi-user.target

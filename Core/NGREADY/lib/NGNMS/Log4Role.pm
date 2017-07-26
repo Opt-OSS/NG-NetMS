@@ -1,4 +1,5 @@
 package NGNMS::Log4Role;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -16,7 +17,6 @@ has verbose => (
     is =>'rw',
 #        builder=> 1,
 #        default=>sub{ $ENV{NGNMS_DEBUG} || 'INFO' }
-
 );
 sub BUILD {
     Log::Log4perl->init_once($ENV{NGNMS_LOGCONF}||$ENV{NGNMS_HOME}."/bin/log4perl.conf");
@@ -76,3 +76,4 @@ sub _build_logger  {
 
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

@@ -1,0 +1,16 @@
+<VirtualHost *:80>
+    ServerName web
+    #open_basedir="@NGNMS_INSTALL_DIR@/www/"
+    DocumentRoot "@NGNMS_INSTALL_DIR@/www/html/"
+    <Directory @NGNMS_INSTALL_DIR@/www/html/>
+                Options Indexes FollowSymLinks MultiViews
+                AllowOverride All
+                Order allow,deny
+                allow from all
+    </Directory>
+#    <Location  "/grafana/">
+#        ProxyPass ${GRAFANA_URL}
+#        ProxyPassReverse ${GRAFANA_URL}
+#        ProxyPassReverseCookieDomain web grafana
+#    </Location>
+</VirtualHost>

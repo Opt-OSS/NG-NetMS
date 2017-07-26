@@ -1,4 +1,5 @@
 package NGNMS::Parser::OSPF;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -207,3 +208,4 @@ sub parse_ospf_juniper {
     return "ok";
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

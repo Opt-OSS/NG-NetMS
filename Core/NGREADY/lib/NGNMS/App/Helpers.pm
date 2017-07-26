@@ -1,4 +1,5 @@
 package NGNMS::App::Helpers;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -130,3 +131,4 @@ sub isIP{
     return 0;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

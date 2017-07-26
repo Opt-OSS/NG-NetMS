@@ -42,12 +42,12 @@ use strict;
 use threads;
 use warnings;
 
-=for ddd
-
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- DB Version !!!!!!!!! IMPORTANT FOR ABILITY TO PROCESS OLD ARCHIVES
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-=cut
+#=for ddd
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# DB Version !!!!!!!!! IMPORTANT FOR ABILITY TO PROCESS OLD ARCHIVES
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#=cut
 use constant DB_VERSION => 35001;# x.xx.xx
 
 use NGNMS::OLD::DB;

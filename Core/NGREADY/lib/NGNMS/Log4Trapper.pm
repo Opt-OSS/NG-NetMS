@@ -1,4 +1,5 @@
 package NGNMS::Log4Trapper;
+
 use strict;
 
 use warnings FATAL => 'all';
@@ -19,3 +20,4 @@ sub PRINT {
     $Log::Log4perl::caller_depth--;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

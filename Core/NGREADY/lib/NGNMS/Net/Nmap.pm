@@ -1,4 +1,5 @@
 package NGNMS::Net::Nmap;
+
 use strict;
 use warnings FATAL => 'all';
 use Nmap::Scanner;
@@ -25,3 +26,4 @@ sub getNmapResponse
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

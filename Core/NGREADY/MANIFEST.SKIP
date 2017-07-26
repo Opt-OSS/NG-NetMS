@@ -1,0 +1,14 @@
+dist\.ini
+env
+\.iml
+wiki
+nas
+pmea
+#sh scripts in root
+^[^\/]+\.sh$
+CMake
+\.cmake$
+^NGNMS
+^t/
+test
+weaver.ini

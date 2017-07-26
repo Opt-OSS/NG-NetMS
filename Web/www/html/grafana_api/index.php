@@ -7,6 +7,7 @@
  *          https://blog.svedr.in/posts/nifty-queries-over-time-series-data-using-postgresql.html
  *
  */
+date_default_timezone_set('UTC');
 session_start();
 require_once __DIR__ . '/classes/Psr4ClassLoader.php';
 $loader = new Psr4ClassLoader();

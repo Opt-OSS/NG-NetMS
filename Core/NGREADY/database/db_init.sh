@@ -5,7 +5,7 @@
 # comment creation publick sheme
 #
 
-DATABASE=ngnms
+DATABASE=$NGNMS_DB
 STOP_ON_ERROR=""
 QUIET=0
 RESET_EV_SEQ=1
@@ -15,14 +15,13 @@ RESET_EV_SEQ=1
     exit
 }
 
-
 #DBFILE=$NGNMS_HOME/database/ngnms.sql
 
 function confirm {
     [ "$QUIET" != "1" ] && {
-        echo -n "About to delete database '$DATABASE' on host $DB_HOST. Proceed? (y/n) [n] "
+        echo -n "About to delete database '$DATABASE' on host $DB_HOST. Proceed? (Y/n) [n] "
         read i
-        [ "$i" == "y" ] || [ "$i" == "Y" ] || {
+        [ "$i" == "Y" ] || {
         echo "Very good... Aborted."
         exit
         }
@@ -35,7 +34,7 @@ function confirm_red {
 
     printf  "${RED}LAST WARNING!!
           DO YOU REALLY REALLY WANT TO INITIATE DB?
-          ALL SETTINGS AND NETWORK DATA WILL BE LOST) not found.!!
+          ALL SETTINGS AND NETWORK DATA WILL BE LOST
           ALL ROUTER CONFIGS WILL BE DELETED.!!
           ----------------------------------
           OPERATION COULD NOT BE REVERTED!!
@@ -100,7 +99,7 @@ while [[ $# -gt 1 ]]; do
         --help)                     usage                                                ;;
         -f|--force)                 QUIET=1                                              ;;
         -r|--reset-events-sequence) RESET_EV_SEQ=0                                       ;;
-        -w|--no-password)           DB_PASS_MODE="--no-password"                         ;;
+#        -w|--no-password)           DB_PASS_MODE="--no-password"                         ;;
         -a|--echo-all)              DB_IO_OPTION="$DB_IO_OPTION $key"                    ;;
         -b|--echo-errors)           DB_IO_OPTION="$DB_IO_OPTION $key"                    ;;
         -e|--echo-queries)          DB_IO_OPTION="$DB_IO_OPTION $key"                    ;;
@@ -155,44 +154,55 @@ if [[ $DBFILE == -* ]];then usage; fi;
 
 
 
-
-echo "(Re)creating database $DATABASE from file $DBFILE.\n"
+echo -e "(Re)creating database $DATABASE from file $DBFILE\n"
 confirm
 confirm_red
 
+
+echo -n "Database Password for user $DB_USER :"
+read -s DB_PASS
+echo -e "\ntring to connect to database\n"
+T=`PGPASSWORD=$DB_PASS psql -h 127.0.0.1 template1 -c "select now();"`
+
+if [[ $? -ne 0 ]] ; then
+    echo -e "\n\nERROR: Could not connect to database!!!\n"
+    exit 1
+fi
+
+
 [ "$RESET_EV_SEQ" == "0" ] && {
-    echo -n "Saving  events sequence current value from Database"
-	EV_SEQ=`psql  $DB_PASS_MODE --username=$DB_USER --port=$DB_PORT --host=$DB_HOST -t -c "SELECT pg_catalog.nextval('events_event_id_seq')"`
+    echo -e "Saving  events sequence current value from Database\n\n"
+	EV_SEQ=`PGPASSWORD=$DB_PASS psql  --username=$DB_USER --port=$DB_PORT --host=$DB_HOST -t -c "SELECT pg_catalog.nextval('events_event_id_seq')"`
 } || {
     EV_SEQ=1000;
 }
 
 
 
-echo "Stopping services"
+echo -e "Stopping services, this requires sudo password:"
 sudo killall ngnetms_collector
 sudo killall ngnetms_detector
 sudo killall ngnetms_observer
 sudo killall ngnetms_profiler
 
 
-echo  "Disconnect users from database  '$DATABASE', "
-drop=`echo "select pg_terminate_backend(pid) from pg_stat_activity where datname='$DATABASE'" |  psql   $DB_PASS_MODE --username=$DB_USER --port=$DB_PORT --host=$DB_HOST  $STOP_ON_ERROR template1`
+echo -e "Disconnect users from database  '$DATABASE'...\n"
+drop=`PGPASSWORD=$DB_PASS   psql --username=$DB_USER --port=$DB_PORT --host=$DB_HOST  $STOP_ON_ERROR template1 -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='$DATABASE'"`
 sleep 3;
-echo  "Dropping database '$DATABASE', "
-drop=`echo "drop database if exists $DATABASE" | psql  $DB_PASS_MODE --username=$DB_USER --port=$DB_PORT --host=$DB_HOST template1`
+echo -e "Dropping database '$DATABASE'... \n "
+drop=`PGPASSWORD=$DB_PASS  psql  --username=$DB_USER --port=$DB_PORT --host=$DB_HOST template1 -c "drop database if exists $DATABASE" `
 
 
-echo   "Creating new database  '$DATABASE', "
-cmd="psql  $DB_PASS_MODE --username=$DB_USER --port=$DB_PORT --host=$DB_HOST $DB_IO_OPTION  template1  < $DBFILE";
+echo -e  "Creating new database  '$DATABASE'... \n "
+cmd="PGPASSWORD=$DB_PASS  psql   --username=$DB_USER --port=$DB_PORT --host=$DB_HOST $DB_IO_OPTION  template1  < $DBFILE";
 eval $cmd;
 
 [ "$RESET_EV_SEQ" == "0" ] && {
-    echo   "Restoring events sequence current value"
-	eval "psql  $DB_PASS_MODE --username=$DB_USER --port=$DB_PORT --host=$DB_HOST  -t -c \"SELECT pg_catalog.setval('events_event_id_seq',$EV_SEQ,true)\""
+    echo  -e "Restoring events sequence current value \n"
+	eval "PGPASSWORD=$DB_PASS  psql  --username=$DB_USER --port=$DB_PORT --host=$DB_HOST  -t -c \"SELECT pg_catalog.setval('events_event_id_seq',$EV_SEQ,true)\""
 }
 
-echo "Clearing ${NGNMS_DATA}/rtconfig/ "
+echo -e "Clearing ${NGNMS_DATA}/rtconfig/ \n"
 `rm -rf  ${NGNMS_DATA}/rtconfig/*`
 
 echo "Done."

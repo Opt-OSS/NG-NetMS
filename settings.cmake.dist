@@ -1,0 +1,8 @@
+set( DB_CFG_FILE_NAME "db.cfg")
+set( DB_HOST          "localhost" )
+set( DB_PORT           5432 )
+set( DB_NAME          "ngnms" )
+set( DB_USER          "ngnms" )
+set( DB_PASSWORD      "ngnms" )
+set( DB_TIMEOUT	       10 )
+set( HOME_ENV         "NGNMS_HOME" )

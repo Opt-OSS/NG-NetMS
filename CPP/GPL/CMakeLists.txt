@@ -1,56 +1,84 @@
 cmake_minimum_required (VERSION 2.6)
 
+
 # Project name
 project (NG-NetMS)
+IF (NOT COLLECTOR_CMAKE_INCLUDED)
+    # Project version
+    set( VERSION_MAJOR 3)
+    set( VERSION_MINOR 623)
 
-# Project version
-set( VERSION_MAJOR 3)
-set( VERSION_MINOR 623)
+    # Project settings
+    set( DB_CFG_FILE_NAME "db.cfg")
+    set( DB_HOST          "localhost" )
+    set( DB_PORT           5432 )
+    set( DB_NAME          "ngnms" )
+    set( DB_USER          "ngnms" )
+    set( DB_PASSWORD      "ngnms" )
+    set( DB_TIMEOUT	       10 )
+    set( HOME_ENV         "NGNMS_HOME" )
+    # Put all binaries to bin directory 
+    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/" )
 
-# Project settings
-set( DB_CFG_FILE_NAME "db.cfg")
-set( DB_HOST          "localhost" )
-set( DB_PORT           5432 )
-set( DB_NAME          "ngnms" )
-set( DB_USER          "ngnms" )
-set( DB_PASSWORD      "ngnms" )
-set( DB_TIMEOUT	       10 )
-set( HOME_ENV         "NGNMS_HOME" )
+ENDIF()
+
+
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    if ("${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "4.8")
+       message(FATAL_ERROR "
+    ### You appear to be using GCC ${CMAKE_CXX_COMPILER_VERSION}, which isknown to be
+    ### unable to compile NGNMS. Only GCC >= 4.8 is supported.
+    ### Consider using a more recent GCC
+    ### If a more recent compiler is already installed on your
+    ### system, you can tell CMake to use it with
+    ###
+    ###     cmake .. -DCMAKE_CXX_COMPILER=/path/to/compiler
+        ")
+    endif()
+else()
+       message(FATAL_ERROR "
+    ### You appear to be using NOT GNU GCC ${CMAKE_CXX_COMPILER_VERSION}, which isknown to be
+    ### unable to compile NGNMS. Only y GCC >= 4.8 is supported.
+        ")
+endif()
+
 
 # Multithread support
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 #Binaries names
 set( NGNETMS_BIN_DB_SETTINGS ngnetms_db )
-set( NGNETMS_BIN_DISCOVERY_SETTINGS ngnetms_discovery )
+# set( NGNETMS_BIN_DISCOVERY_SETTINGS ngnetms_discovery )
 set( NGNETMS_BIN_COLLECTOR ngnetms_collector )
+set( NGNETMS_BIN_OBSERVER ngnetms_observer )
+set( NGNETMS_BIN_OPTPRF ngnetms_opt_prf )
 
 # Compilation Timestamp 
 string( TIMESTAMP BUILD_DATE "%Y-%m-%d" )
 string( TIMESTAMP BUILD_TIME "%H:%M:%S" )
 
-# Put all binaries to bin directory 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/" )
 
 # Make configuration file from template
-configure_file ( common/Configuration.h.in common/Configuration.h )
-  
+configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/common/Configuration.h.in ${CMAKE_CURRENT_SOURCE_DIR}/common/Configuration.h )
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)  
 #Common sources
 set(COMMON_SRC 
 common/ConfigFileReader.cpp
 common/ConfigFileWriter.cpp
 common/Cryptography.cpp 
 common/DbConnector.cpp 
-common/MessageQueue.cpp)
+common/MessageQueue.cpp
+common/LogWriter.cpp)
 
 # Sources DbSettings
 set (DB_SETTINGS_SRC 
 sources/db_settings/NgnmsDbSettings.cpp )
 
-# Sources DiscoverySettings
-set (DISCOVERY_SETTINGS_SRC 
-sources/discovery_settings/NgnmsDbSettings.cpp
-sources/discovery_settings/Database.cpp )
+# # Sources DiscoverySettings
+# set (DISCOVERY_SETTINGS_SRC 
+# sources/discovery_settings/NgnmsDbSettings.cpp
+# sources/discovery_settings/Database.cpp )
 
 set (EVENT_COLLECTOR_INC 
 sources/event_collector/SyslogDPs/
@@ -95,42 +123,65 @@ sources/event_collector/Logger.cpp
 sources/event_collector/EventType.cpp
 sources/event_collector/FilePollReader.cpp)
 
+# Sources Observer
+set (OBSERVER_SRC
+sources/observer/Database.cpp
+sources/observer/Initializer.cpp
+sources/observer/main.cpp
+sources/observer/Model.cpp
+sources/observer/ObserverOptions.cpp
+sources/observer/Origin.cpp
+sources/observer/OriginManager.cpp
+sources/observer/Profiler.cpp
+sources/observer/SnmpObserver.cpp
+sources/observer/SnmpOption.cpp)
+
+
+# Sources Observer Profiler
+set (OPT_PRF_SRC
+sources/option_profiler/Database.cpp
+sources/option_profiler/OptionProfiler.cpp
+sources/option_profiler/OptPrfOptions.cpp
+sources/option_profiler/Logger.cpp
+)
+
 #Compiler settings
 add_definitions("-std=c++0x")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
 set(CMAKE_CXX_FLAGS "-O3")        ## Optimize
 set(CMAKE_EXE_LINKER_FLAGS "-s")  ## Strip binary
 
-# GTKMM 3.0
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTK3MM REQUIRED gtkmm-3.0)
-include_directories(${GTK3MM_INCLUDE_DIRS})
-link_directories(${GTK3MM_LIBRARY_DIRS})
-add_definitions(${GTK3MM_CFLAGS_OTHER})
-
 # PQXX
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PQXX REQUIRED libpqxx)
-include_directories(${PQXX_INCLUDE_DIRS})
-link_directories(${PQXX_LIBRARY_DIRS})
-add_definitions(${PQXX_CFLAGS_OTHER})
+find_package(PCRE REQUIRED)
+find_package(PQXX REQUIRED)
+find_package(FLEX REQUIRED)
+find_package(NETSNMP REQUIRED)
+#find_package(Librt REQUIRED)
+
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(PQXX REQUIRED libpqxx)
+# include_directories(${PQXX_INCLUDE_DIRS})
+# link_directories(${PQXX_LIBRARY_DIRS})
+# add_definitions(${PQXX_CFLAGS_OTHER})
 
 # CRYPTO++
 pkg_check_modules(CRYPTOPP libcrypto++ QUIET)
 IF( CRYPTOPP_FOUND )
-include_directories(${CRYPTOPP_INCLUDE_DIRS})
-link_directories(${CRYPTOPP_LIBRARY_DIRS})
-add_definitions(${CRYPTOPP_CFLAGS_OTHER})
+    include_directories(${CRYPTOPP_INCLUDE_DIRS})
+    link_directories(${CRYPTOPP_LIBRARY_DIRS})
+    add_definitions(${CRYPTOPP_CFLAGS_OTHER})
 ELSE()
-pkg_check_modules(CRYPTOPP REQUIRED cryptopp)
-include_directories(${CRYPTOPP_INCLUDE_DIRS})
-link_directories(${CRYPTOPP_LIBRARY_DIRS})
-add_definitions(${CRYPTOPP_CFLAGS_OTHER})
-ENDIF()
+    pkg_check_modules(CRYPTOPP REQUIRED cryptopp)
+    include_directories(${CRYPTOPP_INCLUDE_DIRS})
+    link_directories(${CRYPTOPP_LIBRARY_DIRS})
+    add_definitions(${CRYPTOPP_CFLAGS_OTHER})
+    add_definitions(-DWITH_CRYPTOPP_PP=1)
 
+ENDIF()
 #POCO C++ for Event generator only!!!
-include_directories(/usr/local/Poco/include)
-link_directories(/usr/local/Poco/lib)
+#include_directories(/usr/local/Poco/include)
+#link_directories(/usr/local/Poco/lib)
 
 # Boost
 set(Boost_USE_STATIC_LIBS ON)
@@ -143,6 +194,7 @@ ELSE()
    INCLUDE_DIRECTORIES(/usr/include)
    LINK_DIRECTORIES(/usr/lib64)
 ENDIF()
+
 
 #Common Includes
 include_directories(common)
@@ -160,12 +212,12 @@ target_link_libraries( ${NGNETMS_BIN_DB_SETTINGS} ${PQXX_LIBRARIES} )
 target_link_libraries( ${NGNETMS_BIN_DB_SETTINGS} ${CRYPTOPP_LIBRARIES} )
 target_link_libraries( ${NGNETMS_BIN_DB_SETTINGS} ${Boost_LIBRARIES} )
 
-# Binary DiscoverySettings
-add_executable( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${DISCOVERY_SETTINGS_SRC} ) 
-target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} CommonStatLib )
-target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${PQXX_LIBRARIES} )
-target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${CRYPTOPP_LIBRARIES} )
-target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${Boost_LIBRARIES} )
+# # Binary DiscoverySettings
+# add_executable( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${DISCOVERY_SETTINGS_SRC} ) 
+# target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} CommonStatLib )
+# target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${PQXX_LIBRARIES} )
+# target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${CRYPTOPP_LIBRARIES} )
+# target_link_libraries( ${NGNETMS_BIN_DISCOVERY_SETTINGS} ${Boost_LIBRARIES} )
 
 # Binary EventCollector
 add_executable( ${NGNETMS_BIN_COLLECTOR} ${EVENT_COLLECTOR_SRC} ) 
@@ -178,3 +230,19 @@ target_link_libraries( ${NGNETMS_BIN_COLLECTOR} pcre fl pthread)
 target_include_directories( ${NGNETMS_BIN_COLLECTOR} PUBLIC ${EVENT_COLLECTOR_INC} )
 
 
+# Binary Observer
+add_executable( ${NGNETMS_BIN_OBSERVER} ${OBSERVER_SRC} ) 
+target_link_libraries( ${NGNETMS_BIN_OBSERVER} CommonStatLib )
+target_link_libraries( ${NGNETMS_BIN_OBSERVER} ${PQXX_LIBRARIES} )
+target_link_libraries( ${NGNETMS_BIN_OBSERVER} ${CRYPTOPP_LIBRARIES} )
+target_link_libraries( ${NGNETMS_BIN_OBSERVER} ${Boost_LIBRARIES} )
+target_link_libraries( ${NGNETMS_BIN_OBSERVER} netsnmp )
+target_link_libraries( ${NGNETMS_BIN_OBSERVER} rt )
+
+# Binary Option Profiler
+add_executable( ${NGNETMS_BIN_OPTPRF} ${OPT_PRF_SRC} ) 
+target_link_libraries( ${NGNETMS_BIN_OPTPRF} CommonStatLib )
+target_link_libraries( ${NGNETMS_BIN_OPTPRF} ${PQXX_LIBRARIES} )
+target_link_libraries( ${NGNETMS_BIN_OPTPRF} ${CRYPTOPP_LIBRARIES} )
+target_link_libraries( ${NGNETMS_BIN_OPTPRF} ${Boost_LIBRARIES} )
+target_link_libraries( ${NGNETMS_BIN_OPTPRF} rt )

@@ -235,7 +235,11 @@ if (1) {
         'htmlOptions' => array('class' => 'well'),
     )); ?>
     <input type="hidden" name="tumbler" id="tumbler" value="1">
-
+    <style>
+        .bootstrap-switch{
+            height:2em;
+        }
+    </style>
     <h5>Subnets scanner</h5>
     <?php if ($model2->value > 0) { ?>
         <input type="hidden" name="scanner" id="scanner" value="1">

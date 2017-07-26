@@ -444,10 +444,10 @@ sub saveCommonInfo($) {
     NGNMS::OLD::DB::DB_startSwInfo( $new_rid );
     NGNMS::OLD::DB::DB_writeSwInfo( $new_rid, \%sw_info );
 };
-=for
-    get router Id by host_name, if fails, by IP
-    if fails, then reate new
-=cut
+#=for
+#    get router Id by host_name, if fails, by IP
+#    if fails, then reate new
+#=cut
 sub getThisRouterId($) {
     my $self = shift;
     my $cur_ip = shift;
@@ -601,14 +601,14 @@ sub parse_interfaces_ifconfig($) {
         }
     }
 }
-=for
-    split interface name into
-    {
-        'physical_name' => 'eth1',
-        'logical_name' => 'eth1'
-    };
-
-=cut
+#=for
+#    split interface name into
+#    {
+#        'physical_name' => 'eth1',
+#        'logical_name' => 'eth1'
+#    };
+#
+#=cut
 sub split_inteface_name($) {
     my $self = shift;
     my $ifname = shift;
@@ -704,10 +704,10 @@ sub process_interfaces($$){
     }
     NGNMS::OLD::DB::DB_deleteInterfacesPolledButNotFound($rt_id);
 }
-=for
-    main processing procedure
-
-=cut
+#=for
+#    main processing procedure
+#
+#=cut
 
 sub run_proccessing
 {
@@ -876,5 +876,6 @@ sub linux_cmd()
 
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
 
 __END__

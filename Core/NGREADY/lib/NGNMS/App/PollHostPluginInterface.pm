@@ -1,4 +1,5 @@
 package NGNMS::App::PollHostPluginInterface;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -45,3 +46,5 @@ sub get_first_line {
     return $line ? $line : undef;
 }
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+

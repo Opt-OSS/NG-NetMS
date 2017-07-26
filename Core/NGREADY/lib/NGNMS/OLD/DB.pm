@@ -11,6 +11,7 @@ use warnings;
 use Emsgd;
 
 package NGNMS::OLD::DB;
+
 use Data::Dumper;
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $data);
@@ -323,22 +324,22 @@ sub DB_writeInterface($$*) {
     push @SQLARGS, $ifc_id;
     my $result = $if_h->execute( @SQLARGS );
 }
-=for
-    EXREAME ONLY !! TESTED WITHOUT ROUTING PROTOCOS
-    Mark interfaces (descr = PollNotFound ) by router_id before poll-host;
-    call to DB_writeInterface will update descr field at least to empty state
-    After router polled we could delete logical interfaces with PollNotFound
-
-    THis should be done this way cause IP for same interface could be changed
-    NGNMS_DB::DB_writeInterface do checks by if_name && if_ip so old interace will not be updated
-    (we could have multihomed interfaces, so this is OK for now)
-    and NGNMS_DB::DB_dropInterfaces do deletion by interface name only
-    so we will have in DB 2 interfaces with same name but diffirent IP
-    and we can not delete not-found by name.
-
-    after poll-host prsed interfaces, call to DB_markInterfacesToBePolled
-    to delete interfaces not touched by  NGNMS_DB::DB_writeInterface
-=cut
+#=for
+#    EXREAME ONLY !! TESTED WITHOUT ROUTING PROTOCOS
+#    Mark interfaces (descr = PollNotFound ) by router_id before poll-host;
+#    call to DB_writeInterface will update descr field at least to empty state
+#    After router polled we could delete logical interfaces with PollNotFound
+#
+#    THis should be done this way cause IP for same interface could be changed
+#    NGNMS_DB::DB_writeInterface do checks by if_name && if_ip so old interace will not be updated
+#    (we could have multihomed interfaces, so this is OK for now)
+#    and NGNMS_DB::DB_dropInterfaces do deletion by interface name only
+#    so we will have in DB 2 interfaces with same name but diffirent IP
+#    and we can not delete not-found by name.
+#
+#    after poll-host prsed interfaces, call to DB_markInterfacesToBePolled
+#    to delete interfaces not touched by  NGNMS_DB::DB_writeInterface
+#=cut
 sub DB_markInterfacesToBePolled($) {
     my $rt_id = shift;
     my $if_h = $dbh->prepare( "update  interfaces set descr='#PollNotFound#' WHERE router_id = $rt_id" );
@@ -349,9 +350,9 @@ sub DB_markPhInterfacesToBePolled($) {
     my $if_h = $dbh->prepare( "update  ph_int set descr='#PollNotFound#' WHERE router_id = $rt_id" );
     $if_h->execute();
 }
-=for
- see DB_markInterfacesToBePolled for usage
-=cut
+#=for
+# see DB_markInterfacesToBePolled for usage
+#=cut
 sub DB_deleteInterfacesPolledButNotFound($) {
     my $rt_id = shift;
     my $if_h = $dbh->prepare( "delete from interfaces WHERE  descr='#PollNotFound#'  and  router_id = $rt_id" );
@@ -401,11 +402,11 @@ sub DB_getPhInterfaceId($$) {
     }
     return undef;
 }
-=for
-    inserter new phInt or updates existes
-
-    return ph_int_id on success, undef on error
-=cut
+#=for
+#    inserter new phInt or updates existes
+#
+#    return ph_int_id on success, undef on error
+#=cut
 sub DB_writePhInterface($*) {
     my $rt_id = shift;
     my $ifc = shift;
@@ -581,10 +582,10 @@ sub DB_getRouterVendorById {
 #    my $rref = $dbh->selectall_arrayref( $SQL );
 #    return $rref;
 #}
-=for
-    GET data to access router
-    Param : router name
-=cut
+#=for
+#    GET data to access router
+#    Param : router name
+#=cut
 sub DB_getRouterAccess($) {
     my $rt_id = shift;
     local $dbh->{RaiseError};     # Ignore errors
@@ -1238,32 +1239,32 @@ sub DB_TEST_getAddRouter($$) {
 # exists or no especially access type for router
 
 
-=for
-get count of access rules by $host
-    if $host is IP address then
-        search by router_name, router IP and router's interface IP
-    else
-        search by name
-
-
-           SELECT count(ra.*) as ammount,r.router_id
-                FROM router_access ra ,routers r
-                WHERE (
-                    (host(r.ip_addr) = '192.168.3.117'  or r.name = '192.168.3.117')
-                    AND ra.id_router=r.router_id
-                    )
-                GROUP BY r.router_id
-            UNION
-             SELECT count(ra.*) as ammount,r.router_id
-                FROM router_access ra ,routers r, interfaces i
-                WHERE
-                    (host(i.ip_addr) = '192.168.3.117'
-                        and ra.id_router=i.router_id
-                        and i.router_id = r.router_id
-                    )
-            GROUP BY r.router_id;
-
-=cut
+#=for
+#get count of access rules by $host
+#    if $host is IP address then
+#        search by router_name, router IP and router's interface IP
+#    else
+#        search by name
+#
+#
+#           SELECT count(ra.*) as ammount,r.router_id
+#                FROM router_access ra ,routers r
+#                WHERE (
+#                    (host(r.ip_addr) = '192.168.3.117'  or r.name = '192.168.3.117')
+#                    AND ra.id_router=r.router_id
+#                    )
+#                GROUP BY r.router_id
+#            UNION
+#             SELECT count(ra.*) as ammount,r.router_id
+#                FROM router_access ra ,routers r, interfaces i
+#                WHERE
+#                    (host(i.ip_addr) = '192.168.3.117'
+#                        and ra.id_router=i.router_id
+#                        and i.router_id = r.router_id
+#                    )
+#            GROUP BY r.router_id;
+#
+#=cut
 sub DB_isInRouterAccess($) {
     my $r_n = $_[0];
     local $dbh->{RaiseError};     # Ignore errors
@@ -1482,5 +1483,7 @@ sub DB_checkVersion($) {
 # END { print "deleting NGNMS_DB\n"; }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+
 
 __END__

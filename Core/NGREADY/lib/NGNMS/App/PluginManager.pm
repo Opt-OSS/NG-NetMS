@@ -1,4 +1,5 @@
 package NGNMS::App::PluginManager;
+
 use strict;
 use Emsgd qw /diag/;
 use warnings FATAL => 'all';
@@ -7,12 +8,12 @@ use MooX::Options;
 use Module::Pluggable search_path => 'NGNMS::Plugins', require => 1;
 use NGNMS::App::PollHostPluginInterface;
 with   "NGNMS::App::Database";
-
-=for main
-
-find all pollhost plugin
-
-=cut
+#
+#=for main
+#
+#find all pollhost plugin
+#
+#=cut
 sub find_pollhost_plugins{
     my $self = shift;
     my @pollHostPlugins = (); #clear array so no duplicates
@@ -28,3 +29,4 @@ sub find_pollhost_plugins{
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

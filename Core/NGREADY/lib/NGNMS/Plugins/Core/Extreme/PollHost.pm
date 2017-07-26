@@ -1,4 +1,5 @@
 package NGNMS::Plugins::Core::Extreme::PollHost;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo;
@@ -253,3 +254,4 @@ sub getModuleName {
 
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

@@ -7,9 +7,10 @@ Changelog.md
 Makefile
 docker-compose.yml
 docs
-www/html/themes/classic/
-www/html/custom_config/main.php
-/www/html/assets/
-/www/protected/runtime/
-/www/protected/tmp/
-/www/logs/
+www/html/assets/
+www/protected/runtime/
+www/protected/tmp/
+www/logs/
+docker-build
+*.in
+Dockerfile.*

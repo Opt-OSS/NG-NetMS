@@ -439,5 +439,7 @@ sub autodetect_host_type_by_file_content($$) {
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+
 
 __END__

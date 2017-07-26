@@ -1,4 +1,5 @@
 package NGNMS::App;
+
 use strict;
 use warnings FATAL => 'all';
 use POSIX '!new'; # !!! SUPPRESS Subroutine new redefined at warniongs
@@ -165,3 +166,4 @@ sub run {
 
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

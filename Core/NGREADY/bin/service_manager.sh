@@ -9,8 +9,8 @@
 VERBOSE="-v 3"
 MQ_SIZE=100
 
-BIN_DIR=/home/ngnms/NGREADY/bin
-LOG_DIR=/home/ngnms/NGREADY/logs
+BIN_DIR=${NGNMS_HOME}/bin
+LOG_DIR=${NGNMS_LOGS}
 
 #------------------------------------------------------------
 # AI & DETECTOR OPTIONS
@@ -29,8 +29,8 @@ L=49
 # Service options
 #------------------------------------------------------------
 
-COLLECTOR_UDP_OPTIONS="-u -p 514 -o $BIN_DIR/db.cfg -r /home/ngnms/NGREADY/rules/rules.txt -l $LOG_DIR/syslog_collector.log"
-COLLECTOR_SNMP_OPTIONS="-c snmp -o $BIN_DIR/db.cfg -i /var/log/snmptraps.log -r /home/ngnms/NGREADY/rules/rules.txt -l $LOG_DIR/snmp_collector.log"
+COLLECTOR_UDP_OPTIONS="-u -p 514 -o $BIN_DIR/db.cfg -r ${NGNMS_HOME}/rules/rules.txt -l $LOG_DIR/syslog_collector.log"
+COLLECTOR_SNMP_OPTIONS="-c snmp -o $BIN_DIR/db.cfg -i /var/log/snmptraps.log -r ${NGNMS_HOME}rules/rules.txt -l $LOG_DIR/snmp_collector.log"
 
 PROFILER_OPTIONS="-a 9 $VERBOSE -o $BIN_DIR/db.cfg -l $LOG_DIR/profiler.log"
 DETECTOR_OPTIONS="-L $L -m $m -d $D $VERBOSE -o $BIN_DIR/db.cfg -l $LOG_DIR/detector.log"
@@ -468,14 +468,14 @@ a_restart()
 
 a_dump()
 {
-    pg_dump --data-only --table=public.anomaly ngnms > /home/ngnms/NGREADY/data/anomaly.db
-    pg_dump --data-only --table=public.anomaly_template ngnms > /home/ngnms/NGREADY/data/anomaly_template.db
+    pg_dump --data-only --table=public.anomaly ngnms > ${NGNMS_HOME}/data/anomaly.db
+    pg_dump --data-only --table=public.anomaly_template ngnms > ${NGNMS_HOME}/data/anomaly_template.db
 }
 
 a_restore()
 {
-    $DEBUG psql --table=public.anomaly -d ngnms < /home/ngnms/NGREADY/data/anomaly.db
-    $DEBUG psql --table=public.anomaly_template -d ngnms < /home/ngnms/NGREADY/data/anomaly_template.db
+    $DEBUG psql --table=public.anomaly -d ngnms < ${NGNMS_HOME}/data/anomaly.db
+    $DEBUG psql --table=public.anomaly_template -d ngnms < ${NGNMS_HOME}/data/anomaly_template.db
 }
 
 a_recreate()

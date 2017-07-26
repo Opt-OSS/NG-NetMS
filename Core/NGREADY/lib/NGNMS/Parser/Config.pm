@@ -1,8 +1,8 @@
 use warnings FATAL => 'all';
 use strict;
 package NGNMS::Parser::Config;
-use strict;
-use warnings FATAL => 'all';
+
+
 use File::Slurp qw (read_file);
 use Moo::Role;
 
@@ -103,3 +103,5 @@ sub juniper_get_configs {
 
     return "ok";
 }
+1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

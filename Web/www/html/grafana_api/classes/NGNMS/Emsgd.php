@@ -8,7 +8,6 @@
 
 namespace NGNMS;
 
-//todo Do not print if production
 class Emsgd
 {
     public static function p($f_message = null, $f_file = '', $f_line = '')

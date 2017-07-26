@@ -1,4 +1,5 @@
 package NGNMS::Parser::BGP;
+
 use strict;
 use warnings FATAL => 'all';
 use File::Slurp qw (read_file);
@@ -47,3 +48,4 @@ sub parse_bgp_cisco($) {
 }
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

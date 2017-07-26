@@ -1,4 +1,5 @@
 package NGNMS::Net::SessionRole;
+
 use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
@@ -56,3 +57,5 @@ has play => ( is => 'ro', );
 requires qw ( connect execute_chained_macro macro);
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
+

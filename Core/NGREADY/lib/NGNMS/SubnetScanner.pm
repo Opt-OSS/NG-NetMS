@@ -1,4 +1,5 @@
 package  NGNMS::SubnetScanner;
+
 use strict;
 use warnings FATAL => 'all';
 no warnings qw(redefine);  # !!! SUPPRESS Subroutine new redefined at warniongs
@@ -487,3 +488,4 @@ sub process_result {
 
 
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.

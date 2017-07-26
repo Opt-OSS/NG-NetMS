@@ -1,5 +1,6 @@
 use strict;
 use warnings;
 package NGREADY;
-# ABSTRACT: turns baubles into trinkets
+
 1;
+# ABSTRACT: This file is part of open source NG-NetMS tool.
