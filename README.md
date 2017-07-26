@@ -23,7 +23,7 @@ Apache License V2.0, GNU General Public License version 3.0 (GPLv3), GNU Library
 [ngnms@localhost build]$ sudo yum install epel-release  deltarpm
 [ngnms@localhost build]$ sudo yum install cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
 [ngnms@localhost build]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection 
-[ngnms@localhost build]$ git clone https://vladzaitsev@bitbucket.org/optoss/ngnms-open-source.git
+[ngnms@localhost build]$ git clone https://github.com/opt-oss/NG-NetMS.git
 [ngnms@localhost build]$ mkdir ./build
 [ngnms@localhost build]$ cd ./build
 [ngnms@localhost build]$ cp ../ngnms-open-source/settings.cmake.dist ../ngnms-open-source/settings.cmake
@@ -54,7 +54,7 @@ Configuring /opt/ngnms ... OK
 
 ## After-install Configuring
 ### Database
- perfotm usual steps to setup postgres and start service
+ perform usual steps to setup postgres and start service
  `sudo systemctl start postgresql-9.5`
 ```shell
 [ngnms@localhost build]$ sudo su -l postgres                
