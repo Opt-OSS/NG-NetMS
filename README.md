@@ -19,22 +19,35 @@ Apache License V2.0, GNU General Public License version 3.0 (GPLv3), GNU Library
 
 ## Installing
 
+# Centos
 ```bash
 [ngnms@localhost build]$ sudo yum install epel-release  deltarpm
 [ngnms@localhost build]$ sudo yum install cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
 [ngnms@localhost build]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection 
 [ngnms@localhost build]$ git clone https://github.com/opt-oss/NG-NetMS.git
-[ngnms@localhost build]$ mkdir ./build
-[ngnms@localhost build]$ cd ./build
-[ngnms@localhost build]$ cp ../ngnms-open-source/settings.cmake.dist ../ngnms-open-source/settings.cmake
-[ngnms@localhost build]$ vi ../ngnms-open-source/settings.cmake
-[ngnms@localhost build]$ cmake ../ngnms-open-source
+[ngnms@localhost build]$ cp settings.cmake.dist settings.cmake
+[ngnms@localhost build]$ vi settings.cmake
+[ngnms@localhost build]$ cmake .
 [ngnms@localhost build]$ make
 [ngnms@localhost build]$ sudo mkdir -p /opt/ngnms
 [ngnms@localhost build]$ sudo chown ngnms /opt/ngnms
 [ngnms@localhost build]$ make install
 ```
 
+# Ubuntu
+```bash
+[ngnms@localhost build]$ sudo apt-get update
+[ngnms@localhost build]$ sudo apt-get install cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+[ngnms@localhost build]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection
+[ngnms@localhost build]$ git clone https://github.com/opt-oss/NG-NetMS.git
+[ngnms@localhost build]$ cp settings.cmake.dist settings.cmake
+[ngnms@localhost build]$ vi settings.cmake
+[ngnms@localhost build]$ cmake .
+[ngnms@localhost build]$ make
+[ngnms@localhost build]$ sudo mkdir -p /opt/ngnms
+[ngnms@localhost build]$ sudo chown ngnms /opt/ngnms
+[ngnms@localhost build]$ make install
+```
 
 ### Perl deps
 
@@ -112,12 +125,20 @@ as user `ngnms`
 wait 5 minutes for scheduled tasks added and script created
 
 ### Audit worker
+
 ```shell
 [ngnms@localhost build]$ sudo cp /opt/ngnms/ngnms-audit.service /etc/systemd/system/ngnms-audit.service
+
+# Centos
 [ngnms@localhost build]$ sudo systemctl enable ngnms-audit
 [ngnms@localhost build]$ sudo systemctl start ngnms-audit
 [ngnms@localhost build]$ sudo systemctl status ngnms-audit 
 ```
+# Ubuntu
+sudo cp /opt/ngnms/jm-worker-initd.sh into /etc/init.d/jm-workerd-init
+chmod ug+x /etc/init.d/jm-worker-init
+chown root:root /etc/init.d/jm-worker-init
+
 #### namp sudo
 ```shell
 [ngnms@localhost ~]$ sudo cp /opt/ngnms/nmap.sudo /etc/sudoers.d/nmap
@@ -129,3 +150,23 @@ wait 5 minutes for scheduled tasks added and script created
 [ngnms@localhost bin]$ ./ngnetms_db      
 [ngnms@localhost bin]$ sudo -E ${NGNMS_HOME}/bin/ngnetms_collector -s syslog-udp -p 514 -c ${NGNMS_HOME}/bin/db.cfg -r ${NGNMS_HOME}/rules/rules.txt -l ${NGNMS_LOGS}/syslog_collector.log -v &  
 ```
+
+## Restart the server and verify web login URL:  http://{serverIP}:80/
+Default login details: 
+ngnms:optoss
+
+## CLI interface
+
+obtain terminal connection via SSH and change your directory to $NGNMS_HOME
+
+cd $NGNMS_HOME
+cd bin
+service_manager ngnetms status
+
+
+Start collector, observer and optprf services if not runninng.
+
+Usage: service_manager.sh 
+  <collector|observer|optprf> <start|stop|restart|initdb|status> ["options"]
+  <anomaly|ngnetms> <start|stop|restart|initdb|status>
+

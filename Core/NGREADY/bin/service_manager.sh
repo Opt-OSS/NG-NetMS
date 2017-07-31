@@ -32,17 +32,8 @@ L=49
 COLLECTOR_UDP_OPTIONS="-u -p 514 -o $BIN_DIR/db.cfg -r ${NGNMS_HOME}/rules/rules.txt -l $LOG_DIR/syslog_collector.log"
 COLLECTOR_SNMP_OPTIONS="-c snmp -o $BIN_DIR/db.cfg -i /var/log/snmptraps.log -r ${NGNMS_HOME}rules/rules.txt -l $LOG_DIR/snmp_collector.log"
 
-PROFILER_OPTIONS="-a 9 $VERBOSE -o $BIN_DIR/db.cfg -l $LOG_DIR/profiler.log"
-DETECTOR_OPTIONS="-L $L -m $m -d $D $VERBOSE -o $BIN_DIR/db.cfg -l $LOG_DIR/detector.log"
-
 OBSERVER_OPTIONS="$VERBOSE -m -c $BIN_DIR/options.json -o $BIN_DIR/db.cfg -l $LOG_DIR/observer.log"
 OPTION_PROFILER="$VERBOSE -o $BIN_DIR/db.cfg -l $LOG_DIR/optprf.log" 
-
-EXTRACTOR_OPTIONS="$VERBOSE -L -o $BIN_DIR/db.cfg -l $LOG_DIR/feature_extractor.log"
-PREPROCESSOR_OPTIONS="$VERBOSE -D -o $BIN_DIR/db.cfg -l $LOG_DIR/feature_preprocessor.log"
-CLUSTERER_OPTIONS="-D -j $VERBOSE -k $K -o $BIN_DIR/db.cfg -l $LOG_DIR/clusterer.log"
-CLASSIFIER_OPTIONS="$VERBOSE -D -o $BIN_DIR/db.cfg -l $LOG_DIR/classifier.log"
-
 
 
 #------------------------------------------------------------
@@ -127,90 +118,6 @@ c_status()
 
 
 #------------------------------------------------------------
-# Profiler functions
-#------------------------------------------------------------
-p_initdb()
-{
-    p_stop
-    $DEBUG sudo $BIN_DIR/ngnetms_profiler -D $PROFILER_OPTIONS &
-    sleep 1
-    echo "\n Init Profiler DB tables"
-}
-
-p_start()
-{
-    [ -z "$1" ] || {
-        PROFILER_OPTIONS=$1
-    }
-    echo "\n Starting profiler..."
-    $DEBUG sudo $BIN_DIR/ngnetms_profiler $PROFILER_OPTIONS &
-    sleep 2
-    echo "\n started"
-}
-
-p_stop()
-{
-    $DEBUG sudo killall ngnetms_profiler
-    sleep 1
-    echo "\n ngnetms profiler stopped"
-}
-
-p_restart()
-{
-    p_stop
-    p_start "$1"
-}
-
-p_status()
-{
-	echo "\tProfiler:"
-    $DEBUG ps -ax | grep /[n/]gnetms_profiler >&2
-}
-
-
-#------------------------------------------------------------
-# Detector functions
-#------------------------------------------------------------
-d_initdb()
-{
-    d_stop
-    $DEBUG sudo $BIN_DIR/ngnetms_detector -D $DETECTOR_OPTIONS &
-    sleep 1
-    echo "\n Init Detector DB tables"
-}
-
-d_start()
-{
-    [ -z "$1" ] || {
-        DETECTOR_OPTIONS=$1
-    }
-
-    echo "\n Starting detector..."
-    $DEBUG sudo $BIN_DIR/ngnetms_detector $DETECTOR_OPTIONS &
-    sleep 1
-    echo "\n started"
-}
-
-d_stop()
-{
-    $DEBUG sudo killall ngnetms_detector
-    sleep 1
-    echo "\n ngnetms detector stopped"
-}
-
-d_restart()
-{
-    d_stop
-    d_start "$1"
-}
-
-d_status()
-{
-	echo "\tDetector:"
-    $DEBUG ps -ax | grep /[n/]gnetms_detector >&2
-}
-
-#------------------------------------------------------------
 # Observer functions
 #------------------------------------------------------------
 o_initdb()
@@ -253,247 +160,8 @@ o_status()
 }
 
 
-#------------------------------------------------------------
-# Feature extractor functions
-#------------------------------------------------------------
-fe_initdb()
-{
-    fe_stop
-    $DEBUG sudo $BIN_DIR/ngnetms_feature_extractor -D $EXTRACTOR_OPTIONS &
-    sleep 1
-    echo "\n Init Feature Extractor DB tables"
-}
-
-fe_start()
-{
-    [ -z "$1" ] || {
-        EXTRACTOR_OPTIONS=$1
-    }
-
-    echo "\n Start feature extractor"
-    $DEBUG sudo $BIN_DIR/ngnetms_feature_extractor $EXTRACTOR_OPTIONS &
-}
-
-fe_stop()
-{
-    $DEBUG sudo killall ngnetms_feature_extractor
-    sleep 1
-    echo "\n ngnetms feature extractor stopped"
-}
-
-fe_restart()
-{
-    fe_stop
-    fe_start "$1"
-}
-
-fe_status()
-{
-	echo "\tFeature extractor:"
-    $DEBUG ps -ax | grep /[n/]gnetms_feature_extractor >&2
-}
-
-#------------------------------------------------------------
-# Feature preprocessor functions
-#------------------------------------------------------------
-fp_initdb()
-{
-    fp_stop
-    $DEBUG sudo $BIN_DIR/ngnetms_feature_preprocessor $PREPROCESSOR_OPTIONS &
-    sleep 2
-    echo "\n Init Feature Preprocessor DB tables"
-}
-
-fp_start()
-{
-    [ -z "$1" ] || {
-        PREPROCESSOR_OPTIONS=$1
-    }
-
-    echo "\n Starting feature preprocessor"
-    $DEBUG sudo $BIN_DIR/ngnetms_feature_preprocessor $PREPROCESSOR_OPTIONS &
-    sleep 1
-    echo "\n started"
-}
-
-fp_stop()
-{
-    $DEBUG sudo killall ngnetms_feature_preprocessor
-    sleep 1
-    echo "\n ngnetms feature preprocessor stopped"
-}
-
-fp_restart()
-{
-    fp_stop
-    fp_start "$1"
-}
-
-fp_status()
-{
-	echo "\tFeature preprocessor:"
-    $DEBUG ps -ax | grep /[n/]gnetms_feature_preprocessor >&2
-}
-
-#------------------------------------------------------------
-# Clusterer functions
-#------------------------------------------------------------
-cu_initdb()
-{
-    cu_stop
-    $DEBUG sudo $BIN_DIR/ngnetms_clusterer $CLUSTERER_OPTIONS &
-    sleep 1
-    echo "\n Init Clusterer DB tables"
-}
-
-cu_start()
-{
-    [ -z "$1" ] || {
-        CLUSTERER_OPTIONS=$1
-    }
-
-    echo "\n Starting Clusterer"
-    $DEBUG sudo $BIN_DIR/ngnetms_clusterer $CLUSTERER_OPTIONS &
-    sleep 1
-    echo "\n started"
-}
-
-cu_stop()
-{
-    $DEBUG sudo killall ngnetms_clusterer
-    sleep 1
-    echo "\n ngnetms clusterer stopped"
-}
-
-cu_restart()
-{
-    cu_stop
-    cu_start "$1"
-}
-
-cu_status()
-{
-	echo "\tClusterer:"
-    $DEBUG ps -ax | grep /[n/]gnetms_clusterer >&2
-}
-
-#------------------------------------------------------------
-# Classifier functions
-#------------------------------------------------------------
-
-ca_initdb()
-{
-    ca_stop
-    $DEBUG sudo $BIN_DIR/ngnetms_classifier $CLASSIFIER_OPTIONS &
-    sleep 1
-    echo "\n Init Classifier DB tables"
-}
-
-ca_start()
-{
-    [ -z "$1" ] || {
-        CLASSIFIER_OPTIONS=$1
-    }
-
-    echo "\n Starting Classifier"
-    $DEBUG sudo $BIN_DIR/ngnetms_classifier $CLASSIFIER_OPTIONS &
-    sleep 1
-    echo "\n started"
-}
-
-ca_stop()
-{
-    $DEBUG sudo killall ngnetms_classifier
-    sleep 1
-    echo "\n ngnetms classifier stopped"
-}
-
-ca_restart()
-{
-    ca_stop
-    ca_start "$1"
-}
-
-ca_status()
-{
-	echo "\tClassifier:"
-    $DEBUG ps -ax | grep /[n/]gnetms_classifier >&2
-}
 
 
-#------------------------------------------------------------
-# Anomaly (profiler & detector) functions
-#------------------------------------------------------------
-a_initdb()
-{
-    a_stop
-    $DEBUG $BIN_DIR/ngnetms_profiler -D -j $PROFILER_OPTIONS &
-    echo "\n Init Profiler DB tables"
-    sleep 2
-
-    $DEBUG $BIN_DIR/ngnetms_detector -D -j $DETECTOR_OPTIONS &
-    echo "\n Init Detector DB tables"
-	a_stop
-}
-
-a_start()
-{
-#    mq_size=`cat /proc/sys/fs/mqueue/msg_max`
-#    [ $mq_size -eq $MQ_SIZE ] || {
-#        $DEBUG sudo su root -c "echo $MQ_SIZE > /proc/sys/fs/mqueue/msg_max"
-#        echo "\n MQ_Size updated"
-#    }
-
-    #Detector sould be started 1st
-    d_start
-    sleep 3
-    #Profiler shoul be started 2nd
-    p_start
-}
-
-a_stop()
-{
-    p_stop
-    d_stop
-    sleep 1
-    echo "\n ngnetms Anomaly processing stopped"
-}
-
-a_restart()
-{
-    a_stop
-	sleep 1
-    a_start
-}
-
-a_dump()
-{
-    pg_dump --data-only --table=public.anomaly ngnms > ${NGNMS_HOME}/data/anomaly.db
-    pg_dump --data-only --table=public.anomaly_template ngnms > ${NGNMS_HOME}/data/anomaly_template.db
-}
-
-a_restore()
-{
-    $DEBUG psql --table=public.anomaly -d ngnms < ${NGNMS_HOME}/data/anomaly.db
-    $DEBUG psql --table=public.anomaly_template -d ngnms < ${NGNMS_HOME}/data/anomaly_template.db
-}
-
-a_recreate()
-{
-# Experimental - work in progress...
-    a_stop
-    a_dump
-    $DEBUG $BIN_DIR/ngnetms_detector -D -j $DETECTOR_OPTIONS &
-    sleep 2
-    a_restore
-    $DEBUG $BIN_DIR/ngnetms_profiler -D -j $PROFILER_OPTIONS &
-}
-
-a_status()
-{
-    p_status
-    d_status
-}
 
 
 #------------------------------------------------------------
@@ -502,9 +170,6 @@ a_status()
 
 n_initdb()
 {
-    echo "\n Initialising DB for anomaly detection NGNMS services"
-    a_initdb
-    sleep 2
 
 #    echo "\n Initialising DB for observer NGNMS services"
 #    o_initdb
@@ -512,19 +177,7 @@ n_initdb()
 #    op_initdb
 #    sleep 1
 
-    echo "\n Initialising DB for AI feature extraction NGNMS services"
-    fe_initdb
-    sleep 3
 
-# In order to initialize other AI services do this one by one individually.
-#	fp_initdb
-#    sleep 1
-#    cu_initdb
-#    sleep 1
-#    ca_initdb
-#    sleep 1
-    ## now stop everything if still running
-	
     n_stop
 }
 
@@ -532,24 +185,16 @@ n_start()
 {
     echo "\n Starting base ngnms services"
     c_start
-    a_start
-#    o_start
-#    op_start
-	fe_start
-	## dont start other AI functions. That needs to wait in order to have some data to train on.
+    o_start
+    op_start
 }
 
 n_stop()
 {
     echo "\n Stopping All ngnms services"
     c_stop
-    a_stop
     o_stop
     op_stop
-	fe_stop
-	fp_stop
-	cu_stop
-	ca_stop
     echo "\n Done."
 }
 
@@ -564,13 +209,8 @@ n_status()
 {
 	echo ""
     c_status
-    a_status
     o_status
     op_status
-	fe_status
-	fp_status
-	cu_status
-	ca_status
 	echo ""
 }
 
@@ -604,73 +244,12 @@ case $service in
             *)  print_help $service;;
         esac
     ;;
-    "profiler") case $action in
-            "start") p_start "$options";;
-            "stop") p_stop;;
-            "restart") p_restart "$options";;
-            "status") p_status;;
-            *)  print_help $service;;
-        esac
-    ;;
-    "detector") case $action in
-            "start") d_start "$options";;
-            "stop") d_stop;;
-            "restart") d_restart "$options";;
-            "status") d_status;;
-            *)  print_help $service;;
-        esac
-    ;;
     "observer") case $action in
             "initdb") o_initdb "$options";;
             "start") o_start "$options";;
             "stop") o_stop;;
             "restart") o_restart "$options";;
             "status") o_status;;
-            *)  print_help $service;;
-        esac
-    ;;
-    "anomaly") case $action in
-            "start") a_start "$options";;
-            "stop") a_stop;;
-            "restart") a_restart "$options";;
-            "status") a_status;;
-            "initdb") a_initdb;;
-            *)  print_help $service;;
-        esac
-    ;;
-	"feature_extractor") case $action in
-            "start") fe_start "$options";;
-            "stop") fe_stop;;
-            "restart") fe_restart "$options";;
-            "status") fe_status;;
-            "initdb") fe_initdb;;
-            *)  print_help $service;;
-        esac
-    ;;
-	"feature_preprocessor") case $action in
-            "start") fp_start "$options";;
-            "stop") fp_stop;;
-            "restart") fp_restart "$options";;
-            "status") fp_status;;
-            "initdb") fp_initdb;;
-            *)  print_help $service;;
-        esac
-    ;;
-	"clusterer") case $action in
-            "start") cu_start "$options";;
-            "stop") cu_stop;;
-            "restart") cu_restart "$options";;
-            "status") cu_status;;
-            "initdb") cu_initdb;;
-            *)  print_help $service;;
-        esac
-    ;;
-	"classifier") case $action in
-            "start") ca_start "$options";;
-            "stop") ca_stop;;
-            "restart") ca_restart "$options";;
-            "initdb") ca_initdb;;
-            "status") ca_status;;
             *)  print_help $service;;
         esac
     ;;
@@ -693,8 +272,7 @@ case $service in
         esac
     ;;
     *)  echo "Usage:"
-        echo "  <collector|profiler|detector|observer|feature_extractor|feature_preprocessor|clusterer|classifier|optprf> <start|stop|restart|initdb|status> [\"options\"]"
-        echo "  <anomaly|ngnetms> <start|stop|restart|initdb|status>"
+        echo "  <collector|observer|optprf> <start|stop|restart|initdb|status> [\"options\"]"
         ;;
 esac
 
