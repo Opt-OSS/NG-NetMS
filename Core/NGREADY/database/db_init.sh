@@ -162,7 +162,7 @@ confirm_red
 echo -n "Database Password for user $DB_USER :"
 read -s DB_PASS
 echo -e "\ntring to connect to database\n"
-T=`PGPASSWORD=$DB_PASS psql -h 127.0.0.1 template1 -c "select now();"`
+T=`PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT template1 -c "select now();"`
 
 if [[ $? -ne 0 ]] ; then
     echo -e "\n\nERROR: Could not connect to database!!!\n"
