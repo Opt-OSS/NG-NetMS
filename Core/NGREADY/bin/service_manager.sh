@@ -272,7 +272,7 @@ case $service in
         esac
     ;;
     *)  echo "Usage:"
-        echo "  <collector|observer|optprf> <start|stop|restart|initdb|status> [\"options\"]"
+        echo "  <collector|ngnetms|observer|optprf> <start|stop|restart|initdb|status> [\"options\"]"
         ;;
 esac
 

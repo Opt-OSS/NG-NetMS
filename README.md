@@ -19,6 +19,11 @@ Apache License V2.0, GNU General Public License version 3.0 (GPLv3), GNU Library
 
 ## Installing
 
+IMPORTANT: Before proceeding, ensure that you have root permissions and administrative rights for the network about to be discovered or managed.
+If in doubt, consult with your network administrator or company management.
+Do not try to discover and manage networks for which you do not have administrative rights. This may result in your IP address being banned or even serious legal consequences.
+
+
 # Centos
 ```bash
 [ngnms@localhost build]$ sudo yum install epel-release  deltarpm
@@ -114,6 +119,22 @@ __remove /var/www/html if exists__
 [ngnms@localhost build]$ cp /opt/ngnms/www/custom_config/main.php.example /opt/ngnms/www/custom_config/main.php
 [ngnms@localhost build]$ sudo chown -R ngnms:apache /opt/ngnms/www
 ```
+
+## PHP
+
+short_open_tag should be ennabled.
+
+This can be done by enabling short_open_tag in php.ini:
+
+short_open_tag = on
+
+
+If you do not have access to the php.ini you can try to enable short_open_tag trough the .htaccess file.
+
+php_value short_open_tag 1
+
+NOTE: it's possible that host admin disabled the second option. Verify your permissions with your system administrators.
+
 
 ## Services
 
