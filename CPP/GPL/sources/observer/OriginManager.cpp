@@ -71,7 +71,7 @@ inline void updateTypes(shared_ptr<Database>& db)
 
 void OriginManager::Run()
 {
-	m_Logger->LogInfo( "Running" );
+	m_Logger->LogInfo( "Entering OriginManager Run..." );
     using namespace chrono;
     system_clock::time_point tp = system_clock::now();
 
@@ -90,9 +90,9 @@ void OriginManager::Run()
 void originThread(Origin &origin, Profiler &profiler, int imax)
 {
     stringstream ss;
-    ss << "Thread was started:" << endl;
+    ss << "Starting Thread:" << endl;
     ss << "IP = " << origin.GetIpAddr( ) << endl;
-    ss << "Version = " << origin.GetVersion( ) << endl;
+    ss << "Version enumerator = " << origin.GetVersion( ) << endl;
     ss << "Community = " << origin.GetCommunity( ) << endl;
     for( auto option : origin.GetOptions( ) )
     {
@@ -110,7 +110,7 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
         if (interval < imax)
         {
             tp += seconds(interval *= 2);
-            threadLog("Can not check origin options. The next try in " + to_string(interval) + "s.", origin.GetId());
+            threadLog("Can not get data from origin. The next try in " + to_string(interval) + "s.", origin.GetId());
         }
 
         this_thread::sleep_until(tp);
@@ -118,7 +118,7 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
 
     if (!origin.GetMonitorableCount())
     {
-        threadLog("There is no monitorable options. Tread will be stopped.", origin.GetId());
+        threadLog("There are no monitorable options. Tread will be stopped.", origin.GetId());
         return;
     }
 
@@ -182,22 +182,21 @@ bool OriginManager::LoadOrigins()
     map<int, Model> sharedModels;
     string originVendor, originModel, ipAddr;
 
-    m_Logger->LogInfo("Before Read Origins");
     if(false == m_Database->ReadOrigins(pqOrigins))
     {
+        m_Logger->LogError("Failed to ReadOrigins... ");
         return false;
     }
 
-    m_Logger->LogInfo("Before origins empty");
     if (pqOrigins.empty())
     {
-        m_Logger->LogError("There is no origins in the database.");
+        m_Logger->LogError("There are no origins in the database.");
         return true;
     }
 	
     try
     {
-    	m_Logger->LogInfo("Before read origin models");
+    	m_Logger->LogInfo("Reading origin models from DB...");
         if(m_Database->ReadOriginModels(models))
         {
             Model m;
@@ -209,7 +208,7 @@ bool OriginManager::LoadOrigins()
                 m._snmpVersion = aRow["snmp_version"].as<string>();
 
 
-                m_Logger->LogInfo("Before read origin model options");
+                m_Logger->LogInfo("Current origin model settings are: " + to_string(m._id) + " Vendor: " + m._vendor + " Model: " + m._model + " Version: " + m._snmpVersion);
 
                 pqxx::result pqOriginModelOptions;
                 if(m_Database->ReadOriginModelOptions(pqOriginModelOptions, m._id))
@@ -224,11 +223,13 @@ bool OriginManager::LoadOrigins()
                         o._oid = aRow["oid"].as<string>();
                         o._unit = aRow["unit"].as<string>();
                         m._modelOptions[o._id] = ModelOption(o);
+
+                        m_Logger->LogInfo("Current origin model options are: " + to_string(o._id) + " ModelID: " + to_string(o._modelId) + " Type: "+to_string(o._type)+" Name: " + o._name + " OID: " + o._oid + " Unit: " + o._unit );
                     }
                 }
                 else
                 {
-                    m_Logger->LogInfo("Model " + m._model + " (id:" + to_string(m._id) + ") does not have any monitorable option.");
+                    m_Logger->LogError("Model " + m._model + " (id:" + to_string(m._id) + ") does not have any monitorable options.");
                     continue;
                 }
 				
@@ -237,25 +238,24 @@ bool OriginManager::LoadOrigins()
             }
         }
 
-        m_Logger->LogInfo("before create new origins");
+        m_Logger->LogInfo("Before create new origins...");
 
         bool vendorFound;
         string community;
         for (auto aRow : pqOrigins)
         {
-        	m_Logger->LogInfo("-");
             m_Origins.push_back(Origin());		// Create new origin
             Origin &origin = m_Origins.back();
-            m_Logger->LogInfo("-");
             origin.SetId(aRow["router_id"].as<int>());
             ipAddr = aRow["ip_addr"].as<string>();
+            
+            m_Logger->LogInfo("- " + ipAddr );
+            
             origin.SetIp(rtrim(ipAddr));
-            m_Logger->LogInfo("-");
             if (m_Database->GetComunityStr(origin.GetId(), community))
             {
                 origin.SetCommunity(rtrim(community));
             }
-            m_Logger->LogInfo("-");
             if (aRow["eq_vendor"].is_null())
             {
                 originVendor = DEF_VM_NAME;
@@ -265,7 +265,6 @@ bool OriginManager::LoadOrigins()
                 originVendor = aRow["eq_vendor"].as<string>();
                 originVendor = rtrim(originVendor);
             }
-            m_Logger->LogInfo("-");
             
             if (aRow["eq_type"].is_null())
             {
@@ -276,7 +275,7 @@ bool OriginManager::LoadOrigins()
                 originModel = aRow["eq_type"].as<string>();
                 originModel = rtrim(originModel);
             }
-            m_Logger->LogInfo("-");
+            m_Logger->LogInfo("- "+ originVendor + " - " + originModel);
 
             origin.SetModelId( 0 );
             vendorFound = false;
@@ -297,7 +296,7 @@ bool OriginManager::LoadOrigins()
                 origin.SetModelId(mit.first);
                 break;
             }
-            m_Logger->LogInfo("end");
+            m_Logger->LogInfo("-end-");
             if ( !origin.GetModelId( ) )
             {
                 //create new model/options
@@ -320,9 +319,10 @@ bool OriginManager::LoadOrigins()
                 sharedModels[m._id] = Model(m);
             }
 
-            m_Logger->LogInfo("Before read observer options");
             origin.SetVersion(sharedModels[origin.GetModelId()]._snmpVersion);  //Set SNMP version
             pqxx::result pqObserverOptions;
+            
+            m_Logger->LogInfo("Before ReadObserverOptions");
             if(m_Database->ReadObserverOptions(pqObserverOptions, origin.GetId()))
             {
                 SnmpOption o;
@@ -345,8 +345,12 @@ bool OriginManager::LoadOrigins()
                     o._id = aRow["id"].as<int>();
                     o._originId = aRow["routers_id"].as<int>();
 
+		    m_Logger->LogInfo("Option_id is: " + to_string(o._id) + " RouterID is: " + to_string(o._originId) );
+
                     o._optionType = SnmpVT(it->second._type);
                     o._oid = it->second._oid;
+		    m_Logger->LogInfo("Option type is: " + to_string(o._optionType) + " OID is: " + o._oid );
+
                     origin.AddOption(o);
                     model._optionIDs.remove(o._modelOptionId);	//Math was found
                 }
@@ -366,16 +370,17 @@ bool OriginManager::LoadOrigins()
                     origin.AddOption(opt);
                 }
             }
-            m_Logger->LogInfo("Before optionscount");
             if (!origin.GetOptionsCount())
             {
                 m_Origins.pop_back();
+		m_Logger->LogInfo("origin.GetOptionsCount is not defined, pop_back");
                 continue;
             }
 
             if (!origin.GetMonitorableCount())
             {
                     m_Origins.pop_back();
+		    m_Logger->LogInfo("origin.GetMonitorableCount is not defined, pop_back");
                     continue;
             }
         }//for row in origins loop
@@ -385,18 +390,19 @@ bool OriginManager::LoadOrigins()
         m_Logger->LogError( e.what());
         return false;
     }
-
+        m_Logger->LogInfo("OriginManager::LoadOrigins was sucessful...");
 	return true;
 }
 
 bool OriginManager::LoadOriginThreads()
 {
+m_Logger->LogInfo("Loading OriginThreads...");
     for (auto &o : m_Origins)
     {
-#if 0
+/*#if 0
         if (o.GetId() != 6468)
             continue;
-#endif   
+#endif */   
         m_Threads.push_back(std::thread(originThread, std::ref(o), std::ref(m_Profiler), m_MaxInterval));
         writeLog(m_Logger);
     }

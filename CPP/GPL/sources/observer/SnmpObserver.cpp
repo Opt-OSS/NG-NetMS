@@ -37,25 +37,35 @@ int SnmpObserver::Execute( int argc, char * argv[] )
     if( !ReadNgnmsHomeEnvVariable( ) )
     {
         return -2;
-    }
+        }
 
-    if( !CreateDbStorage( options ) )
-    {
+    if( CreateDbStorage( options ) )
+      {
+      m_Logger->LogInfo( "Db connected..." );
+      }
+      else 
+        {
         return -3;
-    }
-    m_Logger->LogInfo( "Db connected" );
-    if(!Update(options))
-    {
+        }
+   
+    if( Update(options) )
+      {
+      m_Logger->LogInfo( "Db updated..." );
+      }
+      else
+       {
         return -4;
-    }
-    m_Logger->LogInfo( "Db updated" );
+       }
 
 
-    if (!CreateOriginManager(options) )
-    {
+    if(CreateOriginManager(options) )
+      {
+      m_Logger->LogInfo( "Origin manager created..." );
+      }
+      else
+       {  
         return -5;
-    }
-    m_Logger->LogInfo( "Origin manager created" );
+       }
 
     Run( options );
     return 0;
@@ -110,7 +120,7 @@ bool SnmpObserver::ReadNgnmsHomeEnvVariable( )
     if( m_NgnmsHomePath[0] != '/' )
     {
         stringstream ss;
-        ss << "Wrong setting NGNMS_HOME = " << m_NgnmsHomePath;
+        ss << "Wrong setting for NGNMS_HOME = " << m_NgnmsHomePath;
         m_Logger->LogError( ss.str( ) );
 
         return false;
@@ -120,7 +130,7 @@ bool SnmpObserver::ReadNgnmsHomeEnvVariable( )
     if( !fs::is_directory( data_dir ) )
     {
         stringstream ss;
-        ss << "Should contain directory NGNMS_HOME = " << m_NgnmsHomePath;
+        ss << "Home path variable should contain directory NGNMS_HOME = " << m_NgnmsHomePath;
         m_Logger->LogError( ss.str( ) );
 
         return false;
@@ -129,7 +139,7 @@ bool SnmpObserver::ReadNgnmsHomeEnvVariable( )
     if( !fs::exists( data_dir ) )
     {
         stringstream ss;
-        ss << "Directory not exist NGNMS_HOME = " << m_NgnmsHomePath;
+        ss << "Directory does not exist NGNMS_HOME = " << m_NgnmsHomePath;
         m_Logger->LogError( ss.str( ) );
 
         return false;
@@ -163,7 +173,7 @@ bool SnmpObserver::CreateDbStorage( ObserverOptions& Options )
     if( !boost::filesystem::exists( dbSettingsFileName ) )
     {
         stringstream ss;
-        ss << "DB settings file not exist! Path = " << dbSettingsFileName;
+        ss << "DB settings file does not exist! Path = " << dbSettingsFileName;
         m_Logger->LogError( ss.str( ) );
         return false;
     }
@@ -179,7 +189,7 @@ bool SnmpObserver::CreateDbStorage( ObserverOptions& Options )
     }
 
     bool connected = false;
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 10; ++i) {
         if (!m_Database->Connect(dbSettings)) {
 
             sleep(1);
@@ -228,7 +238,7 @@ bool SnmpObserver::Update(ObserverOptions& options)
 void SnmpObserver::Run( ObserverOptions& options )
 {
     m_Observer->LoadOriginThreads();
-    m_Logger->LogInfo( "Origin threads loaded" );
+    m_Logger->LogInfo( "Origin threads loaded..." );
     m_Observer->Run();
 }
 
