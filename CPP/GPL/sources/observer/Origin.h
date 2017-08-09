@@ -46,6 +46,7 @@ class Origin
         bool TestOptions(std::map<int, int>& newOptTypes, std::mutex& mtxOptTypes);
         eRetCode UpdateValues();
         void PrintOptions();
+
 	
     private:
         int                     m_Id;

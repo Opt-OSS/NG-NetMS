@@ -25,5 +25,5 @@ class OriginManager
         Profiler                m_Profiler;
         vector<std::thread>     m_Threads;
         vector<Origin>          m_Origins;
-		int						m_MaxInterval;
+	int			m_MaxInterval;
 };
