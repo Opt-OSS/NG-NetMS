@@ -42,7 +42,12 @@ Do not try to discover and manage networks for which you do not have administrat
 # Ubuntu
 ```bash
 [ngnms@localhost build]$ sudo apt-get update
-[ngnms@localhost build]$ sudo apt-get install cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+[ngnms@localhost build]$ sudo apt-get install cmake make gcc g++
+[ngnms@localhost build]$ sudo apt-get install perl cpanminus nmap 
+[ngnms@localhost build]$ sudo apt-get install pcre-devel libpqxx-devel 
+[ngnms@localhost build]$ sudo apt-get install flex flex-devel net-snmp-devel 
+[ngnms@localhost build]$ sudo apt-get install cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+
 [ngnms@localhost build]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection
 [ngnms@localhost build]$ git clone https://github.com/opt-oss/NG-NetMS.git
 [ngnms@localhost build]$ cp settings.cmake.dist settings.cmake
@@ -99,6 +104,10 @@ logout and login
 
 
 ### HTTPD for default directory config
+
+!!!WARNING!!! Excersise caution if your web server already hosts your other websites. Do not copy-paste blindly, because this will render your existing website inoperable.
+instructions that follow assume that you do not have web service configured yet.
+
 use `su` account for operations below
 ####SELinux
 setting up of `selinux` permission is out iof this document scope
@@ -111,6 +120,7 @@ __dangerous__
 __remove /var/www/html if exists__
 `this will remove all previously installed default server content`
 
+##Centos
 ```
 [ngnms@localhost build]$ sudo yum install httpd php php-pdo_pgsql php-pgsql php-pear php-mcrypt
 [ngnms@localhost build]$ sudo pear install Net_IPv4
@@ -118,6 +128,12 @@ __remove /var/www/html if exists__
 [ngnms@localhost build]$ sudo ln -s /opt/ngnms/www/html /var/www/html
 [ngnms@localhost build]$ cp /opt/ngnms/www/custom_config/main.php.example /opt/ngnms/www/custom_config/main.php
 [ngnms@localhost build]$ sudo chown -R ngnms:apache /opt/ngnms/www
+
+Edit your ngnms_vhost.conf file accordingly to your local configuration and copy into apache2 sites-available folder
+  sudo cp ngnms_vhost.conf /etc/apache2/sites-available/ngnms_vhost.conf
+  sudo a2ensite ngnms_vhost.conf 
+  service apache2 reload
+
 ```
 
 ## PHP
@@ -156,11 +172,12 @@ wait 5 minutes for scheduled tasks added and script created
 [ngnms@localhost build]$ sudo systemctl status ngnms-audit 
 ```
 # Ubuntu
-sudo cp /opt/ngnms/jm-worker-initd.sh into /etc/init.d/jm-workerd-init
-chmod ug+x /etc/init.d/jm-worker-init
-chown root:root /etc/init.d/jm-worker-init
 
-#### namp sudo
+sudo cp jm-worker-initd.sh /etc/init.d/jm-workerd-init
+sudo chmod ug+x /etc/init.d/jm-workerd-init 
+sudo chown root:root /etc/init.d/jm-workerd-init 
+
+#### nmap sudo
 ```shell
 [ngnms@localhost ~]$ sudo cp /opt/ngnms/nmap.sudo /etc/sudoers.d/nmap
 ```
