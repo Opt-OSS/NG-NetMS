@@ -59,9 +59,9 @@ General options:
 
 Database connection options:
   -w, --no-password        never prompt for password
-  -h, --host=HOSTNAME      database server host or socket directory (default: $NGNMS_DB_HOST)
-  -p, --port=PORT          database server port (default: $NGNMS_DB_PORT)
-  -U, --username=USERNAME  database user name (default: $NGNMS_DB_USER)
+  -L, --dbhost=HOSTNAME      database server host or socket directory (default: $NGNMS_DB_HOST)
+  -P, --dbport=PORT          database server port (default: $NGNMS_DB_PORT)
+  -U, --dbuser=USERNAME  database user name (default: $NGNMS_DB_USER)
 "
 echo
 echo
@@ -86,7 +86,7 @@ while [[ $# -gt 0 ]]; do
         -f|--file)           shift; DBFILE=$1                   ;;
         -f=*|--file=*)              DBFILE="${key#*=}"          ;;
         -P|--dbport)         shift; DB_PORT=$1                  ;;
-        -p=*|--dbport=*)            DB_PORT="${key#*=}"         ;;
+        -P=*|--dbport=*)            DB_PORT="${key#*=}"         ;;
         -U|--dbuser)         shift; DB_USER=$1                  ;;
         -U=*|--dbuser=*)            DB_USER="${key#*=}"         ;;
         -L|--dbhost)         shift; DB_HOST=$1                  ;;
