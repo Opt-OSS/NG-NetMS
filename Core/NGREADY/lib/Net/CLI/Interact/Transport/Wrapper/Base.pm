@@ -82,7 +82,7 @@ sub disconnect {
     $self->clear_wrapper;
     $self->flush;
 }
-use NGNMS::EscapeANSI qw /escape_ansi/;
+
 sub _abc { die "not implemented." }
 
 sub put { _abc() }
@@ -102,7 +102,6 @@ sub do_action {
         while ($self->pump) {
             # remove control characters
             (my $buffer = $self->buffer) =~ s/[\000-\010\013\014\016-\032\034-\037]//g;
-            escape_ansi(\$buffer);
             $self->logger->log('dump', 'debug', "SEEN:\n". $buffer);
 
             if ($buffer =~ m/^(.*$irs_re)(.*)/s) {

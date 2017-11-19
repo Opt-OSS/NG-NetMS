@@ -26,7 +26,7 @@ TcpServer::~TcpServer()
 
 }
 
-bool TcpServer::Initialize(int Port)
+bool TcpServer::Initialize(int Port, string BindIPAddress)
 {
 	if (m_Initialized)
 	{
@@ -42,7 +42,8 @@ bool TcpServer::Initialize(int Port)
 	struct sockaddr_in sa_serv;
 	memset(&sa_serv, '\0', sizeof(sa_serv));
 	sa_serv.sin_family = AF_INET;
-	sa_serv.sin_addr.s_addr = INADDR_ANY;
+//	sa_serv.sin_addr.s_addr = INADDR_ANY;
+	sa_serv.sin_addr.s_addr = inet_addr(BindIPAddress.c_str());
 	sa_serv.sin_port = htons(Port);
 
 	int status = bind(m_ListenSocket, (struct sockaddr*) &sa_serv, sizeof (sa_serv));

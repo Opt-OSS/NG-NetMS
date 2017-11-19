@@ -25,7 +25,7 @@ class TcpServer
 public:
 	TcpServer( );
 	~TcpServer();
-	bool Initialize(int Port);
+	bool Initialize(int Port, std::string BindIPAddress );
 	std::pair<bool,std::string> GetIpAddress(int ConnectionId);
 	bool SendData(int ConnectionId, const std::string& Data);
 	void RegisterHandler(ITcpServerHandlers& Handlers);

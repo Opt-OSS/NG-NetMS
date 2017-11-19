@@ -16,7 +16,7 @@ has logger => (
 has verbose => (
     is =>'rw',
 #        builder=> 1,
-#        default=>sub{ $ENV{NGNMS_DEBUG} || 'INFO' }
+        default=>sub{ $ENV{NGNMS_DEBUG} || 'INFO' }
 );
 sub BUILD {
     Log::Log4perl->init_once($ENV{NGNMS_LOGCONF}||$ENV{NGNMS_HOME}."/bin/log4perl.conf");

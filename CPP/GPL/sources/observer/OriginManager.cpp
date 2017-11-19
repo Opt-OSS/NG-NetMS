@@ -89,11 +89,12 @@ void OriginManager::Run()
 
 void originThread(Origin &origin, Profiler &profiler, int imax)
 {
+    string myIp = origin.GetIpAddr( );
     stringstream ss;
     ss << "Starting Thread:" << endl;
-    ss << "IP = " << origin.GetIpAddr( ) << endl;
+    ss << "IP = " << myIp << endl;
     ss << "Version enumerator = " << origin.GetVersion( ) << endl;
-    ss << "Community = " << origin.GetCommunity( ) << endl;
+    // ss << "Community = " << origin.GetCommunity( ) << endl;
     for( auto option : origin.GetOptions( ) )
     {
         ss << "OID = " << option._oid << " track = " << option._track << endl;
@@ -106,19 +107,19 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
     system_clock::time_point tp;
     while (!origin.TestOptions(newOptTypes, mtxOptTypes))
     {
-        tp = system_clock::now();
         if (interval < imax)
         {
-            tp += seconds(interval *= 2);
-            threadLog("Can not get data from origin. The next try in " + to_string(interval) + "s.", origin.GetId());
+            interval *= 2;
         }
+        tp =  system_clock::now()+ seconds(interval);
+        threadLog("Can not get data from origin(" + myIp + "). The next try in " + to_string(interval) + "s. max "+to_string(imax), origin.GetId());
 
         this_thread::sleep_until(tp);
     }
 
     if (!origin.GetMonitorableCount())
     {
-        threadLog("There are no monitorable options. Tread will be stopped.", origin.GetId());
+        threadLog("There are no monitorable options (" + myIp + "). Tread will be stopped.", origin.GetId());
         return;
     }
 
@@ -129,7 +130,7 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
     }
 
     interval = MIN_INTERVAL;
-    tp = system_clock::now();
+    
     while (true) 
     {
         switch (origin.UpdateValues())
@@ -139,8 +140,13 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
                 if (interval < imax)
                 {
                     interval *= 2;
-                    threadLog("Can not update origin options. The next try in " + to_string(interval) + "s.", origin.GetId());
                 }
+                for (auto& opt : options)
+                 {
+                     profiler.Update(opt._valueId, 0, true); //set _is_nan=true flag in SNMP struct soit will not be saved to DB
+                 }
+                threadLog("Can not update origin options (" + myIp + "). The next try in " + to_string(interval) + "s.", origin.GetId());
+
             }
             break;
             case RET_ERROR:
@@ -148,7 +154,7 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
                 origin.TestOptions(newOptTypes, mtxOptTypes);
                 if (!origin.GetMonitorableCount())
                 {
-                    threadLog("There is no monitorable options. Tread will be stopped.", origin.GetId());
+                    threadLog("There is no monitorable options (" + myIp + "). Tread will be stopped.", origin.GetId());
                     return;
                 }
             }
@@ -157,7 +163,7 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
             {
                 for (auto& opt : options)
                 {
-                    profiler.Update(opt._valueId, opt._value.bigintV);
+                    profiler.Update(opt._valueId, opt._value.bigintV, false);
                 }
 
                 interval = MIN_INTERVAL;
@@ -165,12 +171,12 @@ void originThread(Origin &origin, Profiler &profiler, int imax)
             break;
             case RET_FAIL:
             {
-                threadLog("Can not open SNMP session. Tread will be stopped.", origin.GetId());
+                threadLog("Can not open SNMP session (" + myIp + "). Tread will be stopped.", origin.GetId());
                 return;
             }
         }
         
-        tp += seconds(interval);
+        tp = system_clock::now()+ seconds(interval);
         this_thread::sleep_until(tp);
     }
 }

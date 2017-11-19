@@ -22,6 +22,7 @@ use DBI;
 use DBD::Pg;
 use DBD::Pg qw(:pg_types);
 use File::Slurp;
+use NGNMS::App::Helpers qw /trim/;
 use Emsgd qw(diag);
 
 require Exporter;
@@ -483,7 +484,7 @@ sub DB_getHostVendor {
 
     my $rref = $dbh->selectcol_arrayref( $SQL );
     if (defined( $rref )) {
-        return $rref->[0];
+        return NGNMS::App::Helpers->trim($rref->[0]);
     }
     return undef;
 }
@@ -973,7 +974,7 @@ sub DB_addLinkNoWrite($$$$) {
 
     #    Emsgd::diag( \@_ ) unless $from;
 
-    $logger->debug( "Link: $from to $to");
+    $logger->debug( "Link: $from to $to as $type");
     if ($to ne $from &&
         !grep (/^$to:.*$/, @{${$links->{$from}}}) &&
         !grep (/^$from:.*$/, @{${$links->{$to}}}))
@@ -1013,8 +1014,9 @@ sub DB_dropHost($$) {
 sub DB_replaceHost($$$) {
     #    diag(\@_,'DB_replaceHost',1);
     my ($links, $src, $dst) = @_[0 .. 2];
-    $logger->debug( "Replacing $src with $dst");
     return if ( $src eq $dst );
+    $logger->debug( "Moving $src to $dst");
+#    diag([$links->{$src},$links->{$dst}],'before');
     if (defined( $links->{$src} )) {
         if (defined( $links->{$dst} )) {
             push  @{${$links->{$dst}}}, @{${$links->{$src}}};
@@ -1023,8 +1025,10 @@ sub DB_replaceHost($$$) {
         }
         delete $links->{$src};
     }
-    @{${$links->{$dst}}} = grep( !/^$src:(.*)$/, @{${$links->{$dst}}});
+#    diag([$links->{$src},$links->{$dst}],'middle');
 
+    @{${$links->{$dst}}} = grep( !/^$src:(.*)$/, @{${$links->{$dst}}});
+#    diag([$links->{$src},$links->{$dst}],'after');
     foreach my $host (keys %$links) {
         $logger->debug( "links for $host:");
         map {

@@ -1,4 +1,5 @@
 #include "Database.h"
+#include "EventProtocol.h"
 #include <sstream>
 #include <map>
 #include <algorithm>
@@ -29,6 +30,76 @@ Database::~Database( )
 
     WakeupWriterThread( );
     m_WritterThread->join();
+}
+
+bool Database::DeleteTables( )
+{
+	stringstream ss;
+	ss << "DROP TABLE IF EXISTS events CASCADE;";
+	ss << "DROP TABLE IF EXISTS event_protocol CASCADE;";
+
+	return PerformQuery(ss.str()).IsOk();
+}
+
+bool Database::CreateTables( )
+{
+	stringstream ss;
+
+	if(m_Debug)
+	{
+		ss << "CREATE TABLE IF NOT EXISTS events ( "
+			  "event_id SERIAL ,"
+			  "origin_ts timestamp with time zone ,"
+			  "receiver_ts timestamp with time zone ,"
+			  "origin character varying(64) ,"
+			  "origin_id integer ,"
+			  "facility character varying ,"
+			  "code character varying(64) ,"
+			  "descr character varying(10000) ,"
+			  "priority character varying(10) ,"
+			  "severity integer,"
+			  "protocol integer NOT NULL ,"
+			  "raw_event character varying"
+			  ");";
+	}
+	else
+	{
+		ss << "CREATE TABLE IF NOT EXISTS events ( "
+			  "event_id SERIAL ,"
+			  "origin_ts timestamp with time zone ,"
+			  "receiver_ts timestamp with time zone ,"
+			  "origin character varying(64) ,"
+			  "origin_id integer ,"
+			  "facility character varying ,"
+			  "code character varying(64) ,"
+			  "descr character varying(10000) ,"
+			  "priority character varying(10) ,"
+			  "severity integer,"
+			  "protocol integer NOT NULL"
+			  ");";
+	}
+
+	ss << "CREATE TABLE IF NOT EXISTS event_protocol ( "
+				  "id integer PRIMARY KEY,"
+				  "name character varying(64)"
+			      ");";
+
+	ss << "CREATE INDEX IF NOT EXISTS event_id_idx ON events USING btree( event_id ASC NULLS LAST );";
+	ss << "CREATE INDEX IF NOT EXISTS events_origin_ts_idx ON events USING btree( origin_ts ASC NULLS LAST );";
+	ss << "CREATE INDEX IF NOT EXISTS event_receiver_ts_idx ON events USING btree( receiver_ts ASC NULLS LAST );";
+
+	if( PerformQuery(ss.str()).IsFail())
+	{
+		return false;
+	}
+
+	for( auto& e : GetProtocolToStringMapping())
+	{
+		string query = "INSERT INTO event_protocol (id, name) VALUES(" + to_string( static_cast<int>(e.first) ) + ", '" + e.second  + "');";
+		PerformQuery(query);
+	}
+
+	return true;
 }
 
 bool Database::Connect( const DbSettings& Settings  )
@@ -73,8 +144,8 @@ void Database::WritterThread( Database* This )
         }
 
         This->m_CondVarPredicate = false;
-        string baseQuery = This->m_Debug ? "INSERT INTO events ( priority, severity, origin_ts, receiver_ts, origin, origin_id, facility, code, descr, raw_event ) VALUES " :
-                                     "INSERT INTO events ( priority, severity, origin_ts, receiver_ts, origin, origin_id, facility, code, descr ) VALUES ";
+        string baseQuery = This->m_Debug ? "INSERT INTO events ( priority, severity, origin_ts, receiver_ts, origin, origin_id, facility, code, descr, protocol, raw_event ) VALUES " :
+                                     "INSERT INTO events ( priority, severity, origin_ts, receiver_ts, origin, origin_id, facility, code, descr, protocol ) VALUES ";
 
         string multipleQueries = This->m_QueryQueue.empty( ) ? "" : baseQuery;
         while( !This->m_QueryQueue.empty( ) )
@@ -233,7 +304,8 @@ DbReturnCode Database::WriteEvent( const Event& event )
     }
 
     string queryInsertEvent = " ( '" + event.getPriority( ) +  "', '" + to_string( severity ) + "', '" + event.getOrign_Ts( ) + "', '" + event.getTs() + "', '" +
-    event.getOrigin( ) + "', '" + to_string( RouterId ) + "', '" + event.getFacility( ) + "', '" + event.getCode( ) + "', '" +EscapeString( event.getDescr( ) );
+    event.getOrigin( ) + "', '" + to_string( RouterId ) + "', '" + event.getFacility( ) + "', '" + event.getCode( ) + "', '" + EscapeString( event.getDescr( ) ) +
+    "', '" + to_string( static_cast<int>( event.getProtocol()) );
 
     if( m_Debug )
     {
@@ -245,3 +317,26 @@ DbReturnCode Database::WriteEvent( const Event& event )
     PushQueryToQueue( queryInsertEvent );
     return DbReturnCode( DbReturnCode::Code::OK );
 }
+
+DbReturnCode Database::PerformQuery( const string& Query )
+{
+	pqxx::result result;
+	return PerformQuery(Query, result);
+}
+
+DbReturnCode Database::PerformQuery( const string& Query, pqxx::result& result )
+{
+    try
+    {
+        pqxx::work work( *m_Connector->GetConnection() );
+        result = work.exec( Query );
+        work.commit();
+    }
+    catch( const exception &e )
+    {
+        return DbReturnCode( DbReturnCode::Code::QUERY_ERROR, string( "Failed to execute query: " + Query ) );
+    }
+
+    return DbReturnCode( DbReturnCode::Code::OK );
+}
+

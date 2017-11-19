@@ -1622,7 +1622,8 @@ map<int,string> NetscreenFacilityParser::m_CodeToFacility =
 bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
 {
     // Save original message
-    static string OriginalMessage = Message;
+    static string OriginalMessage;
+    OriginalMessage = Message;
 
     static string hostName;
     bool parseHostName = !(SourceIP.size() && HasSourceIp);
@@ -1659,7 +1660,7 @@ bool ParserSyslog::Parse( string Message, bool HasSourceIp, string SourceIP )
             Message = netscreenDeviceIdParser.GetOutput( );
         }
 
-        NetscreenFacilityParser netscreenFacilityParser;
+        static NetscreenFacilityParser netscreenFacilityParser;
         netscreenFacilityParser.Parse( Message );
         if( netscreenFacilityParser.GetFound( ) )
         {

@@ -6,7 +6,7 @@
 class NetFlowTcpDP: public IDataProvider, public ITcpServerHandlers
 {
     public:
-		NetFlowTcpDP( int Port );
+		NetFlowTcpDP( int Port, string BindIPAddress );
         virtual ~NetFlowTcpDP( );
         bool Run( );
         bool Stop( );
@@ -22,6 +22,7 @@ class NetFlowTcpDP: public IDataProvider, public ITcpServerHandlers
     private:
         int 		m_Port;
         bool		m_Interrupted;
+        string m_BindIPAddress;
         TcpServer	m_TcpServer;
         Notifier<DataProviderListener, DataProviderListener::DataProviderEvent&> m_Notifier;
 };

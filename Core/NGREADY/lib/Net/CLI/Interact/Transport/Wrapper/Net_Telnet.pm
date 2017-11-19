@@ -6,7 +6,7 @@ package Net::CLI::Interact::Transport::Wrapper::Net_Telnet;
 use Moo;
 use Sub::Quote;
 use MooX::Types::MooseLike::Base qw(Str InstanceOf);
-use NGNMS::EscapeANSI qw/escape_ansi/;
+
 extends 'Net::CLI::Interact::Transport::Wrapper::Base';
 
 {
@@ -33,7 +33,6 @@ sub buffer {
 sub pump {
     my $self = shift;
     my $content = $self->wrapper->get(Timeout => $self->timeout);
-#    escape_ansi(\$content)if defined $content;
     $self->_buffer($self->_buffer . $content) if defined $content;
 }
 

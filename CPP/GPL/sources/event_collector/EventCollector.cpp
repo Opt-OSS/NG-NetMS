@@ -261,43 +261,43 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 					 m_DataProvider = shared_ptr<IDataProvider>( new SyslogFileDP( Options.GetFileName( ) ) );
 				break;
 				case Options::SourceType::SYSLOG_FILE_POLLING:
-		             m_DataProvider =  shared_ptr<IDataProvider>( new SyslogFilePollingDP( Options.GetFileName( ) ) );
+		             m_DataProvider =  shared_ptr<IDataProvider>( new SyslogFilePollingDP( Options.GetFileName( ) , m_Logger) );
 				break;
 				case Options::SourceType::SYSLOG_UDP:
-					 m_DataProvider = shared_ptr<IDataProvider>( new SyslogUdpDP( Options.GetPort( ) ) );
+					 m_DataProvider = shared_ptr<IDataProvider>( new SyslogUdpDP( Options.GetPort( ), Options.GetBindIPAddress() ) );
 				break;
 				case Options::SourceType::SYSLOG_TCP:
-					m_DataProvider =  shared_ptr<IDataProvider>( new SyslogTcpDP( Options.GetPort( ) ) );
+					m_DataProvider =  shared_ptr<IDataProvider>( new SyslogTcpDP( Options.GetPort( ), Options.GetBindIPAddress( ) ) );
 				break;
 				case Options::SourceType::SNMP_FILE:
 					 m_DataProvider = shared_ptr<IDataProvider>( new SyslogFileDP( Options.GetFileName( ) ) );
 				break;
 				case Options::SourceType::SNMP_FILE_POLLING:
-		             m_DataProvider =  shared_ptr<IDataProvider>( new SyslogFilePollingDP( Options.GetFileName( ) ) );
+		             m_DataProvider =  shared_ptr<IDataProvider>( new SyslogFilePollingDP( Options.GetFileName( ), m_Logger ) );
 				break;
 				case Options::SourceType::NETFLOW_UDP:
-					m_DataProvider =  shared_ptr<IDataProvider>( new NetFlowUdpDP( Options.GetPort( ) ) );
+					m_DataProvider =  shared_ptr<IDataProvider>( new NetFlowUdpDP( Options.GetPort( ) , Options.GetBindIPAddress( ) ) );
 				break;
 				case Options::SourceType::NETFLOW_TCP:
-					m_DataProvider = shared_ptr<IDataProvider>( new NetFlowTcpDP( Options.GetPort( ) ) );
+					m_DataProvider = shared_ptr<IDataProvider>( new NetFlowTcpDP( Options.GetPort( ) , Options.GetBindIPAddress( )  ) );
 				break;
 				case Options::SourceType::APACHE_FILE:
 					 m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
 				break;
 				case Options::SourceType::APACHE_FILE_POLLING:
-		             m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) ) );
+		             m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ), m_Logger ) );
 				break;
 				case Options::SourceType::CUSTOM1_FILE:
 					 m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
 				break;
 				case Options::SourceType::CUSTOM1_FILE_POLLING:
-					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) ) );
+					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) , m_Logger ) );
 				break;
 				case Options::SourceType::CUSTOM2_FILE:
 					m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
 				break;
 				case Options::SourceType::CUSTOM2_FILE_POLLING:
-					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) ) );
+					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) , m_Logger ) );
 				break;
             }
 
@@ -392,7 +392,12 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
                 return false;
             }
 
-            return true;
+            if(Options.GetRenewTables())
+            {
+            	m_Database->DeleteTables();
+            }
+
+            return m_Database->CreateTables();
         }
 
         void Notify( ClassifierEvent& event )

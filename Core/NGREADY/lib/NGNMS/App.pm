@@ -107,6 +107,7 @@ sub session_factory {
     $param{record_dir} = $self->record_dir;
     return $self->SessionClass->new( %param );
 }
+#@returns NGNMS::Net::SNMPSession
 sub snmp_session_factory {
     my $self = shift;
     my $param = shift;
@@ -115,7 +116,7 @@ sub snmp_session_factory {
 }
 
 
-
+#@deprecated
 sub runPluginRegistration{
     my $self=shift;
     my $manager = NGNMS::App::PluginManager->new();

@@ -32,6 +32,9 @@ class Database
     public:
         Database( bool Debug );
         ~Database( );
+    	bool DeleteTables();
+    	bool CreateTables();
+
         bool Connect( const DbSettings& Settings  );
         DbReturnCode WriteEvent( const Event& event );
 
@@ -43,6 +46,9 @@ class Database
         bool PushQueryToQueue( string& Query );
         void WakeupWriterThread( );
         size_t GetQueryQueueSize( );
+        DbReturnCode PerformQuery( const string& Query );
+        DbReturnCode PerformQuery( const string& Query, pqxx::result& result );
+
         static void TimeoutThread( Database* This );
         static void WritterThread( Database* This );
 

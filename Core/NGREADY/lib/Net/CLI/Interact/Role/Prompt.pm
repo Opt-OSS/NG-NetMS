@@ -2,7 +2,7 @@ package Net::CLI::Interact::Role::Prompt;
 {
   $Net::CLI::Interact::Role::Prompt::VERSION = '2.143070';
 }
-use Emsgd qw/diag/;
+
 use Moo::Role;
 use MooX::Types::MooseLike::Base qw(Str RegexpRef);
 use Net::CLI::Interact::ActionSet;
@@ -103,7 +103,8 @@ sub find_prompt {
                     $self->logger->log('prompt', 'info', "hit, matches prompt $prompt");
                     $self->set_prompt($prompt);
                     $self->last_actionset( $self->_fabricate_actionset() );
-                    $self->logger->log('dialogue', 'info',                        "trimmed command response:\n". $self->last_response);
+                    $self->logger->log('dialogue', 'info',
+                        "trimmed command response:\n". $self->last_response);
                     last PUMPING;
                 }
                 $self->logger->log('prompt', 'debug', "nope, doesn't (yet) match $prompt");

@@ -1,6 +1,16 @@
 <?php
 //error_reporting(E_ALL);
-//ini_set('display_errors',1);
+//ini_set("display_startup_errors","1");
+//ini_set("display_errors","1");
+//define('YII_ENABLE_ERROR_HANDLER', false);
+//define('YII_ENABLE_EXCEPTION_HANDLER', false);
+
+// remove the following lines when in production mode
+//defined('YII_DEBUG') or define('YII_DEBUG',true);
+// specify how many levels of call stack should be shown in each log message
+//defined('YII_TRACE_LEVEL') or define('YII_TRACE_LEVEL',3);
+//defined('YII_DEBUG_SHOW_PROFILER') or define('YII_DEBUG_SHOW_PROFILER',true);
+
 include_once '../protected/extensions/Emsgd.php';
 // change the following paths if necessary
 $yii=dirname(__FILE__).'/../framework/yii.php';
@@ -8,10 +18,6 @@ $base=require dirname(__FILE__).'/../protected/config/main.php';
 $local = include dirname(__FILE__).'/../custom_config/main.php';
 
 
-// remove the following lines when in production mode
-defined('YII_DEBUG') or define('YII_DEBUG',true);
-// specify how many levels of call stack should be shown in each log message
-defined('YII_TRACE_LEVEL') or define('YII_TRACE_LEVEL',3);
 
 require_once($yii);
 $config=array_replace_recursive($base, $local);

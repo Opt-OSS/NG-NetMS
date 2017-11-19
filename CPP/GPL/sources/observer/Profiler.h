@@ -16,7 +16,7 @@ class Profiler
 public:
 	friend bool dump(Profiler& p, shared_ptr<Database>& db, const time_t& ts);
 	int Add(const int oid, const SnmpVT& t);
-	void Update(const int vid, const long val);	//! Provides deadlock in case of std::mutex
+	void Update(const int vid, const long val, bool _is_nan=false);	//! Provides deadlock in case of std::mutex
 };
 
 bool dump(Profiler& p, shared_ptr<Database>& db, const time_t& ts);

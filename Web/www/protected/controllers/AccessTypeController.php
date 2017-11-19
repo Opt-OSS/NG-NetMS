@@ -148,7 +148,7 @@ class AccessTypeController extends Controller
      */
     public function actionEdit()
     {
-        $acc_type_id = Yii::app()->getRequest()->getParam('id');
+        $acc_type_id =(int) Yii::app()->getRequest()->getParam('id');
         $model=new AccessType('search');
         $model->unsetAttributes();  // clear any default values
 

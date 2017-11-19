@@ -60,8 +60,6 @@ has 'last_actionset' => (
 
 sub _trigger_last_actionset {
     my ($self, $new) = @_;
-
-#    use Emsgd; Emsgd::diag('----','here we miss',1);
     $self->logger->log('prompt', 'notice',
         sprintf ('output matching prompt was "%s"', $new->item_at(-1)->response));
     if (Class::Load::is_class_loaded('Data::Printer', {-version => '0.27'})) {
@@ -165,6 +163,7 @@ sub _execute_actions {
 
     $self->logger->log('engine', 'debug', 'dispatching to execute method');
     my $timeout_bak = $self->transport->timeout;
+
     $self->transport->timeout($options->timeout || $timeout_bak);
     $set->execute;
     $self->transport->timeout($timeout_bak);

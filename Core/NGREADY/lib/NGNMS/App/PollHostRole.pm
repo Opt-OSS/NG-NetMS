@@ -9,7 +9,8 @@ use Module::Pluggable search_path => 'NGNMS::Plugins', require => 1;
 use NGNMS::App::PollHostPluginInterface;
 use NGNMS::Net::Nmap;
 use NGNMS::Log4;
-with  "NGNMS::App::Helpers", "NGNMS::App::Database", "NGNMS::App::Crypt";
+use NGNMS::App::Crypt;
+with  "NGNMS::App::Helpers", "NGNMS::App::Database";
 with "NGNMS::Log4Role";
 my @pollHostPluginsCanSNMP; # array of classes that implements PollHost::checkSNMPsysObjectID
 my @pollHostPluginsCanSupport; # array of classes that implements PollHost::checkDeviceSupported
@@ -23,6 +24,19 @@ has ssh_status => (is => 'rw');
 has nmap_status => (is => 'rw');
 has override_hosttype => (is => 'rw');
 has sysObjIdResult => (is => 'rw');
+#@returns NGNMS::App::Crypt
+has crypt => (is => 'lazy', builder => sub{
+            my $self = shift;
+            my $crypt = NGNMS::App::Crypt->new(
+                DB                  => $self->DB,
+                username            => $self->host_user,
+                password            => $self->host_password,
+                privileged_password => $self->host_priveleged_password,
+                transport           => $self->host_transport,
+                community           => $self->host_community,
+
+            );
+        });
 # ------------------------------------------------------
 #=for runPollHost()
 #check arguments,
@@ -33,7 +47,7 @@ has sysObjIdResult => (is => 'rw');
 #=cut
 
 
-sub find_plugins{
+sub find_plugins {
     my $self = shift;
     @pollHostPluginsCanSNMP = (); #clear array so no duplicates
     @pollHostPluginsCanSupport = (); #clear array so no duplicates
@@ -41,10 +55,10 @@ sub find_plugins{
     #  $self->plugins - list of modules returned by Module::Pluggable with search_path => 'NGNMS::Plugins'
     #**
     foreach my NGNMS::App::PollHostPluginInterface $plugin ($self->plugins) {
-        push ( @pollHostPluginsCanSNMP, $plugin->new)
-            if $plugin->can( 'checkCanPollHost' ) && $plugin->checkCanPollHost() && $plugin->can( 'checkDeviceSupported' ) && !Moo::Role->is_role( $plugin );
-        push ( @pollHostPluginsCanSupport, $plugin->new )
-            if $plugin->can( 'checkCanPollHost' ) && $plugin->checkCanPollHost() && $plugin->can( 'checkSNMPsysObjectID' ) && !Moo::Role->is_role( $plugin );
+        push (@pollHostPluginsCanSNMP, $plugin->new)
+            if $plugin->can('checkCanPollHost') && $plugin->checkCanPollHost() && $plugin->can('checkDeviceSupported') && !Moo::Role->is_role($plugin);
+        push (@pollHostPluginsCanSupport, $plugin->new)
+            if $plugin->can('checkCanPollHost') && $plugin->checkCanPollHost() && $plugin->can('checkSNMPsysObjectID') && !Moo::Role->is_role($plugin);
     }
 }
 sub runPollHost {
@@ -52,23 +66,23 @@ sub runPollHost {
     my $self = shift;
     my $host = $self->host;
     $plugin_module = undef;
-    $self->logger->error( "DIE: host perameter required in poll run mode" ) && return 0 unless defined $host;
+    $self->logger->error("DIE: host perameter required in poll run mode") && return 0 unless defined $host;
 
-    ($rt_id, $host_name, $host_ip) = $self->DB->getRouterInfo( $host );
-#    $self->put_debug_key('host',$host_ip);
+    ($rt_id, $host_name, $host_ip) = $self->DB->getRouterInfo($host);
+    #    $self->put_debug_key('host',$host_ip);
     $self->override_hosttype($self->host_type);
     #todo move inject into App
     $self->logger->debug("already exists, skip injecting") unless $rt_id && $self->inject;
     if (!$rt_id) {
-        $self->logger->error ( "host not found in DB" ) && return 0 unless $self->inject;
-        $rt_id = $self->DB->addRouter( $host, $host, 'up' );
-        $self->logger->error ( "can not add router" ) && return 0 unless $rt_id;
-        $self->DB->setHostVendor( $rt_id, $self->host_type );
+        $self->logger->error ("host not found in DB") && return 0 unless $self->inject;
+        $rt_id = $self->DB->addRouter($host, $host, 'up');
+        $self->logger->error ("can not add router") && return 0 unless $rt_id;
+        $self->DB->setHostVendor($rt_id, $self->host_type);
 
-        $self->logger->info("host injected into DB as ".$self->host_type);
-        ($rt_id, $host_name, $host_ip) = $self->DB->getRouterInfo( $host );
+        $self->logger->info("host injected into DB as " . $self->host_type);
+        ($rt_id, $host_name, $host_ip) = $self->DB->getRouterInfo($host);
     }
-    $self->logger->error ( "host not found in DB" ) && return 0 unless $rt_id;
+    $self->logger->error ("host not found in DB") && return 0 unless $rt_id;
 
     $self->find_plugins();
 
@@ -78,15 +92,16 @@ sub runPollHost {
     # in case if DNS name failed get host ip addr and re-try to connect using it instead
     #try another round
     if (!$self->ssh_status) {
-        $self->logger->info( "Could not get configs default configs");
+        $self->logger->info("Could not get configs default configs");
         if ($host ne $host_ip) {
-            $self->logger->info( "Attempt to get configs for  hostname  by  $host_ip" );
-            local $NGNMS::Log4::package_prefix = $self->host."($host_ip) :: Pollhost :: ";
+            $self->logger->info("Attempt to get configs for  hostname  by  $host_ip");
+            local $NGNMS::Log4::package_prefix = $self->host . "($host_ip) :: Pollhost :: ";
             $self->host($host_ip);
             #            $self->set_logger();
             $self->start_poll_processing;
-        } else {
-            $self->logger->warn( "Could not get configs  by  hostname or ip $host_ip" );
+        }
+        else {
+            $self->logger->warn("Could not get configs  by  hostname or ip $host_ip");
 
         }
     }
@@ -97,15 +112,15 @@ sub _setNmapStatus {
     my $self = shift;
     $self->nmap_status(NGNMS::Net::Nmap::getNmapResponse($self->host));
 }
-sub doNmap{
+sub doNmap {
     my $self = shift;
 
     $self->_setNmapStatus;
     #    diag "NO manual type: nmap status ".$self->nmap_status."; host type ".($self->host_type || 'undef');
-    $self->DB->setHostStatus( $rt_id, ($self->host_type ? 'Down' : 'Unknown')) && return
+    $self->DB->setHostStatus($rt_id, ($self->host_type ? 'Down' : 'Unknown')) && return
         if !$self->nmap_status;
     my $st = $plugin_module ? 'Unmanaged' : 'Unsupported';
-    $self->DB->setHostStatus( $rt_id, ($self->host_type ? $st : 'New')) && return
+    $self->DB->setHostStatus($rt_id, ($self->host_type ? $st : 'New')) && return
         if $self->nmap_status;
 }
 sub setHostStatus {
@@ -127,23 +142,24 @@ sub setHostStatus {
         #"ERROR       when 010 impossible if manual type is NOT provided "
         # it is result BY DEFAULT
         #"UP          when 011 fallback to DB type"
-        $self->DB->setHostStatus( $rt_id, 'Up') && return
+        $self->DB->setHostStatus($rt_id, 'Up') && return
             if !$self->snmp_status && $self->ssh_status && $self->host_type;
         #"UNMANAGED   when 100 and plugin is exists"
         # "UNSUPPORTED when 100 and plugin is NOT exists"
-        $self->DB->setHostStatus( $rt_id, ($plugin_module ? 'Unmanaged' : 'Unsupported')) && return
+        $self->DB->setHostStatus($rt_id, ($plugin_module ? 'Unmanaged' : 'Unsupported')) && return
             if $self->snmp_status && !$self->ssh_status && !$self->host_type;
 
 
         # "UNMANAGED   when 101"
-        $self->DB->setHostStatus( $rt_id, 'Unmanaged') && return
+        $self->DB->setHostStatus($rt_id, 'Unmanaged') && return
             if $self->snmp_status && !$self->ssh_status && $self->host_type;
         # "UP          when 110"
         # "UP          when 111"
-        $self->DB->setHostStatus( $rt_id, 'Up') && return
+        $self->DB->setHostStatus($rt_id, 'Up') && return
             if $self->snmp_status && $self->ssh_status;
 
-    } else {
+    }
+    else {
         #       diag "Manual type: snmp_status  ".$self->snmp_status."; ssh_status ". $self->ssh_status ."; host type ".($self->host_type || 'undef');
         ############## WITH MANUAL TYPE
         ## [snmp ssh]
@@ -154,14 +170,14 @@ sub setHostStatus {
         }
         # "UP          when 01";
         # "UP          when 11";
-        $self->DB->setHostStatus( $rt_id, 'Up') && return
+        $self->DB->setHostStatus($rt_id, 'Up') && return
             if $self->ssh_status;
         # "UNMANAGED   when 10 and plugin is exists";
         # "UNSUPPORTED when 10 and plugin is NOT exists";
-        $self->DB->setHostStatus( $rt_id, ($plugin_module ? 'Unmanaged' : 'Unsupported')) && return
+        $self->DB->setHostStatus($rt_id, ($plugin_module ? 'Unmanaged' : 'Unsupported')) && return
             if $self->snmp_status && !$self->ssh_status;
     }
-    $self->DB->setHostStatus( $rt_id, 'ERROR');
+    $self->DB->setHostStatus($rt_id, 'ERROR');
     return;
 }
 # ------------------------------------------------------
@@ -176,14 +192,14 @@ sub start_poll_processing {
     my $self = shift;
     my $host = $self->host;
 
-    $self->logger->info( "============= Start  Processing =================" );
-    my $credentials = $self->getHostCredentials( $host );
+    $self->logger->info("============= Start  Processing =================");
+    my $credentials = $self->crypt->getHostCredentials($host);
     $self->snmp_status($self->getTypeBySNMP($credentials->{community}));
     #if host type forced from command line, try to get plugin by host_type
     $plugin_module = $self->host_type ? $self->getPollHostPluginByHostType : $self->getPollHostPluginBySNMP;
-    $self->logger->error( "Could not get PollHost plugin type:".($self->host_type ? $self->host_type : "unknown") ) && return 0 unless $plugin_module;
-    $self->logger->info( "Using ".$plugin_module->getModuleName );
-    $self->ssh_status($self->processPollHost( $credentials ));
+    $self->logger->error("Could not get PollHost plugin type:" . ($self->host_type ? $self->host_type : "unknown")) && return 0 unless $plugin_module;
+    $self->logger->info("Using " . $plugin_module->getModuleName);
+    $self->ssh_status($self->processPollHost($credentials));
     return $self->ssh_status;
 }
 # ------------------------------------------------------
@@ -195,19 +211,27 @@ sub processPollHost {
     my $self = shift;
     my $credentials = shift;
 
-    $self->logger->info( "Skipping polling: conection failed" ) && return 0 unless $self->setSession( $credentials );
-    $self->logger->info( "Skipping polling: beforeProcessing checks failed") && return 0 unless $plugin_module->beforeProcessing();
+    $self->logger->info("Skipping polling: conection failed") && return 0 unless $self->setSession($credentials);
+    $self->logger->info("Skipping polling: beforeProcessing checks failed") && return 0 unless $plugin_module->beforeProcessing();
     #Process host
-    $self->processModel();
-    $self->processVendor();
-    $self->processHostname();
-    $self->processHardware();
-    $self->processSoftware();
-    $self->processLocation();
-    $self->processInterfaces();
-    $self->processIpLayer();
-    $self->processConfig();
-    return 1;
+    my $res = 1;
+    eval {
+        $self->processModel();
+        $self->processVendor();
+        $self->processHostname();
+        $self->processHardware();
+        $self->processSoftware();
+        $self->processLocation();
+        $self->processInterfaces();
+        $self->processIpLayer();
+        $self->processConfig();
+    };
+    if ($@) {
+        $self->logger->warn("Process died :" . $@);
+        $res = 0;
+    };
+    $plugin_module->session->connection->close();
+    return $res;
 
 }
 
@@ -215,28 +239,28 @@ sub processModel {
     my $self = shift;
     my $res = $plugin_module->getModel();
     $self->logger->warn ("Bad model") && return unless $res;
-    $self->DB->setHostModel( $rt_id, $res );
+    $self->DB->setHostModel($rt_id, $res);
 
 }
 sub processVendor {
     my $self = shift;
     my $res = $plugin_module->getVendor();
-    $self->logger->warn ("Bad vendor" ) && return unless $res;
-    $self->DB->setHostVendor( $rt_id, $res );
+    $self->logger->warn ("Bad vendor") && return unless $res;
+    $self->DB->setHostVendor($rt_id, $res);
 
 }
 sub processHostname {
     my $self = shift;
     my $res = $plugin_module->getHostName();
     #    diag($res);
-    $self->DB->setHostName( $rt_id, $res ) if $res && ($res ne $host_name);
+    $self->DB->setHostName($rt_id, $res) if $res && ($res ne $host_name);
 }
 sub processHardware {
     my $self = shift;
     my $res = $plugin_module->getHardware();
     $self->logger->warn ("Bad hardware") && return unless $res;
-    $self->DB->clearHostHardwareInfo( $rt_id );
-    $self->DB->setHostHardwareInfo( $rt_id, $res );
+    $self->DB->clearHostHardwareInfo($rt_id);
+    $self->DB->setHostHardwareInfo($rt_id, $res);
 
 }
 sub processSoftware {
@@ -244,41 +268,41 @@ sub processSoftware {
     my $res = $plugin_module->getSoftware();
 
     $self->logger->warn ("Bad software") && return unless $res;
-    $self->DB->clearHostSoftwareInfo( $rt_id );
-    $self->DB->setHostSoftwareInfo( $rt_id, $res );
+    $self->DB->clearHostSoftwareInfo($rt_id);
+    $self->DB->setHostSoftwareInfo($rt_id, $res);
 }
 sub processLocation {
     my $self = shift;
     my $res = $plugin_module->getLocation();
-    $self->logger->warn ("Bad location " ) && return unless $res;
-    $self->DB->setHostLocation( $rt_id, $res );
+    $self->logger->warn ("Bad location ") && return unless $res;
+    $self->DB->setHostLocation($rt_id, $res);
 }
 
 sub processInterfaces {
     my $self = shift;
     my ($ph_if, $ifc ) = $plugin_module->getInterfaces();
-    $self->processPhysicalInterfaces( $ph_if );
-    $self->processLogicalInterfaces( $ph_if, $ifc );
+    $self->processPhysicalInterfaces($ph_if);
+    $self->processLogicalInterfaces($ph_if, $ifc);
 }
 
 
 sub processIpLayer {
     my $self = shift;
     my $res = $plugin_module->getIpLayer();
-    $self->logger->warn("Bad IP layer for ".$self->host) && return unless $res;
-    $self->DB->setHostLayer( $rt_id, $res );
+    $self->logger->warn("Bad IP layer for " . $self->host) && return unless $res;
+    $self->DB->setHostLayer($rt_id, $res);
 }
 sub processPhysicalInterfaces {
     my $self = shift;
     my $ph_if = shift; #reference to Physical int array
     $self->logger->warn ("got empty Pysical Interface list") unless %$ph_if;
-    $self->DB->markPhInterfacesToBePolled( $rt_id );
-    while (my ($phys_in_name, $data) = each %$ph_if){
+    $self->DB->markPhInterfacesToBePolled($rt_id);
+    while (my ($phys_in_name, $data) = each %$ph_if) {
         $data->{name} = $phys_in_name;
-        $data->{ph_int_id} = $self->DB->setPhInterface( $rt_id, $data );
+        $data->{ph_int_id} = $self->DB->setPhInterface($rt_id, $data);
         $self->logger->warn("error adding physical interface $phys_in_name with id=$rt_id") unless $data->{ph_int_id};
     }
-    $self->DB->deletePhInterfacesPolledButNotFound( $rt_id );
+    $self->DB->deletePhInterfacesPolledButNotFound($rt_id);
 }
 
 sub processLogicalInterfaces {
@@ -287,21 +311,21 @@ sub processLogicalInterfaces {
     my $ifc = shift; #reference to Logical int array
     $self->logger->warn ("got empty Logical Interface list") && return unless (defined $ifc && %$ifc);
 
-    $self->DB->markInterfacesToBePolled( $rt_id );
-    while (my ($logic_name, $data) = each %$ifc){
+    $self->DB->markInterfacesToBePolled($rt_id);
+    while (my ($logic_name, $data) = each %$ifc) {
         my $ph_int_id = $ph_if->{$data->{physical_interface_name}}->{ph_int_id};
         $self->logger->warn("error adding logical interface $logic_name  to $rt_id") && next unless $ph_int_id;
         $data->{name} = $logic_name;
         $data->{ph_int_id} = $ph_int_id;
-        $self->DB->setInterface( $rt_id, $data );
+        $self->DB->setInterface($rt_id, $data);
     }
-    $self->DB->deleteInterfacesPolledButNotFound( $rt_id );
+    $self->DB->deleteInterfacesPolledButNotFound($rt_id);
 
 }
 sub processConfig {
     my $self = shift;
     my $config = $plugin_module->getConfig();
-    $self->DB->addConfig( $rt_id, $config ) if ($config);
+    $self->DB->addConfig($rt_id, $config) if ($config);
 }
 #=for setSession($credentials)
 #Try to connect to host using $credentials
@@ -318,8 +342,8 @@ sub setSession {
     my $app = NGNMS::App->instance;
 
     my $snmp_sess = $app->snmp_session_factory();
-    $snmp_sess->connect( $credentials->{community}, $host_ip, $host_name );
-    $plugin_module->snmp_session( $snmp_sess );
+    $snmp_sess->connect($credentials->{community}, $host_ip, $host_name);
+    $plugin_module->snmp_session($snmp_sess);
     my $session_debug = 'error';
     $session_debug = 'notice' if $self->verbose eq 'INFO';
     $session_debug = 'debug' if $self->verbose eq 'DEBUG';
@@ -334,27 +358,42 @@ sub setSession {
         verbose             => $self->verbose, #App log level
         privileged_paging   => 0,
         wake_up             => 0,
-        connect_options     => { opts => $credentials->{connect_options} }
+        connect_options     => { opts => $credentials->{connect_options} },
+
+        username            => $credentials->{username},
+            password            => $credentials->{password},
+            privileged_password => $credentials->{privileged_password},
 
     };
     $params = $plugin_module->prepare_connection($params);
-    my NGNMS::Net::SessionRole $sess = $app->session_factory();
-    #    diag($params);
+    my $sess = $app->session_factory();
+    if (exists $credentials->{jumphost}) {
+        $params->{jumphost} = Net::Appliance::Session->new(
+            transport       => 'SSH',
+            personality     => 'bash',
+            host            => $credentials->{jumphost}{host},
+            username        => $credentials->{jumphost}{username},
+            password        => $credentials->{jumphost}{password},
+            connect_options => { opts => $credentials->{jumphost}{connect_options} },
+
+        );
+    }
+    #        diag($params);
     $self->logger->fatal("Could non create session ") && return 0 unless $sess;
-    my $path = ($ENV{'NGNMS_DATA'} || '.').'/rtconfig/'.$rt_id;
+    my $path = ($ENV{'NGNMS_DATA'} || '.') . '/rtconfig/' . $rt_id;
     make_path($path);
     $self->logger->fatal("Cannot create directory '$path'") && return 0 unless (-d $path);
     $sess->record_dir($path);
-    my $c = $sess->connect( $params, {
+    my $c = $sess->connect($params, {
             username            => $credentials->{username},
             password            => $credentials->{password},
             privileged_password => $credentials->{privileged_password},
-        } );
+        });
     $self->logger->info("Could not connect") && return 0 if $c ne 'ok';
 
     $self->logger->info("SUCCESS: connected");
 
-    $plugin_module->session( $sess );
+    $plugin_module->session($sess);
     return 1;
 
 }
@@ -368,9 +407,9 @@ sub setSession {
 
 sub getPollHostPluginByHostType {
     my $self = shift;
-    $self->logger->debug("Search plugin by command-line or DB host-type: ".$self->host_type);
+    $self->logger->debug("Search plugin by command-line or DB host-type: " . $self->host_type);
     for my NGNMS::App::PollHostPluginInterface $plugin (@pollHostPluginsCanSupport) {
-        return $plugin if $plugin->checkDeviceSupported( $self->host_type );
+        return $plugin if $plugin->checkDeviceSupported($self->host_type);
     }
     return undef;
 }
@@ -383,7 +422,7 @@ sub getPollHostPluginByHostType {
 #
 #=cut
 
-sub getTypeBySNMP{
+sub getTypeBySNMP {
     my $self = shift;
 
     if ($self->play) {
@@ -392,29 +431,30 @@ sub getTypeBySNMP{
     }
 
     my ($community) = @_;
-    my ($mib, $snmp_error) = $self->getSysObjectID( $self->host, $community );
+    my ($mib, $snmp_error) = $self->getSysObjectID($self->host, $community);
 
     $self->sysObjIdResult($mib);
-    $self->logger->debug( "Search plugin by SNMP response ");
-    $self->logger->debug( "  SMNP: $snmp_error" ) if $snmp_error;
-    $self->logger->debug( "  SMNP: wrong response" ) unless $self->sysObjIdResult;
+    $self->logger->debug("Search plugin by SNMP response ");
+    $self->logger->debug("  SMNP: $snmp_error") if $snmp_error;
+    $self->logger->debug("  SMNP: wrong response") unless $self->sysObjIdResult;
     return ($self->sysObjIdResult && !$snmp_error);
 }
 
 sub getPollHostPluginBySNMP {
     my $self = shift;
     if ($self->snmp_status) {
-        $self->logger->debug( "  SNMP response is: ".$self->sysObjIdResult);
+        $self->logger->debug("  SNMP response is: " . $self->sysObjIdResult);
         # --- 1 - SNMP
         for my NGNMS::App::PollHostPluginInterface $plugin (@pollHostPluginsCanSNMP) {
-            return $plugin if $plugin->checkSNMPsysObjectID( $self->sysObjIdResult );
+            return $plugin if $plugin->checkSNMPsysObjectID($self->sysObjIdResult);
         }
-    } else {
+    }
+    else {
         # --- 2 no SNMP, try get latest known from DB and find plugin by getPollHostPluginByHostType()
-        $self->logger->debug( "  Fall back to DB:");
-        my $vendor = $self->DB->getHostVendor( $self->host );
-        $self->logger->warn( "No hosttype in DB") && return unless $vendor;
-        $self->host_type( $self->trim( $vendor ) );
+        $self->logger->debug("  Fall back to DB:");
+        my $vendor = $self->DB->getHostVendor($self->host);
+        $self->logger->warn("No hosttype in DB") && return unless $vendor;
+        $self->host_type($self->trim($vendor));
         return $self->getPollHostPluginByHostType;
     }
 

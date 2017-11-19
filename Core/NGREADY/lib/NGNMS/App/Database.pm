@@ -5,6 +5,7 @@ use warnings FATAL => 'all';
 use Moo::Role;
 use MooX::Options;
 use NGNMS::DB;
+use Emsgd qw/diag/;
 with "NGNMS::Log4Role";
 with 'NGNMS::DB::CommandLineOptions';
 
@@ -25,6 +26,7 @@ has DB => (
 #@returns NGNMS::DB
 sub get_db {
     my $self = shift;
+
     my $db =  NGNMS::DB->instance(
         domain           => 'public',
         type             => 'main',

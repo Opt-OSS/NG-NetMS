@@ -49,18 +49,11 @@ my $Log = NGNMS::Log4->new();
 my $logger = $Log->get_new_category_logger(__PACKAGE__);
 
 sub cisco_connect {
-    my ($host, $username, $password, $enablepw, $access) = @_[0 .. 4];
-    #    Emsgd::diag(\@_);
-    $Log->put_debug_key('host',$host);
-    $session = NGNMS::Net::Connect->new( {
-            personality         => 'ios',
-            transport           => $access || 'Telnet',
-            host                => $host,
-            username            => $username,
-            password            => $password,
-            privileged_password => $enablepw,
-            'debug'             => 'error',
-        } );
+    my $connect_params = shift;
+    $connect_params->{personality}='ios';
+    $connect_params->{connect_options}->{opts} =  $connect_params->{connect_options};
+    $Log->put_debug_key('host',$connect_params->{host});
+    $session = NGNMS::Net::Connect->new( $connect_params );
     return try{
             $session->connect();
 
@@ -69,14 +62,14 @@ sub cisco_connect {
             my @output = $session->macro( 'check_privileged' );
             $output[0] =~ s/\n//g;
             return 'ok' if $output[0] eq "Current privilege level is 15";
-            $Error = "$username\@$host ios: enable level 15 failed!";
+            $Error = "$connect_params->{host} ios: enable level 15 failed!";
             #        $session->close();
             return $Error;
         }catch{
                 $Error = $_;
                 #last resonce could throw exception if port was not opened :connection refused etc
                 try {$Error = $session->last_response();}catch{};
-                        $Error =  "$username\@$host: ".$Error;
+                        $Error =  $connect_params->{host}.": ".$Error;
                 $logger->error( $Error);
                 return $Error;
             };
@@ -143,11 +136,11 @@ sub cisco_get_bgp_file($) {
 sub get_topologies ($$$$) {
     return $getTopReturn if defined( $getTopReturn );
 
-    my ($host, $username, $password, $enablepw) = @_[0 .. 3];
+    my ($host, $connect_params) = (shift,shift);
     my $filename1 = $host."_isis.txt";
     my $filename2 = $host."_ospf.txt";
     my $filename3 = $host."_bgp.txt";
-    my $er = cisco_connect( @_ );
+    my $er = cisco_connect( $connect_params );
 
     #    $session->connect();
     #    my @output;
@@ -200,7 +193,8 @@ sub get_topologies ($$$$) {
 
     return "ok";
 }
-
+#moved to poll-host plugin
+#@deprecated
 sub cisco_get_configs {
     my ($host, $username, $password, $enablepw) = @_[0 .. 3];
     my $configPath = $_[4];
@@ -274,6 +268,7 @@ my %ifc;
 #  router_id
 #  vers file
 
+#@deprecated
 sub cisco_parse_version {
     my ($rt_id, $host, $version_file) = @_[0 .. 2];
     $logger->debug( "Parsing $version_file");

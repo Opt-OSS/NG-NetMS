@@ -21,6 +21,7 @@ use Data::Dumper;
 use File::Path qw( make_path );
 
 use NGNMS::Net::Connect;
+use Net::Appliance::Session;
 use Try::Tiny;
 use Emsgd qw(diag);
 
@@ -70,32 +71,39 @@ my $Error;
 my $verbose = $ENV{"NGNMS_DEBUG"} || 0;
 
 sub juniper_create_session {
-    my ($host, $username, $password, $enablepw, $access) = @_[0 .. 4];
-    $Log->put_debug_key('host',$host);
+    my $connect_params = shift;
+    $connect_params->{personality}='junos';
+    $connect_params->{wake_up} = 0;
+    $connect_params->{connect_options} = { opts => $connect_params->{connect_options} } ;
+    if (exists $connect_params->{jumphost}) {
+        $connect_params->{jumphost} = Net::Appliance::Session->new(
+        transport       => 'SSH',
+            personality     => 'bash',
+            host            => $connect_params->{jumphost}{host},
+            username        => $connect_params->{jumphost}{username},
+            password        => $connect_params->{jumphost}{password},
+            connect_options => { opts => $connect_params->{jumphost}{connect_options} },
+
+        );
+    }
+#        diag $connect_params;
+    $Log->put_debug_key('host',$connect_params->{host});
+
     try {
             $session->close();
         }catch{};
     undef $session;
-    $session = NGNMS::Net::Connect->new( {
-            personality         => 'junos',
-            transport           => $access || 'Telnet',
-            host                => $host,
-            username            => $username,
-            password            => $password,
-            privileged_password => $enablepw,
-            'debug'             => 'error',
-        } );
+    $session = NGNMS::Net::Connect->new( $connect_params );
 
     return try{
             $session->connect();
-            $logger->debug( "Connected to $username\@$host");
             return 'ok';
         }catch{
                 $Error = $_;
                 $logger->error( $Error);
                 #last resonce could throw exception if port was not opened :connection refused etc
                 try {$Error = $session->last_response();}catch{};
-                $Error = "$username\@$host: ".$Error;
+        $Error =  $connect_params->{host}.": ".$Error;
                 $logger->error( $Error);
                 return $Error;
             };
@@ -207,17 +215,17 @@ sub juniper_get_configs {
     return "ok";
 }
 
-sub get_topologies ($$$$$) {
-    my ($host, $user, $passwd, $enpasswd, $access) = @_;
+sub get_topologies  {
+    my ($connect_params) = shift;
     #    my ($host, $username) = @_[0 .. 1];
     #    my @passwds = @_[2 .. 3];
     #    my $access = @_[4 .. 4];
     #    my @params = ($_[0], $_[1], $_[2], $_[3], '', '', $_[4]);
-    my $filename1 = $host."_isis.txt";
-    my $filename2 = $host."_ospf.txt";
-    my $filename3 = $host."_bgp.txt";
+    my $filename1 = $connect_params->{host}."_isis.txt";
+    my $filename2 = $connect_params->{host}."_ospf.txt";
+    my $filename3 = $connect_params->{host}."_bgp.txt";
 
-    juniper_create_session( $host, $user, $passwd, $enpasswd, $access );
+    juniper_create_session( $connect_params );
     return $Error if $Error;
 
     # specific timeout for the topology collection

@@ -6,31 +6,18 @@
 #------------------------------------------------------------
 # Default options
 #------------------------------------------------------------
-VERBOSE="-v 3"
-MQ_SIZE=100
+VERBOSE="-v 1"
 
 BIN_DIR=${NGNMS_HOME}/bin
 LOG_DIR=${NGNMS_LOGS}
 
 #------------------------------------------------------------
-# AI & DETECTOR OPTIONS
-#------------------------------------------------------------
-# m - limit number of anomalies per device discovered
-# D - anomaly similarity tolerance in %
-# K - number of clusters
-# L - anomaly detection threshold level
-#------------------------------------------------------------
-m=10000
-D=10
-K=100
-L=49
-
-#------------------------------------------------------------
 # Service options
 #------------------------------------------------------------
 
-COLLECTOR_UDP_OPTIONS="-u -p 514 -o $BIN_DIR/db.cfg -r ${NGNMS_HOME}/rules/rules.txt -l $LOG_DIR/syslog_collector.log"
-COLLECTOR_SNMP_OPTIONS="-c snmp -o $BIN_DIR/db.cfg -i /var/log/snmptraps.log -r ${NGNMS_HOME}rules/rules.txt -l $LOG_DIR/snmp_collector.log"
+COLLECTOR_UDP_OPTIONS="-s syslog-udp -p 514 -c $BIN_DIR/db.cfg -r $NGNMS_HOME/rules/rules-log.txt -l $LOG_DIR/syslog_collector.log"
+COLLECTOR_SNMP_OPTIONS="-s snmp-polling -c $BIN_DIR/db.cfg -f /var/log/snmptraps.log -r $NGNMS_HOME/rules/rules-snmp.txt -l $LOG_DIR/snmp_collector.log"
+COLLECTOR_NFLOW_OPTIONS="-s netflow-udp -p 2055 -c $BIN_DIR/db.cfg -r $NGNMS_HOME/rules/rules-netflow.txt -l $LOG_DIR/netflow_collector.log"
 
 OBSERVER_OPTIONS="$VERBOSE -m -c $BIN_DIR/options.json -o $BIN_DIR/db.cfg -l $LOG_DIR/observer.log"
 OPTION_PROFILER="$VERBOSE -o $BIN_DIR/db.cfg -l $LOG_DIR/optprf.log" 
@@ -272,7 +259,7 @@ case $service in
         esac
     ;;
     *)  echo "Usage:"
-        echo "  <collector|ngnetms|observer|optprf> <start|stop|restart|initdb|status> [\"options\"]"
+        echo "  <collector|ngnms|observer|optprf> <start|stop|restart|initdb|status> [\"options\"]"
         ;;
 esac
 
@@ -285,18 +272,4 @@ service=$1
 action=$2
 options=$3
 
-issudo=$(sudo -n pwd | wc -l)      # this little trick will return 1 if I can sudo. 1 is result of wc counting 1 line of output. If sudo -n fails and needs pasword, the wc will give 0
-
-if [ ${issudo} -gt 0 ] 
-
-then do_case
-
-else echo "\n Enter your password now in order to proceed"     
-    if sudo echo "Thank you!"
-    then
-        do_case
-    else
-       echo "\t Unable to proceed... terminating the script"
-       exit 1
-    fi
-fi
+do_case

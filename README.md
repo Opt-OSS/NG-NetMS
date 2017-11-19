@@ -24,48 +24,81 @@ If in doubt, consult with your network administrator or company management.
 Do not try to discover and manage networks for which you do not have administrative rights. This may result in your IP address being banned or even serious legal consequences.
 
 
-# Centos
+### Centos
 ```bash
-[ngnms@localhost build]$ sudo yum install epel-release  deltarpm
-[ngnms@localhost build]$ sudo yum install cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
-[ngnms@localhost build]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection 
-[ngnms@localhost build]$ git clone https://github.com/opt-oss/NG-NetMS.git
-[ngnms@localhost build]$ cp settings.cmake.dist settings.cmake
-[ngnms@localhost build]$ vi settings.cmake
-[ngnms@localhost build]$ cmake .
-[ngnms@localhost build]$ make
-[ngnms@localhost build]$ sudo mkdir -p /opt/ngnms
-[ngnms@localhost build]$ sudo chown ngnms /opt/ngnms
-[ngnms@localhost build]$ make install
+[ngnms@localhost]$ sudo yum install epel-release  deltarpm
+[ngnms@localhost]$ sudo yum install git cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+[ngnms@localhost]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection 
+[ngnms@localhost]$ git clone https://github.com/opt-oss/NG-NetMS.git
+[ngnms@localhost]$ cp NG-NetMS/settings.cmake.dist NG-NetMS/settings.cmake
+[ngnms@localhost]$ vi NG-NetMS/settings.cmake
+[ngnms@localhost]$ mkdir build
+[ngnms@localhost]$ cd ./build
+[ngnms@localhost]$ cmake ../NG-NetMS
+[ngnms@localhost]$ make
+[ngnms@localhost]$ sudo mkdir -p /opt/ngnms
+[ngnms@localhost]$ sudo chown ngnms /opt/ngnms
+[ngnms@localhost]$ make install
 ```
 
-# Ubuntu
+### Ubuntu
 ```bash
-[ngnms@localhost build]$ sudo apt-get update
-[ngnms@localhost build]$ sudo apt-get install cmake make gcc g++
-[ngnms@localhost build]$ sudo apt-get install perl cpanminus nmap 
-[ngnms@localhost build]$ sudo apt-get install pcre-devel libpqxx-devel 
-[ngnms@localhost build]$ sudo apt-get install flex flex-devel net-snmp-devel 
-[ngnms@localhost build]$ sudo apt-get install cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+[ngnms@localhost]# sudo apt-get update
+[ngnms@localhost]$ sudo apt-get install git cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+[ngnms@localhost]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection
+[ngnms@localhost]$ git clone https://github.com/opt-oss/NG-NetMS.git
+[ngnms@localhost]$ cp NG-NetMS/settings.cmake.dist NG-NetMS/settings.cmake
+[ngnms@localhost]$ vi NG-NetMS/settings.cmake
+[ngnms@localhost]$ mkdir build
+[ngnms@localhost]$ cd ./build
+[ngnms@localhost]$ cmake ../NG-NetMS
+[ngnms@localhost]$ make
+[ngnms@localhost]$ sudo mkdir -p /opt/ngnms
+[ngnms@localhost]$ sudo chown ngnms /opt/ngnms
+[ngnms@localhost]$ make install
+```
 
-[ngnms@localhost build]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection
-[ngnms@localhost build]$ git clone https://github.com/opt-oss/NG-NetMS.git
-[ngnms@localhost build]$ cp settings.cmake.dist settings.cmake
-[ngnms@localhost build]$ vi settings.cmake
-[ngnms@localhost build]$ cmake .
-[ngnms@localhost build]$ make
-[ngnms@localhost build]$ sudo mkdir -p /opt/ngnms
-[ngnms@localhost build]$ sudo chown ngnms /opt/ngnms
-[ngnms@localhost build]$ make install
+### Centos
+```bash
+[ngnms@localhost]$ sudo yum install epel-release  deltarpm
+[ngnms@localhost]$ sudo yum install git cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+[ngnms@localhost]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection 
+[ngnms@localhost]$ git clone https://github.com/opt-oss/NG-NetMS.git
+[ngnms@localhost]$ cp NG-NetMS/settings.cmake.dist NG-NetMS/settings.cmake
+[ngnms@localhost]$ vi NG-NetMS/settings.cmake
+[ngnms@localhost]$ mkdir build
+[ngnms@localhost]$ cd ./build
+[ngnms@localhost]$ cmake ../NG-NetMS
+[ngnms@localhost]$ make
+[ngnms@localhost]$ sudo mkdir -p /opt/ngnms
+[ngnms@localhost]$ sudo chown ngnms /opt/ngnms
+[ngnms@localhost]$ make install
+```
+
+### Ubuntu
+```bash
+[ngnms@localhost]# sudo apt-get update
+[ngnms@localhost]$ sudo apt-get install git cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
+[ngnms@localhost]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection
+[ngnms@localhost]$ git clone https://github.com/opt-oss/NG-NetMS.git
+[ngnms@localhost]$ cp NG-NetMS/settings.cmake.dist NG-NetMS/settings.cmake
+[ngnms@localhost]$ vi NG-NetMS/settings.cmake
+[ngnms@localhost]$ mkdir build
+[ngnms@localhost]$ cd ./build
+[ngnms@localhost]$ cmake ../NG-NetMS
+[ngnms@localhost]$ make
+[ngnms@localhost]$ sudo mkdir -p /opt/ngnms
+[ngnms@localhost]$ sudo chown ngnms /opt/ngnms
+[ngnms@localhost]$ make install
 ```
 
 ### Perl deps
 
-either 
+either
 ```shell
 [ngnms@localhost build]$ sudo make perl-install-deps
 ```
-or
+or (in install dir)
 ```shell
 ngnms@localhost ngnms]$ pwd
 /opt/ngnms
@@ -79,6 +112,7 @@ Configuring /opt/ngnms ... OK
 ### Database
  perform usual steps to setup postgres and start service
  `sudo systemctl start postgresql-9.5`
+
 ```shell
 [ngnms@localhost build]$ sudo su -l postgres                
 Last login: Tue Jun 27 12:00:28 CEST 2017 on pts/1         
@@ -87,7 +121,7 @@ Enter password for new role:
 Enter it again:                                            
 -bash-4.2$                                                 
 ```
-## Enviroment
+### Enviroment
 ```
  sudo su
  [root@localhost database]# cat /opt/ngnms/env.list >> /etc/environment
@@ -102,12 +136,8 @@ logout and login
 [ngnms@localhost database]$ ./migrate.pl  --upgrade=latest
 ```
 
-
+## Setup Web-Server
 ### HTTPD for default directory config
-
-!!!WARNING!!! Excersise caution if your web server already hosts your other websites. Do not copy-paste blindly, because this will render your existing website inoperable.
-instructions that follow assume that you do not have web service configured yet.
-
 use `su` account for operations below
 ####SELinux
 setting up of `selinux` permission is out iof this document scope
@@ -120,7 +150,6 @@ __dangerous__
 __remove /var/www/html if exists__
 `this will remove all previously installed default server content`
 
-##Centos
 ```
 [ngnms@localhost build]$ sudo yum install httpd php php-pdo_pgsql php-pgsql php-pear php-mcrypt
 [ngnms@localhost build]$ sudo pear install Net_IPv4
@@ -128,15 +157,9 @@ __remove /var/www/html if exists__
 [ngnms@localhost build]$ sudo ln -s /opt/ngnms/www/html /var/www/html
 [ngnms@localhost build]$ cp /opt/ngnms/www/custom_config/main.php.example /opt/ngnms/www/custom_config/main.php
 [ngnms@localhost build]$ sudo chown -R ngnms:apache /opt/ngnms/www
-
-Edit your ngnms_vhost.conf file accordingly to your local configuration and copy into apache2 sites-available folder
-  sudo cp ngnms_vhost.conf /etc/apache2/sites-available/ngnms_vhost.conf
-  sudo a2ensite ngnms_vhost.conf 
-  service apache2 reload
-
 ```
 
-## PHP
+### PHP
 
 short_open_tag should be ennabled.
 
@@ -172,39 +195,27 @@ wait 5 minutes for scheduled tasks added and script created
 [ngnms@localhost build]$ sudo systemctl status ngnms-audit 
 ```
 # Ubuntu
+copy provided jm-worker-initd.sh file into /etc/init.d while renaming it to jm-worker-initd
+then do:
+```
+update-rc.d jm-worker-initd defaults
+update-rc.d jm-worker-initd enable
+```
 
-sudo cp jm-worker-initd.sh /etc/init.d/jm-workerd-init
-sudo chmod ug+x /etc/init.d/jm-workerd-init 
-sudo chown root:root /etc/init.d/jm-workerd-init 
+This should create all symlinks in /etc/rcX.d directories.
+[TODO] Add a respawn line for this service at the bottom of the /etc/inittab file
 
-#### nmap sudo
+
+### nmap sudo
+
 ```shell
 [ngnms@localhost ~]$ sudo cp /opt/ngnms/nmap.sudo /etc/sudoers.d/nmap
 ```
 
 ###collector
+
 ```shell
 [ngnms@localhost bin]$ cd /opt/ngnms/bin
 [ngnms@localhost bin]$ ./ngnetms_db      
 [ngnms@localhost bin]$ sudo -E ${NGNMS_HOME}/bin/ngnetms_collector -s syslog-udp -p 514 -c ${NGNMS_HOME}/bin/db.cfg -r ${NGNMS_HOME}/rules/rules.txt -l ${NGNMS_LOGS}/syslog_collector.log -v &  
 ```
-
-## Restart the server and verify web login URL:  http://{serverIP}:80/
-Default login details: 
-ngnms:optoss
-
-## CLI interface
-
-obtain terminal connection via SSH and change your directory to $NGNMS_HOME
-
-cd $NGNMS_HOME
-cd bin
-service_manager ngnetms status
-
-
-Start collector, observer and optprf services if not runninng.
-
-Usage: service_manager.sh 
-  <collector|observer|optprf> <start|stop|restart|initdb|status> ["options"]
-  <anomaly|ngnetms> <start|stop|restart|initdb|status>
-

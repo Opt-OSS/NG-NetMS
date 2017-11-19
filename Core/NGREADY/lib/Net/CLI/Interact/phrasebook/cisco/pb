@@ -44,3 +44,10 @@ macro disconnect
 # legacy support
 prompt prompt
     match /[\/a-zA-Z0-9._\[\]-]+ ?(?:\(config[^)]*\))? ?[#>] ?$/
+
+prompt JUMPHOST
+    match /^JUMPHOST CONNECTED$/
+
+## ssh key prompt
+prompt ssh_key
+	match /[Ee]nter passphrase for key.+: $/

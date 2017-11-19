@@ -13,7 +13,7 @@ blib/
 archive/*
 logs/*
 data/*
-pmea/
+../../misc/pmea/
 nas/
 wiki/
 tmp/*

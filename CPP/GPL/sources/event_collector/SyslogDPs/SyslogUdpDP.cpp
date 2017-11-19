@@ -1,8 +1,9 @@
 #include "SyslogUdpDP.h"
 #include <boost/bind.hpp>
 
-SyslogUdpDP::SyslogUdpDP( int Port ):
+SyslogUdpDP::SyslogUdpDP( int Port, string BindIPAddress ):
 m_Port( Port ),
+m_BindIPAddress( BindIPAddress ),
 m_Interrupted( false )
 {
 
@@ -28,8 +29,7 @@ bool SyslogUdpDP::Run( )
         // Construct a signal set registered for process termination.
         boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
         signals.async_wait( boost::bind(&boost::asio::io_service::stop, &io_service));
-
-        m_Socket = shared_ptr<udp::socket>( new udp::socket( io_service, udp::endpoint( udp::v4(), m_Port ) ) );
+		m_Socket = shared_ptr<udp::socket>( new udp::socket( io_service, udp::endpoint( boost::asio::ip::address::from_string(m_BindIPAddress), m_Port ) ) );
     }
     catch(...)
     {

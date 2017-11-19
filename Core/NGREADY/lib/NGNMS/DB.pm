@@ -33,8 +33,8 @@ sub getCommunity {
     #@inject PGSQL
     my $SQL = "SELECT sa.community_ro,sa.community_rw
         FROM router_snmp_access rs,snmp_access sa
-        WHERE rs.router_id= '$rt_id' AND rs.snmp_access_id = sa.id;";
-    return $self->dbh->selectall_arrayref( $SQL );
+        WHERE rs.router_id= ? AND rs.snmp_access_id = sa.id;";
+    return $self->dbh->selectall_arrayref( $SQL,undef,($rt_id) );
 }
 sub isDueCommunity{
     my $self = shift;
@@ -110,8 +110,8 @@ sub getRouterInfo {
 #
 #=cut
 sub addRouter {
-    my $self = shift;
-    my ($hostname, $ip, $stat) = @_[0 .. 2];
+    my( $self, $hostname, $ip, $stat) = (shift,shift,shift,shift,);
+
     #    diag "($hostname, $ip, $stat)";
     my $new_id = $self->getSeqNextVal( 'routers_router_id_seq' );
     #@inject PGSQL

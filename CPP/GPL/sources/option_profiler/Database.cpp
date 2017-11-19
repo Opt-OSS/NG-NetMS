@@ -86,7 +86,7 @@ DbReturnCode Database::ProfileAllData( int Interval )
     string tableT1 = "observer_history_t1_" + IntervalToString( Interval );
     string tableT2 = "observer_history_t2_" + IntervalToString( Interval );
 
-    string dropTableT1 = "DROP TABLE observer_history_t1_" + IntervalToString( Interval ) + ";";
+    string dropTableT1 = "DROP TABLE IF EXISTS observer_history_t1_" + IntervalToString( Interval ) + ";";
     string procedureT1 = "CREATE OR REPLACE FUNCTION profile_oprionsT1( integer, text ) RETURNS SETOF void AS $$ "
                          "declare "
                          "timestamps TIMESTAMP WITH TIME ZONE[] := ARRAY(SELECT to_timestamp( floor( ( extract('epoch' from ts ) / $1 ) ) * $1 ) AS interval_alias FROM observer_history_t1  GROUP BY interval_alias); "
@@ -119,7 +119,7 @@ DbReturnCode Database::ProfileAllData( int Interval )
     commonQUery += executeProcedureT1;
     commonQUery += dropProcedureT1;
 
-    string dropTableT2 = "DROP TABLE observer_history_t2_" + IntervalToString( Interval ) + ";";
+    string dropTableT2 = "DROP TABLE IF EXISTS observer_history_t2_" + IntervalToString( Interval ) + ";";
     string procedureT2 = "CREATE OR REPLACE FUNCTION profile_oprionsT2( integer, text ) RETURNS SETOF void AS $$ "
                          "declare "
                          "timestamps TIMESTAMP WITH TIME ZONE[] := ARRAY(SELECT to_timestamp( floor( ( extract('epoch' from ts ) / $1 ) ) * $1 ) AS interval_alias FROM observer_history_t2 GROUP BY interval_alias); "

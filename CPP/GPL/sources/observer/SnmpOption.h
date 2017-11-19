@@ -33,6 +33,7 @@ struct SnmpValue {
 	int		_optionId;
 	SnmpVT	_type;
 	uValue	_value;
+	bool 	_is_nan=false;
 };
 
 struct SnmpOption 

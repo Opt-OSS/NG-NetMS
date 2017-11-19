@@ -155,14 +155,14 @@ if [[ $DBFILE == -* ]];then usage; fi;
 
 
 echo -e "(Re)creating database $DATABASE from file $DBFILE\n"
-confirm
-confirm_red
+#confirm
+#confirm_red
 
 
 echo -n "Database Password for user $DB_USER :"
 read -s DB_PASS
 echo -e "\ntring to connect to database\n"
-T=`PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT template1 -c "select now();"`
+T=`PGPASSWORD=$DB_PASS psql  --username=$DB_USER --port=$DB_PORT --host=$DB_HOST  template1 -c "select now();"`
 
 if [[ $? -ne 0 ]] ; then
     echo -e "\n\nERROR: Could not connect to database!!!\n"
@@ -189,6 +189,11 @@ sudo killall ngnetms_profiler
 echo -e "Disconnect users from database  '$DATABASE'...\n"
 drop=`PGPASSWORD=$DB_PASS   psql --username=$DB_USER --port=$DB_PORT --host=$DB_HOST  $STOP_ON_ERROR template1 -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='$DATABASE'"`
 sleep 3;
+count=`PGPASSWORD=$DB_PASS   psql --username=$DB_USER --port=$DB_PORT --host=$DB_HOST  $STOP_ON_ERROR -t  -c "select count(*) from pg_stat_activity where datname='$DATABASE'"`
+if [[ $count -ge 2 ]] ; then
+    echo -e "\n\nERROR: There are users connected to DB!!!\n"
+    exit 1
+fi
 echo -e "Dropping database '$DATABASE'... \n "
 drop=`PGPASSWORD=$DB_PASS  psql  --username=$DB_USER --port=$DB_PORT --host=$DB_HOST template1 -c "drop database if exists $DATABASE" `
 

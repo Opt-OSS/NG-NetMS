@@ -10,4 +10,6 @@ package NGNMS::DB::Base {
     #@returns DBI
     sub dbh;
 };
+
+
 1;
