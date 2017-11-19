@@ -37,7 +37,7 @@ macro getModel
   	send cat   /etc/*-rel* /etc/*_ver*
 
 macro getHostName
-	send uname -n
+	send hostname -s
 
 macro getHardware
 #  	send uname -m

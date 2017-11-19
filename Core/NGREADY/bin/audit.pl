@@ -51,6 +51,8 @@ use warnings;
 use constant DB_VERSION => 35001;# x.xx.xx
 
 use NGNMS::OLD::DB;
+use NGNMS::DB;
+use NGNMS::App::Crypt;
 use NGNMS::OLD::Util;
 use NGNMS::Log4;
 
@@ -298,16 +300,16 @@ $prom_val = DB_getSettings( 'hostType' );
 my $test_host_type1 = getAttrVal( $prom_val->[0] );
 $test_host_type = $test_host_type1 unless defined( $test_host_type );
 
-$prom_val = DB_getSettings( 'username' );
-$user = getAttrVal( $prom_val->[0] );
-$prom_val = DB_getSettings( 'password' );
-$passwd = getAttrVal( $prom_val->[0] );
-$prom_val = DB_getSettings( 'enpassword' );
-$enpasswd = getAttrVal( $prom_val->[0] );
-$prom_val = DB_getSettings( 'type access' );
-my $access1 = getAttrVal( $prom_val->[0] );
-$access = $access1 if defined( $access1 );
-$prom_val = DB_getSettings( 'community' );
+#$prom_val = DB_getSettings( 'username' );
+#$user = getAttrVal( $prom_val->[0] );
+#$prom_val = DB_getSettings( 'password' );
+#$passwd = getAttrVal( $prom_val->[0] );
+#$prom_val = DB_getSettings( 'enpassword' );
+#$enpasswd = getAttrVal( $prom_val->[0] );
+#$prom_val = DB_getSettings( 'type access' );
+#my $access1 = getAttrVal( $prom_val->[0] );
+#$access = $access1 if defined( $access1 );
+#$prom_val = DB_getSettings( 'community' );
 my $community1 = getAttrVal( $prom_val->[0] );
 $community = $community1 if defined( $community1 );
 DB_close;
@@ -324,7 +326,7 @@ $community = shift @ARGV if $#ARGV >= 0;
 if ($access eq 'SSH') {
     $access = 'SSHv2'
 }
-$access = 'Telnet' unless $access =~ m/SSHv[12]/i;
+#$access = 'Telnet' unless $access =~ m/SSHv[12]/i;
 
 my @seedHostList = split /,/, $seedHosts;
 
@@ -367,6 +369,15 @@ my (%bgp_host_ips, %bgp_links, %bgp_autonomous_systems);
 my $dbg_lastSeedHost = '';
 my $dbg_host_type;
 $logger->info ( "=== Discovery Iteraton  Started ====");
+my $NEWDB = NGNMS::DB->new(dbh=>NGNMS::OLD::DB::getDbh);
+#diag($user);
+my $NEW_CRYPT = NGNMS::App::Crypt->new(
+    DB=>$NEWDB,
+    username            => $user,
+    password            => $passwd,
+    privileged_password => $enpasswd,
+    transport           => $access,
+);
 discoveryBgp( \@bgp_parser_queue, 1 );
 DB_updateDiscoveryStatus( 5, 0 );## Host type was determined by one of the methods (CLI/SNMP)
 
@@ -398,6 +409,7 @@ sub discoveryBgp  {
     {filter => \&Data::Dumper::Dumper,
         value  => $arr_bgps}
         );
+
     foreach my $seedHost (@$arr_bgps) {
         my $bgp_router_id = NGNMS::OLD::DB::DB_getBgpRouterId( $seedHost ) || 'Undefined';
         $Log->put_debug_key('host',$seedHost);
@@ -456,9 +468,11 @@ sub discoveryBgp  {
 
         if (!$test_topologies) {
             # execute this section if started without -f <file> option
-            my @connect_params = NGNMS::OLD::Util::decode_router_access_method( $seedHost, $user, $passwd, $enpasswd,
-                $access );
-            my $ret = &getTopologies( $hostType, $seedHost, @connect_params );
+            my $new_connect_params =     $NEW_CRYPT->getHostCredentials($seedHost);
+            #( $user, $passwd, $enpasswd, $access, $path_to_key )
+            $new_connect_params->{host}=$seedHost;
+#            my @connect_params = NGNMS::OLD::Util::decode_router_access_method( $seedHost, $user, $passwd, $enpasswd,$access );
+            my $ret = &getTopologies( $hostType, $new_connect_params );
             #        $ret = &getTopologies($hostType, $seedHost, $user, $passwd, $enpasswd, $access);
 
             if ($ret ne "ok") {
@@ -863,8 +877,7 @@ sub spawnForAll {
         DB_close;
 
         $logger->info( "Spawning child $child");
-        my $p = spawnChild ( $spawn_marker++, $cmd, $child, $user, $passwd, $enpasswd, $community_l, $access,
-            $path_to_key );
+        my $p = spawnChild ( $spawn_marker++, $cmd, $child);
         defined $p or next;
         $pipes{$child} = $p;
 
@@ -890,11 +903,12 @@ sub spawnForAll {
 # enpasswd
 #
 sub getTopologies {
+    my ($hostType,$connect_params) = (shift,shift);
 
-    my $hostType = shift;
+#    diag $connect_params;
     $logger->debug( "Getting topologies from $hostType device");
-    $hostType eq "Cisco" and return &NGNMS::Host::Cisco::get_topologies;
-    $hostType eq "Juniper" and return &NGNMS::Host::Juniper::get_topologies;
+    $hostType eq "Cisco" and return &NGNMS::Host::Cisco::get_topologies($connect_params);
+    $hostType eq "Juniper" and return &NGNMS::Host::Juniper::get_topologies($connect_params);
     $hostType eq "Linux" and return &NGNMS::OLD::Linux::linux_get_topologies;
     $hostType eq "HP" and return "ok";
     $hostType eq "Extreme" and return "ok";
@@ -905,7 +919,6 @@ sub runScanner()
     my $cmd = shift;
 
     my @cmd2 = ($cmd);
-    my @params = ($user, $passwd, $enpasswd, $access, $community);
 
     push @cmd2, '-L';
     push @cmd2, $dbhost;

@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
 use MooX::Options;
+
 option dbname => (
         is      => 'ro',
         short   => 'D',

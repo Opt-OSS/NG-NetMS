@@ -13,7 +13,7 @@ using boost::asio::ip::udp;
 class SyslogUdpDP: public IDataProvider
 {
     public:
-        SyslogUdpDP( int Port );
+        SyslogUdpDP( int Port, string BindIPAddress );
         virtual ~SyslogUdpDP( );
         bool Run( );
         bool Stop( );
@@ -25,6 +25,7 @@ class SyslogUdpDP: public IDataProvider
 
     private:
         int     m_Port;
+        string m_BindIPAddress;
         bool    m_Interrupted;
         Notifier<DataProviderListener, DataProviderListener::DataProviderEvent&> m_Notifier;
         shared_ptr<udp::socket> m_Socket;

@@ -13,7 +13,7 @@ using boost::asio::ip::udp;
 class NetFlowUdpDP: public IDataProvider
 {
     public:
-		NetFlowUdpDP( int Port );
+		NetFlowUdpDP( int Port , string BindIPAddress );
         virtual ~NetFlowUdpDP( );
         bool Run( );
         bool Stop( );
@@ -22,6 +22,7 @@ class NetFlowUdpDP: public IDataProvider
 
     private:
         int     m_Port;
+        string m_BindIPAddress;
         bool    m_Interrupted;
         Notifier<DataProviderListener, DataProviderListener::DataProviderEvent&> m_Notifier;
         shared_ptr<udp::socket> m_Socket;

@@ -1,0 +1,15 @@
+use strict;
+use warnings FATAL => 'all';
+
+package NGNMS::DB {
+    #@returns NGNMS::DB
+    sub instance;
+
+};
+package NGNMS::DB::Base {
+    #@returns DBI
+    sub dbh;
+};
+
+
+1;

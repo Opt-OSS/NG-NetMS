@@ -7,7 +7,7 @@ class AttrAccessController extends Controller
      */
     public function actionIndex()
 	{
-        $acc_type_id = Yii::app()->getRequest()->getParam('id');
+        $acc_type_id = (int) Yii::app()->getRequest()->getParam('id');
         $attr_access = new AttrAccess('search');
         $attr_access->unsetAttributes();
         $attr_access->id_access_type = $acc_type_id;

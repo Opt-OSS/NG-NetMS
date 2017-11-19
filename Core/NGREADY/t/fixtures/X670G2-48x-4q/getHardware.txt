@@ -1,8 +1,0 @@
-Switch      : 800546-00-08 1547N-42070 Rev 8.0 BootROM: 1.0.2.1    IMG: 15.6.2.12
-PSU-1       : Internal PSU-1 800460-00-07 1545W-80029
-PSU-2       : Internal PSU-2 800460-00-07 1545W-80030
-
-Image   : ExtremeXOS version 15.6.2.12 v1562b12 by release-manager
-          on Mon Jan 26 16:01:43 EST 2015
-BootROM : 1.0.2.1
-Diagnostics : 2.1

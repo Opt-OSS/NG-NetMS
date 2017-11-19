@@ -33,16 +33,11 @@ has log_config => (
 
 sub _build_log_config {
     return {
-        dispatchers => ['screen','file'],
+        dispatchers => ['screen'],
         screen => {
             class => 'Log::Dispatch::Screen',
             min_level => 'debug',
         },
-        file=> {
-            class => 'Log::Dispatch::File',
-            min_level => 'debug',
-            filename => '/home/ngnms/NGREADY/connect_log.log'
-        }
     };
 }
 

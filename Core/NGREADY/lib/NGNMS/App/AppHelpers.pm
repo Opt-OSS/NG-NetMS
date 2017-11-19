@@ -51,7 +51,7 @@ sub getSysObjectID($$) {
 
     return  ($res->{$req}, undef);
 }
-
+#@deprecated
 sub getHostCredentials($) {
     my $self = shift;
     my $host = shift;

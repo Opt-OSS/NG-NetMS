@@ -17,7 +17,7 @@ prompt privileged
     match /# ?$/
 
 prompt logout
-    match /Do you want to log out \[y\/\n]\?/
+     match /^Do you want to log out \[y\/n\]\? ?$/
 
 macro set_terminal_width
     send terminal width 511
@@ -31,8 +31,6 @@ macro disconnect
     send exit
     match logout
     send y
-    match generic
-
 
 macro getSoftware
     send show system-information

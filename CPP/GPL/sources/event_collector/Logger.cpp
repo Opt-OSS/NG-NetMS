@@ -45,7 +45,7 @@ void Logger::SetLogFileName( string LogFile )
 void Logger::LogInfo( string Message )
 {
     stringstream ss;
-    ss << Message << endl;
+    ss << "INFO: " << Message << endl;
     FileLogger logger( m_LogFile, ss.str() );
     cout << ss.str();
 }
@@ -53,7 +53,7 @@ void Logger::LogInfo( string Message )
 void Logger::LogDebug( string Message )
 {
   stringstream ss;
-  ss << Message << endl;
+  ss << "DEBUG: "<< Message << endl;
   FileLogger logger( m_LogFile, ss.str() );
   cout << ss.str();
 }
@@ -61,7 +61,7 @@ void Logger::LogDebug( string Message )
 void Logger::LogError( string Message )
 {
     stringstream ss;
-    ss << "Error: " << Message << endl;
+    ss << "ERROR: " << Message << endl;
     FileLogger logger( m_LogFile, ss.str() );
     cout << ss.str();
 }

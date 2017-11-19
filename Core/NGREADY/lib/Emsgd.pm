@@ -9,6 +9,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);;
+use Carp;
 
 sub ss {
     my @text = shift;
@@ -22,22 +23,23 @@ sub ss {
 
 sub diag {
 
-    my @text = shift;
+    my $text = shift;
     my $title= shift;
     my $backtrace = shift;
 
-    my $count = 0;
-    {
-        my ($package, $filename, $line, $sub) = caller($count);
-        last unless defined $line;
-        print STDERR CYAN,sprintf("\n%02i %5i %-35s %-20s", $count++, $line, $sub, $filename);
-        last unless $backtrace ;
-        redo;
-    }
-    print STDERR     "\n---------------------------------------------------------------------\n";
-    print STDERR  Data::Dumper->Dump([@text],[$title || 'message']);
+    my ($package0, $filename0, $line0, $sub0) = caller(0);
+    my ($package, $filename, $line, $sub) = caller(1);
+    print STDERR "\n",GREEN;
+    my $trace = $backtrace
+            ? Carp::longmess
+            : sprintf("%-35s %-20s line %i",  $sub, $filename0, $line0);
+    print STDERR "$trace";
+    print STDERR     "\n----------------------------  ".($title || '')." ".ref($text)." -----------------------------------------\n";
+    print STDERR Dumper($text);
+
     #        print "@text";
-    print STDERR     "-----------------------------------------------------------------------\n",RESET;
+    print STDERR     "-----------------------------------------------------------------------\n";
+    print STDERR RESET;
     return 1
 }
 sub pp {

@@ -1,0 +1,10 @@
+use strict;
+use warnings FATAL => 'all';
+
+package NGNMS::App::Crypt; {
+    #@returns NGNMS::DB
+    sub DB;
+
+};
+
+1;

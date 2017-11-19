@@ -471,7 +471,7 @@ class RoutersController extends Controller
     public function actionRelationalhw()
     {
         // partially rendering "_relational" view
-        Yii::app()->graph->setIdRouter(Yii::app()->getRequest()->getParam('id'));
+        Yii::app()->graph->setIdRouter((int)Yii::app()->getRequest()->getParam('id'));
         $invHws = Yii::app()->graph->HwInventory;
         $amount1 = count($invHws);
         $arr_hw = array();
@@ -486,7 +486,7 @@ class RoutersController extends Controller
         }
 
         $this->renderPartial('_relational', array(
-            'id'               => Yii::app()->getRequest()->getParam('id'),
+            'id'               =>(int)  Yii::app()->getRequest()->getParam('id'),
             'gridDataProvider' => new CArrayDataProvider($arr_hw, array(
                 'pagination' => array(
                     'pageSize' => 50,
@@ -526,7 +526,7 @@ class RoutersController extends Controller
     public function actionRelationalsw()
     {
         // partially rendering "_relational" view
-        Yii::app()->graph->setIdRouter(Yii::app()->getRequest()->getParam('id'));
+        Yii::app()->graph->setIdRouter((int) Yii::app()->getRequest()->getParam('id'));
         $invSws = Yii::app()->graph->SwInventory;
         $amount1 = count($invSws);
         $arr_sw = array();
@@ -539,7 +539,7 @@ class RoutersController extends Controller
         }
 
         $this->renderPartial('_relational', array(
-            'id'               => Yii::app()->getRequest()->getParam('id'),
+            'id'               => (int) Yii::app()->getRequest()->getParam('id'),
             'gridDataProvider' => new CArrayDataProvider($arr_sw, array(
                 'pagination' => array(
                     'pageSize' => 50,
@@ -2021,7 +2021,7 @@ class RoutersController extends Controller
      */
     public function actionList()
     {
-        $acc_id = Yii::app()->getRequest()->getParam('id');
+        $acc_id = (int) Yii::app()->getRequest()->getParam('id');
         $criteria = new CDbCriteria();
         $criteria->with = array('idRouter' => array('alias' => 'pl'));
         $criteria->condition = "id_access=:id_access";
@@ -2081,7 +2081,7 @@ class RoutersController extends Controller
      */
     public function actionListSnmp()
     {
-        $acc_id = Yii::app()->getRequest()->getParam('id');
+        $acc_id = (int) Yii::app()->getRequest()->getParam('id');
         $criteria = new CDbCriteria();
         $criteria->with = array('router' => array('alias' => 'pl'));
         $criteria->condition = "snmp_access_id=:snmp_access_id";

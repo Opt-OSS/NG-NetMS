@@ -4,7 +4,6 @@ package Net::CLI::Interact::Role::FindMatch;
 }
 
 use Moo::Role;
-use NGNMS::EscapeANSI qw /escape_ansi/;
 
 # see if any regexp in the arrayref match the response
 sub find_match {
@@ -13,8 +12,6 @@ sub find_match {
     return undef unless
         (scalar grep {ref $_ eq ref qr//} @$matches) == scalar @$matches;
 
-#    my $escaped = $text;
-    escape_ansi(\$text);
     use List::Util 'first';
     return first { $text =~ $_ } @$matches;
 }

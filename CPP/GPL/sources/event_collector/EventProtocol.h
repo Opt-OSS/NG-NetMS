@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -14,33 +15,42 @@ enum class EventProtocol
     CUSTOM2 = 5
 };
 
+static map<EventProtocol, string>& GetProtocolToStringMapping( )
+{
+	static map<EventProtocol, string> protocols =
+	{
+			{ EventProtocol::SYSLOG, "syslog" },
+			{ EventProtocol::SNMP, "snmp" },
+			{ EventProtocol::NETFLOW, "netflow" },
+			{ EventProtocol::APACHE, "apache" },
+			{ EventProtocol::CUSTOM1, "custom1" },
+			{ EventProtocol::CUSTOM2, "custom2" },
+	};
+
+	return protocols;
+}
+
 static EventProtocol EventProtocolFromString( const string& String )
 {
-	if("syslog" == String)
+	for( auto& e : GetProtocolToStringMapping())
 	{
-		return EventProtocol::SYSLOG;
-	}
-	else if( "snmp" == String )
-	{
-		return EventProtocol::SNMP;
-	}
-	else if( "netflow" == String )
-	{
-		return EventProtocol::NETFLOW;
-	}
-	else if( "apache" == String )
-	{
-		return EventProtocol::APACHE;
-	}
-
-	else if( "custom1" == String )
-	{
-		return EventProtocol::CUSTOM1;
-	}
-	else if( "custom2" == String )
-	{
-		return EventProtocol::CUSTOM2;
+		if(e.second == String)
+		{
+			return e.first;
+		}
 	}
 
 	return EventProtocol::SYSLOG;
+}
+
+static string EventProtocolToString( EventProtocol Protocol )
+{
+	map<EventProtocol, string> protocolMap = GetProtocolToStringMapping();
+	auto it = protocolMap.find( Protocol );
+	if(protocolMap.end() == it)
+	{
+		it = protocolMap.begin();
+	}
+
+	return it->second;
 }

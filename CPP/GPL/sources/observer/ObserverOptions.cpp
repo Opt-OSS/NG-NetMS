@@ -21,7 +21,6 @@ ObserverOptions::ObserverOptions( ):
 bool ObserverOptions::Parse(int argc, char * argv[])
 {
     int next_option;
-	bool help = false;
 	/*
 	 * form optstring
 	 * a	- no value
@@ -41,12 +40,15 @@ bool ObserverOptions::Parse(int argc, char * argv[])
         { "imax",	    1,  NULL,	'i'},
         { NULL,			0,  NULL,	0 }
     };
-    do {
+
+    do
+    {
         next_option = getopt_long(argc, (char**)argv, short_options.c_str(), long_options, NULL);
-        switch(next_option) {
+        switch(next_option)
+        {
             case 'h':
-				help = true;
-				break;
+				ShowUsage(cerr);
+				return false;
             case 'o':
                 m_DbSettingsFileName = optarg;
                 break;
@@ -65,7 +67,7 @@ bool ObserverOptions::Parse(int argc, char * argv[])
 				}
                 break;
             case 'i':
-                m_Interval = atoi(optarg);
+                m_MaxInterval = atoi(optarg);
 				if (m_Verbose < 1)
 				{
 					ShowUsage(cerr);
@@ -91,23 +93,48 @@ bool ObserverOptions::Parse(int argc, char * argv[])
         }
     } while(-1 != next_option);
 
-	if (help)
-	{
-		ShowUsage(cerr);
-	}					
-	
     return true;
 }
 
 
-string ObserverOptions::GetDbSettingsFileName()	{ return m_DbSettingsFileName; }
-string ObserverOptions::GetLogFileName()		{ return m_LogFileName; }
-string ObserverOptions::GetConfigFileName()		{ return m_ConfigFileName; }
-int ObserverOptions::GetVerbose()				{ return m_Verbose; }
-bool ObserverOptions::GetMDef()					{ return m_MDef; }
-bool ObserverOptions::GetDrop()					{ return m_Drop; }
-bool ObserverOptions::GetUpdate()				{ return m_Update; }
-int ObserverOptions::GetMaxInterval()			{ return m_MaxInterval; }
+string ObserverOptions::GetDbSettingsFileName()
+{
+	return m_DbSettingsFileName;
+}
+
+string ObserverOptions::GetLogFileName()
+{
+	return m_LogFileName;
+}
+string ObserverOptions::GetConfigFileName()
+{
+	return m_ConfigFileName;
+}
+
+int ObserverOptions::GetVerbose()
+{
+	return m_Verbose;
+}
+
+bool ObserverOptions::GetMDef()
+{
+	return m_MDef;
+}
+
+bool ObserverOptions::GetDrop()
+{
+	return m_Drop;
+}
+
+bool ObserverOptions::GetUpdate()
+{
+	return m_Update;
+}
+
+int ObserverOptions::GetMaxInterval()
+{
+	return m_MaxInterval;
+}
 
 void ObserverOptions::ShowUsage( ostream& Stream )
 {

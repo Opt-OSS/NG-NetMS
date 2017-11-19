@@ -457,11 +457,18 @@ ApacheParser::~ApacheParser()
 
 }
 
+
 bool ApacheParser::Parse( string Message, bool HasSourceIp, string SourceIP )
 {
+
+	string 	OriginalMessage;
+
+	OriginalMessage = Message;
+
 	static ApacheTimestampParser apacheTimestampParser;
 
 	string timespamp;
+	//TODO add support for 23/Aug/2017:14:04:46 +0100 (Ubuntu default)
 	if(apacheTimestampParser.Parse(Message))
 	{
 		timespamp = GetTimestamp(apacheTimestampParser);
@@ -486,7 +493,7 @@ bool ApacheParser::Parse( string Message, bool HasSourceIp, string SourceIP )
 		Message = apacheFacilityParser.GetOutput();
 	}
 
-    Event event( EventProtocol::APACHE, "0", GetTimestamp( ), timespamp, GetHostName(), facility, code, Message, "", 0, 0 );
+    Event event( EventProtocol::APACHE, "0", GetTimestamp( ), timespamp, GetHostName(), facility, code, Message, OriginalMessage, 0, 0 );
     m_Notifier.Notify( event );
     return true;
 }

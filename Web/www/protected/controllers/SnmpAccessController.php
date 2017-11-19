@@ -164,7 +164,7 @@ class SnmpAccessController extends Controller
      */
     public function actionRouterjoin()
     {
-        $acc_type_id = Yii::app()->getRequest()->getParam('id');
+        $acc_type_id = (int) Yii::app()->getRequest()->getParam('id');
         $router_access_model = new RouterSnmpAccess('search');
         $router_access_model->unsetAttributes();
         $router_access_model->snmp_access_id = $acc_type_id;

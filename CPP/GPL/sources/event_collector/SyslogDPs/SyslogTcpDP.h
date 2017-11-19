@@ -13,7 +13,7 @@ using boost::asio::ip::tcp;
 class SyslogTcpDP: public IDataProvider
 {
     public:
-        SyslogTcpDP( int Port );
+        SyslogTcpDP( int Port, string BindIpAddress );
         virtual ~SyslogTcpDP( );
         bool Run( );
         bool Stop( );
@@ -22,6 +22,7 @@ class SyslogTcpDP: public IDataProvider
 
     private:
         int     m_Port;
+        string m_BindIPAddress;
         bool    m_Interrupted;
         Notifier<DataProviderListener, DataProviderListener::DataProviderEvent&> m_Notifier;
         shared_ptr<tcp::socket> m_Socket;

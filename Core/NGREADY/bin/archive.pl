@@ -12,8 +12,9 @@ use Time::Local;
 use POSIX qw/strftime/;
 use Config::Crontab;
 use Data::Dumper;
-use IPC::Run qw( run timeout );
+use IPC::Run qw(run timeout);
 use Time::HiRes qw (gettimeofday tv_interval);
+use File::Path qw(make_path);
 use Emsgd qw(diag);
 use NGNMS::Log4;
 use Log::Dispatch::Syslog;
@@ -41,6 +42,8 @@ use constant DB_VERSION => 34000;# x.xx.xx
 
 
 my $logger = NGNMS::Log4->new()->get_new_category_logger('archive');
+
+
 # ------------------------------------------------------------------------------
 # Queries constants
 # ------------------------------------------------------------------------------
@@ -52,7 +55,7 @@ my DBI $dbh;
 my ( $sth, %opt);
 
 # Get command-line options
-GetOptions( \%opt, qw(unload=i load=i dump l:s u:s w:s d:s p:s v:1 ) );
+GetOptions(\%opt, qw(unload=i load=i dump l:s u:s w:s d:s p:s v:1));
 
 my $feldsInQuestion = '*';
 my $tableInQuestion = '';
@@ -63,17 +66,12 @@ my $arcive_tables = {
         'fields'          => '*', #fields names as in SELECT statment
         'timestamp_field' => 'receiver_ts', #timestamp field
     },
-
-    'anomaly_history'           => #table name
-    {
-        'fields'          => '*', #fields names as in SELECT statment
-        'timestamp_field' => 'end_ts', #timestamp field
-    },
-    'prf_1hour'                 => #table name
-    {
-        'fields'          => '*', #fields names as in SELECT statment
-        'timestamp_field' => 'ts', #timestamp field
-    },
+# DO NOT ARCHIVE LONG INTERVALS SO WE ALLWAYS HAVE SOME HISTORY DATA
+#    'prf_1hour'                 => #table name
+#    {
+#        'fields'          => '*', #fields names as in SELECT statment
+#        'timestamp_field' => 'ts', #timestamp field
+#    },
     'prf_1min'                  => #table name
     {
         'fields'          => '*', #fields names as in SELECT statment
@@ -99,11 +97,12 @@ my $arcive_tables = {
         'fields'          => '*', #fields names as in SELECT statment
         'timestamp_field' => 'ts', #timestamp field
     },
-    'observer_history_t1_1hr'   => #table name
-    {
-        'fields'          => '*', #fields names as in SELECT statment
-        'timestamp_field' => 'ts', #timestamp field
-    },
+# DO NOT ARCHIVE LONG INTERVALS SO WE ALLWAYS HAVE SOME HISTORY DATA
+#    'observer_history_t1_1hr'   => #table name
+#    {
+#        'fields'          => '*', #fields names as in SELECT statment
+#        'timestamp_field' => 'ts', #timestamp field
+#    },
     'observer_history_t1_1min'  => #table name
     {
         'fields'          => '*', #fields names as in SELECT statment
@@ -138,8 +137,13 @@ my $_ArcTimeout = 86400 * 180;
 my $_ArcDelTimeout = 86400 * 365;
 my $_ArcPeriod = '0 0 */1 * *';
 my $_ArcGzip = 0;
-my $_ArcPath = ($ENV{NGNMS_DATA} || '.').'/archive';
-my $_ArcSettings = ($ENV{NGNMS_CONFIG} || '.').'/configs/archive-time.conf';
+my $_ArcPath = ($ENV{NGNMS_DATA} || '.') . '/archive';
+if (!-d $_ArcPath) {
+    $logger->info("Creating archive path $_ArcPath");
+    make_path $_ArcPath or die "Failed to create path: $_ArcPath";
+
+}
+my $_ArcSettings = ($ENV{NGNMS_CONFIG} || '.') . '/configs/archive-time.conf';
 
 # Logging settings
 my $_LogSyslog = 1;
@@ -150,35 +154,35 @@ my $_LogLevel = 0;
 
 
 
-&usage if ( !defined($opt{start}) && !defined($opt{stop}) && !defined($opt{dump}) && !defined($opt{unload}) && !defined($opt{load}) );
-&usage if ( (defined($opt{start}) && defined($opt{stop})) || (defined($opt{start}) && defined($opt{dump})) || (defined($opt{stop}) && defined($opt{dump})) );
+&usage if (!defined($opt{start}) && !defined($opt{stop}) && !defined($opt{dump}) && !defined($opt{unload}) && !defined($opt{load}));
+&usage if ((defined($opt{start}) && defined($opt{stop})) || (defined($opt{start}) && defined($opt{dump})) || (defined($opt{stop}) && defined($opt{dump})));
 
 eval {
     # Load config
     &loadConfig;
 
     # Init log
-    $logger->info("Starting archiver" );
+    $logger->info("Starting archiver");
     &logOptions;
 
     # Perform dump
-    &doDump if ( defined($opt{dump})   );
+    &doDump if (defined($opt{dump}));
 
-    &doUnLoad if ( defined($opt{unload})   );
-    &doLoad if ( defined($opt{load})   );
+    &doUnLoad if (defined($opt{unload}));
+    &doLoad if (defined($opt{load}));
 
     # Schedule
-#    &doStart if ( defined($opt{start})  );
+    #    &doStart if ( defined($opt{start})  );
 
     # Unschedule
-#    &doStop if ( defined($opt{stop})   );
+    #    &doStop if ( defined($opt{stop})   );
 
     # Close log
-    $logger->info(  "Finished successfully" );
+    $logger->info("Finished successfully");
 };
 
 if ($@) {
-    $logger->error( "Execution aborted due to: $@\n" );
+    $logger->error("Execution aborted due to: $@\n");
 }
 
 # ------------------------------------------------------------------------------
@@ -189,22 +193,21 @@ sub doStart {
     #TODO move scheduler to shceduler.pl so all scheduling will be on one place
     my ($sc, $c, $p);
 
-    $logger->info(  ">> Scheduling crontab" );
+    $logger->info(">> Scheduling crontab");
 
     #todo remove old in-db scheduling format
     # Get period from command line if any
     #    $_ArcPeriod = $opt{start} if ( $opt{start} ne '' );
 
     ## Change access to DB
-    my $file = $ENV{NGNMS_HOME}."/bin/archive_run.sh";
+    my $file = $ENV{NGNMS_HOME} . "/bin/archive_run.sh";
 
-    open (IN, $file) || die "Cannot open file ".$file." for read";
+    open (IN, $file) || die "Cannot open file " . $file . " for read";
     my @lines0 = <IN>;
     close IN;
 
-    open (OUT, ">", $file) || die "Cannot open file ".$file." for write";
-    foreach my $line (@lines0)
-    {
+    open (OUT, ">", $file) || die "Cannot open file " . $file . " for write";
+    foreach my $line (@lines0) {
         $line = "HOST='$_DBHost'\n" if $line =~ m/^HOST/;
         $line = "DB='$_DBName'\n" if $line =~ m/^DB/;
         $line = "USER='$_DBUser'\n" if $line =~ m/^USER/;
@@ -237,7 +240,7 @@ sub doStart {
 
     unless ($_ArcPeriod =~ /^[\s\d\*\-\/]+$/) {
         #            diag $_ArcPeriod;
-        $logger->warn("Wrong period-- [$_ArcPeriod]" );
+        $logger->warn("Wrong period-- [$_ArcPeriod]");
         &usage;
     }
     $sc = $_ArcPeriod;
@@ -247,19 +250,19 @@ sub doStart {
     &doStop;
 
     ## Open crontab for user ngnms
-    my $ct = new Config::Crontab( -owner => 'ngnms' );
+    my $ct = new Config::Crontab(-owner => 'ngnms');
     ## read crontab
     $ct->read;
 
     ## create an array of crontab objects
-    my @lines = ( new Config::Crontab::Comment(-data => '## archive'),
-        new Config::Crontab::Event(-data => $sc.' /home/ngnms/NGREADY/bin/archive_run.sh') );
+    my @lines = (new Config::Crontab::Comment(-data => '## archive'),
+        new Config::Crontab::Event(-data => $sc . ' /home/ngnms/NGREADY/bin/archive_run.sh'));
 
     ## create a block object via lines attribute
-    my $newblock = new Config::Crontab::Block( -lines => \@lines );
+    my $newblock = new Config::Crontab::Block(-lines => \@lines);
 
     ## add this block to crontab file
-    $ct->last( $newblock );
+    $ct->last($newblock);
     ## write out crontab file
     $ct->write;
     #todo remove to-database periodic updates???, we manage it only from web
@@ -267,19 +270,18 @@ sub doStart {
     #    $logger->debug("SQL: [$updatePeriodic ]" );
     #    $dbh->do( $updatePeriodic,  undef, ( $sc ) );
     #    &dbDisconnect;
-    $logger->info( "<< Scheduling complete" );
+    $logger->info("<< Scheduling complete");
 }
 #@deprecated
 sub doStop {
     ## Open crontab for user ngnms
-    my $ct = new Config::Crontab( -owner => 'ngnms' );
+    my $ct = new Config::Crontab(-owner => 'ngnms');
     $ct->read;
-    my $oldblock = $ct->block( $ct->select( -type => "comment", -data_re => 'archive' ) );
+    my $oldblock = $ct->block($ct->select(-type => "comment", -data_re => 'archive'));
 
-    if (defined $oldblock)
-    {
+    if (defined $oldblock) {
         ## remove this block from the crontab
-        $ct->remove( $oldblock );
+        $ct->remove($oldblock);
         ## write changes in crontab
         $ct->write;
     }
@@ -293,17 +295,17 @@ sub doStop {
 
 
 sub logOptions {
-    $logger->debug( "_DBName         = $_DBName" );
-    $logger->debug( "_DBPort         = $_DBPort" );
-    $logger->debug( "_DBHost         = $_DBHost" );
-    $logger->debug( "_DBUser         = ****" );
-    $logger->debug( "_DBPass         = ****" );
-    $logger->debug( "_ArcGzip        = $_ArcGzip" );
-    $logger->debug( "_ArcPath        = $_ArcPath" );
-    $logger->debug( "_ArcSettings    = $_ArcSettings" );
-    $logger->debug( "_ArcTimeout     = $_ArcTimeout" );
-    $logger->debug( "_ArcDelTimeout  = $_ArcDelTimeout" );
-    $logger->debug( "_ArcPeriod      = $_ArcPeriod" );
+    $logger->debug("_DBName         = $_DBName");
+    $logger->debug("_DBPort         = $_DBPort");
+    $logger->debug("_DBHost         = $_DBHost");
+    $logger->debug("_DBUser         = ****");
+    $logger->debug("_DBPass         = ****");
+    $logger->debug("_ArcGzip        = $_ArcGzip");
+    $logger->debug("_ArcPath        = $_ArcPath");
+    $logger->debug("_ArcSettings    = $_ArcSettings");
+    $logger->debug("_ArcTimeout     = $_ArcTimeout");
+    $logger->debug("_ArcDelTimeout  = $_ArcDelTimeout");
+    $logger->debug("_ArcPeriod      = $_ArcPeriod");
 }
 
 # ------------------------------------------------------------------------------
@@ -326,9 +328,9 @@ sub loadConfig {
 
     &dbConnect;
 
-    $logger->debug("SQL: [qGetConf ]" );
-    $sth = $dbh->prepare( $qGetConf );
-    $sth->execute( );
+    $logger->debug("SQL: [qGetConf ]");
+    $sth = $dbh->prepare($qGetConf);
+    $sth->execute();
     my $row = $sth->fetchrow_hashref;
 
     $sth->finish();
@@ -338,7 +340,7 @@ sub loadConfig {
     # Archive paths
     $_ArcPath = $row->{arc_path} || $_ArcPath;
     # Fix paths
-    $_ArcPath = $ENV{NGNMS_DATA}."/".$_ArcPath unless ( $_ArcPath =~ /^\// );
+    $_ArcPath = $ENV{NGNMS_DATA} . "/" . $_ArcPath unless ($_ArcPath =~ /^\//);
     ##  $_ArcSettings   =	$conf{'arc_setting'}   if( defined $conf{'arc_setting'} );
 
     # Logging settings
@@ -355,8 +357,8 @@ sub loadConfig {
     $_ArcDelTimeout = $row->{arc_delete} || $_ArcDelTimeout;
 
     # Transform to seconds
-    $_ArcTimeout = &ti2sec( $_ArcTimeout );
-    $_ArcDelTimeout = &ti2sec( $_ArcDelTimeout  );
+    $_ArcTimeout = &ti2sec($_ArcTimeout);
+    $_ArcDelTimeout = &ti2sec($_ArcDelTimeout);
 
     if (!defined($opt{start}) || $opt{start} eq '') {
         $_ArcPeriod = $row->{arc_period} || $_ArcPeriod;
@@ -372,7 +374,7 @@ sub loadConfig {
 # ------------------------------------------------------------------------------
 sub ti2sec {
     my $str = shift;
-    my @tokens = split( /\s+/, $str );
+    my @tokens = split(/\s+/, $str);
     my ($d, $h, $m, $k, $c, $t);
     $d = 0;
     $h = 0;
@@ -385,18 +387,21 @@ sub ti2sec {
         if ($t =~ /^(\d+)(d|h|m)$/) {
             $c = $1;
             $k = $2;
-            die "Number cannot be 0 in [$str] configuration file\n" if ( $c == 0 );
+            die "Number cannot be 0 in [$str] configuration file\n" if ($c == 0);
             if ($k eq 'd') {
-                die "Duplicate 'd'ay token in config line [$str]\n" if ( $d > 0 );
+                die "Duplicate 'd'ay token in config line [$str]\n" if ($d > 0);
                 $d = $c;
-            } elsif ($k eq 'h') {
-                die "Duplicate 'h'our token in config line [$str]\n" if ( $h > 0 );
+            }
+            elsif ($k eq 'h') {
+                die "Duplicate 'h'our token in config line [$str]\n" if ($h > 0);
                 $h = $c;
-            } else {
-                die "Duplicate 'm'inute token in config line [$str]\n" if ( $m > 0 );
+            }
+            else {
+                die "Duplicate 'm'inute token in config line [$str]\n" if ($m > 0);
                 $m = $c;
             }
-        } else {
+        }
+        else {
             die "Wrong token [$t] in line [$str] while reading configuration\n";
         }
     }
@@ -417,19 +422,19 @@ sub doDump {
     eval
     {
 
-        $logger->debug( "SQL: [$qGetEndTime]" );
-        @row = $dbh->selectrow_array( $qGetEndTime );
+        $logger->debug("SQL: [$qGetEndTime]");
+        @row = $dbh->selectrow_array($qGetEndTime);
         $fromTime = $row[0] ? $row[0] : "-infinity";
         my $time_shift = &timeshiftCalculate;
         my $time_delete = &timedeleteCalculate;
 
         # Generate archive filename & open file
-        chomp( $fileName = `date "+%Y%m%d-%H%M"` );
+        chomp($fileName = `date "+%Y%m%d-%H%M"`);
         $fileName .= ".sql";
-        $logger->debug( "Dumping events to $_ArcPath/$fileName" );
-        open( DUMP, ">$_ArcPath/$fileName" ) || die "cannot create dump file $_ArcPath/$fileName : $!";
+        $logger->info("Dumping events to $_ArcPath/$fileName");
+        open(DUMP, ">$_ArcPath/$fileName") || die "cannot create dump file $_ArcPath/$fileName : $!";
         my $ev_total_count = 0;
-        my $table_start_stop = { };
+        my $table_start_stop = {};
 
         for my $table (keys %$arcive_tables) {
             my $t0 = [ gettimeofday ];
@@ -442,14 +447,14 @@ sub doDump {
                         );"
             );
 
-            $logger->warn("TABLE  $table SKIPPED cause it not exists" ) && next unless $exists;
+            $logger->info("TABLE  $table SKIPPED cause it not exists") && next unless $exists;
 
 
             #set variable for table we are archiving (DBI->prepare dont allow param as table name)
 
             $feldsInQuestion = $arcive_tables->{$table}->{fields};
             $timestampField = $arcive_tables->{$table}->{timestamp_field};
-            $tableInQuestion = $dbh->quote_identifier( $table );
+            $tableInQuestion = $dbh->quote_identifier($table);
 
             my $qGetEvents = "SELECT $feldsInQuestion FROM $tableInQuestion WHERE $timestampField >= ? AND $timestampField <  ? ORDER BY $timestampField ASC";
             my $qGetTimes = "SELECT MIN($timestampField), MAX($timestampField) FROM $tableInQuestion WHERE ($timestampField >= ? AND $timestampField <  ?)";
@@ -458,47 +463,47 @@ sub doDump {
             my $qDelEvents = "DELETE FROM $tableInQuestion WHERE $timestampField >= ? AND $timestampField < ?";
             my $qVacuumEvt = "VACUUM $tableInQuestion";
 
-            $logger->debug("TABLE: [$tableInQuestion] with fields [$feldsInQuestion] by timestamp field [$timestampField]" );
+            $logger->debug("TABLE: [$tableInQuestion] with fields [$feldsInQuestion] by timestamp field [$timestampField]");
             # Get most recent end_time
 
 
             # Get start_time and end_time
-            $logger->debug( "SQL: [$qGetTimes], [$fromTime, $time_shift, for \"$_ArcTimeout second\"]" );
-            $sth = $dbh->prepare( $qGetTimes );
-            $sth->execute( ($fromTime, $time_shift) );
+            $logger->debug("SQL: [$qGetTimes], [$fromTime, $time_shift, for \"$_ArcTimeout second\"]");
+            $sth = $dbh->prepare($qGetTimes);
+            $sth->execute(($fromTime, $time_shift));
             @row = $sth->fetchrow_array;
             $start_time = $row[0];
             $end_time = $row[1];
             if (!defined $start_time || !defined $end_time) {
-                $logger->warn("Nothing to dump for $table for period [$fromTime, $time_shift, for \"$_ArcTimeout second\"]" );
+                $logger->debug("Nothing to dump for table $table [$fromTime, $time_shift, for \"$_ArcTimeout second\"]");
                 next;
             }
             $table_start_stop->{$table} = { start => $start_time, end => $end_time, count => 0 };
 
             # Check whether there are events to archive
-            $logger->debug( ">> Checking for number of events to archive" );
-            $logger->debug( "SQL: [$qGetEvtCount], [$start_time , $end_time]" );
-            $sth = $dbh->prepare( $qGetEvtCount );
+            $logger->debug("Checking for number of events to archive");
+            $logger->debug("SQL: [$qGetEvtCount], [$start_time , $end_time]");
+            $sth = $dbh->prepare($qGetEvtCount);
 
-            $sth->execute( $start_time, $end_time );
+            $sth->execute($start_time, $end_time);
             @row = $sth->fetchrow_array;
             $ev_count = $row[0];
             $ev_total_count += $ev_count;
-            $logger->debug( "<< Found $ev_count event(s)" );
 
             # Do not dump if nothing to dump
-            if ($ev_count eq '0')
-            {
-                $logger->error( "Nothing to dump for $table" );
-                next;
+            if ($ev_count eq '0') {
+                $logger->info("Nothing to dump from table '$table'");
+#                next;
+                # add empty archives too so we have info in database
+                # and archive perf tables if no events
+                # and run vacuum on tables
             }
-            else
-            {
+            else {
                 $table_start_stop->{$table}->{count} = $ev_count;
-                $logger->debug( ">> Dump started  for $table" );
+                $logger->info("Dump started  for $table ($ev_count records)");
 
                 # --- Header start
-                print DUMP '-- Version  '.DB_VERSION."\n";
+                print DUMP '-- Version  ' . DB_VERSION . "\n";
                 print DUMP<<EOF;
 -- Disable triggers
 --UPDATE "pg_class" SET "reltriggers" = 0 WHERE "relname" = 'events';
@@ -509,14 +514,14 @@ EOF
 
 
                 # Dump events to file
-                $logger->debug( "SQL: [$qGetEvents], [$start_time, $end_time, for \"$_ArcTimeout second\"]" );
+                $logger->debug("SQL: [$qGetEvents], [$start_time, $end_time, for \"$_ArcTimeout second\"]");
                 $qGetEvents =~ s/\?/'$start_time'/;
                 $qGetEvents =~ s/\?/'$end_time'/;
                 my $sql = " copy ($qGetEvents) TO STDOUT  WITH (DELIMITER ';' , FORMAT CSV , HEADER , QUOTE  '\"' ,FORCE_QUOTE *)";
-                $dbh->do( $sql );
+                $dbh->do($sql);
                 #       Emsgd::pp($sql);
                 my $copy_data;
-                while ($dbh->pg_getcopydata( $copy_data ) >= 0) {
+                while ($dbh->pg_getcopydata($copy_data) >= 0) {
                     print DUMP $copy_data;
                 }
                 #Emsgd::pp(@copy_data[1]);
@@ -531,42 +536,43 @@ EOF
 EOF
                 # --- Footer end
 
-                $logger->debug( "<< Dump complete" );
-                $table_start_stop->{$table}->{elapsed} = tv_interval ( $t0 );
+                $logger->info("Dump complete for table $table");
+                $table_start_stop->{$table}->{elapsed} = tv_interval ($t0);
 
             } # Dump section
 
 
 
-            # Clear archived records from events table
-            $logger->debug( "SQL: [$qDelEvents], [$start_time, \"$end_time for \"$_ArcTimeout secondd\"]" );
-            $dbh->do( $qDelEvents, undef, ($start_time, $end_time) );
+            # Clear archived records from  table
+            $logger->debug("SQL: [$qDelEvents], [$start_time, \"$end_time for \"$_ArcTimeout secondd\"]");
+            $dbh->do($qDelEvents, undef, ($start_time, $end_time));
 
-            $logger->debug( "Events purged" );
+            $logger->debug("Events purged");
 
             # Finally commit transaction
-            $dbh->commit;
+#            $dbh->commit;
 
             # Vacuum events
-            $dbh->{AutoCommit} = 1;
-            $dbh->do( $qVacuumEvt );
-            $logger->debug( "Events vacuumed" );
-            $dbh->{AutoCommit} = 0;
+#            $dbh->{AutoCommit} = 1;
+            $logger->debug("Start table $table vacuuming");
+            $dbh->do($qVacuumEvt);
+            $logger->debug("table $table vacuumed");
+#            $dbh->{AutoCommit} = 0;
         }
         # Add archive record to table archives
         if ($ev_total_count) {
             $start_time = $table_start_stop->{events}->{start};
             $end_time = $table_start_stop->{events}->{end};
-            $logger->debug( "SQL: [$qInsArchive], [$start_time, $end_time, $fileName]" );
-            my $next_id = $dbh->selectrow_array( "select nextval('archives_archive_id_seq')" );
-            $sth = $dbh->prepare( $qInsArchive );
-            $sth->execute( ($next_id, $start_time, $end_time, $fileName) );
-            $dbh->commit;
-            $logger->debug( "Archive record added to DB" );
-            $sth = $dbh->prepare( $qInsArchiveTables );
+            $logger->debug("SQL: [$qInsArchive], [$start_time, $end_time, $fileName]");
+            my $next_id = $dbh->selectrow_array("select nextval('archives_archive_id_seq')");
+            $sth = $dbh->prepare($qInsArchive);
+            $sth->execute(($next_id, $start_time, $end_time, $fileName));
+#            $dbh->commit;
+            $logger->debug("Archive record added to DB");
+            $sth = $dbh->prepare($qInsArchiveTables);
             for my $table (keys %$table_start_stop) {
-                $logger->debug( "SQL: [$qInsArchiveTables], [$next_id, $table,$start_time, $end_time, $fileName]" );
-                $sth->execute( (
+                $logger->debug("SQL: [$qInsArchiveTables], [$next_id, $table,$start_time, $end_time, $fileName]");
+                $sth->execute((
                     $next_id,
                     $table,
                     $table_start_stop->{$table}->{start},
@@ -576,43 +582,43 @@ EOF
                 )
                 );
             }
-            $dbh->commit;
+#            $dbh->commit;
         }
 
-        $logger->debug( ">> Deleting old archive files" );
+        $logger->debug(">> Deleting old archive files");
 
         # Delete old archive files
-        $logger->debug( "SQL: [$qGetArchives], [\"$_ArcDelTimeout second\"]" );
-        $sth = $dbh->prepare( $qGetArchives );
-        $sth->execute( $time_delete );
-        while( @row = $sth->fetchrow_array ) {
+        $logger->debug("SQL: [$qGetArchives], [$time_delete, $_ArcDelTimeout]");
+        $sth = $dbh->prepare($qGetArchives);
+        $sth->execute($time_delete);
+#        diag($time_delete);
+        while (@row = $sth->fetchrow_array) {
             unlink "$_ArcPath/$row[0]";
-            $logger->debug( "Archive file $_ArcPath/$row[0] deleted" );
+            $logger->debug("Archive file $_ArcPath/$row[0] deleted");
         }
 
         # Delete archive records
-        $logger->debug( "SQL: [$qDelArchives], [\"$_ArcDelTimeout second\"]" );
-        $sth = $dbh->prepare( $qDelArchives );
-        $sth->execute( $time_delete );
-        #        $dbh->commit;
+        $logger->debug("SQL: [$qDelArchives], [\"$_ArcDelTimeout second\"]");
+        $sth = $dbh->prepare($qDelArchives);
+        $sth->execute($time_delete);
+#        $dbh->commit;
 
-        $logger->debug( "Old archive files deleted" );
+        $logger->debug("Old archive files deleted");
 
         close DUMP || die "cannot close dump file $fileName : $!";
 
         # Gzip if needed
-        if ($_ArcGzip)
-        {
-            $logger->debug( "Gzipping dump $_ArcPath/$fileName" );
+        if ($_ArcGzip) {
+            $logger->debug("Gzipping dump $_ArcPath/$fileName");
             `gzip -9 $_ArcPath/$fileName`;
             $fileName .= ".gz";
-            $logger->debug( "Gzipping complete" );
+            $logger->debug("Gzipping complete");
         }
     };
 
     if ($@) {
-        $dbh->rollback;
-        $logger->logdie( "Transaction aborted because $@");
+#        $dbh->rollback;
+        $logger->logdie("Transaction aborted because $@");
     }
 
     &dbDisconnect;
@@ -620,33 +626,33 @@ EOF
 
 sub _clean_tables($) {
     my $arc_id = shift;
-    my $tables = $dbh->selectall_arrayref( "select * from archive_tables  where archive_id=".$arc_id,
-        { 'Columns' => { } } );
+    my $tables = $dbh->selectall_arrayref("select * from archive_tables  where archive_id=" . $arc_id,
+        { 'Columns' => {} });
     my $t0 = [ gettimeofday ];
     my $ev_count_total = 0;
     for my $arc_data (@$tables) {
         my $t1 = [ gettimeofday ];
-        $logger->error("table ".$arc_data->{table_name}." not found in config, could not clear data " ) && next unless defined $arcive_tables->{$arc_data->{table_name}};
+        $logger->error("table " . $arc_data->{table_name} . " not found in config, could not clear data ") && next unless defined $arcive_tables->{$arc_data->{table_name}};
         my $t_config = $arcive_tables->{$arc_data->{table_name}};
 
-        my $sql = "delete from  ".$arc_data->{table_name}." where ".$t_config->{timestamp_field}." >= ? and  ".$t_config->{timestamp_field}." < ?";
+        my $sql = "delete from  " . $arc_data->{table_name} . " where " . $t_config->{timestamp_field} . " >= ? and  " . $t_config->{timestamp_field} . " < ?";
         $logger->debug("About to delete data :$sql with params ( $arc_data->{start_time}, $arc_data->{end_time})");
-        my $ev_count = $dbh->do( $sql, undef, ( $arc_data->{start_time}, $arc_data->{end_time}) );
+        my $ev_count = $dbh->do($sql, undef, ($arc_data->{start_time}, $arc_data->{end_time}));
         $ev_count_total += $ev_count;
 
-        $dbh->commit();
+#        $dbh->commit();
         if ($ev_count) {
             # Vacuum events
-            $dbh->{AutoCommit} = 1;
-            $dbh->do( "VACUUM ".$arc_data->{table_name} );
-            $logger->debug( "Events vacuumed" );
-            $dbh->{AutoCommit} = 0;
+#            $dbh->{AutoCommit} = 1;
+            $dbh->do("VACUUM " . $arc_data->{table_name});
+            $logger->debug("Events vacuumed");
+#            $dbh->{AutoCommit} = 0;
         }
         $logger->debug(
-            "<< archive #$arc_id table ".$arc_data->{table_name}." clenup: $ev_count rows deleted  in ".tv_interval($t1)." seconds" );
+            "<< archive #$arc_id table " . $arc_data->{table_name} . " clenup: $ev_count rows deleted  in " . tv_interval($t1) . " seconds");
     }
     $logger->debug(
-        "#$arc_id clenup: total $ev_count_total rows deleted in  ".tv_interval($t0)." seconds" );
+        "#$arc_id clenup: total $ev_count_total rows deleted in  " . tv_interval($t0) . " seconds");
 
 }
 sub doLoad {
@@ -658,7 +664,7 @@ sub doLoad {
     eval {
 
         my $t0 = [ gettimeofday ];
-        $archive = $dbh->selectrow_hashref( "select * from archives where archive_id=".$arc_id );
+        $archive = $dbh->selectrow_hashref("select * from archives where archive_id=" . $arc_id);
         #        Emsgd::diag($archive);
         die("archive with id $arc_id not found") unless defined $archive;
         die("archive with id $arc_id already loaded into DB") if $archive->{in_db};
@@ -667,30 +673,32 @@ sub doLoad {
         # ------------------ try to find gzipped first (for old archives created via GUI but gzipeed manually)  ------------------
         my $gzipped = 0;
         my $filename = $archive->{file_name};
-        if (-e "$_ArcPath/$filename".'.gz') {
+        if (-e "$_ArcPath/$filename" . '.gz') {
             $gzipped = 1;
             $filename .= '.gz';
-        } elsif (-e "$_ArcPath/$filename" && ($filename =~ /\.gz$/)) {
+        }
+        elsif (-e "$_ArcPath/$filename" && ($filename =~ /\.gz$/)) {
             $gzipped = 1;
         }
         $filename = "$_ArcPath/$filename";
         if ($gzipped) {
-            @cmd1 = ( 'gunzip', '-c', $filename);
-        } else {
-            @cmd1 = ('cat', $filename );
+            @cmd1 = ('gunzip', '-c', $filename);
+        }
+        else {
+            @cmd1 = ('cat', $filename);
         }
         $ENV{PGPASSWORD} = $_DBPass;
         @cmd2 = ('/usr/bin/psql', '-h', $_DBHost, '-p', $_DBPort, '-U', $_DBUser, '-d', $_DBName);
         run   \@cmd1, '|', \@cmd2, \$out, '2>&1';
         $ENV{PGPASSWORD} = undef;
         die "system command failed: $out" if $out ne '';
-        $dbh->do( "update archives set in_db=true where archive_id=".$arc_id ) or die $dbh->errstr;
-        $logger->debug( "<< archive #$arc_id loaded in ".tv_interval($t0)." sec" );
-        $dbh->commit();
+        $dbh->do("update archives set in_db=true where archive_id=" . $arc_id) or die $dbh->errstr;
+        $logger->debug("<< archive #$arc_id loaded in " . tv_interval($t0) . " sec");
+#        $dbh->commit();
     };
     if ($@) {
         $dbh->rollback;
-        $logger->loadie( "Transaction aborted because $@" );
+        $logger->logdie("Transaction aborted because $@");
     }
 
     &dbDisconnect;
@@ -705,18 +713,18 @@ sub doUnLoad {
     eval {
         my $t0 = [ gettimeofday ];
         $ev_count = 0;
-        $archive = $dbh->selectrow_hashref( "select * from archives where archive_id=".$arc_id );
+        $archive = $dbh->selectrow_hashref("select * from archives where archive_id=" . $arc_id);
         #        Emsgd::diag($archive);
         die("archive with id $arc_id not found") unless defined $archive;
         die("archive with id $arc_id not loaded into DB") unless $archive->{in_db};
         _clean_tables($arc_id);
-        $dbh->do( "update archives set in_db=false where archive_id=".$arc_id );
-        $dbh->commit();
-        $logger->debug( "<< archive #$arc_id unloaded, $ev_count rows deleted in ".tv_interval($t0)." sec" );
+        $dbh->do("update archives set in_db=false where archive_id=" . $arc_id);
+#        $dbh->commit();
+        $logger->debug("<< archive #$arc_id unloaded, $ev_count rows deleted in " . tv_interval($t0) . " sec");
     };
     if ($@) {
         $dbh->rollback;
-        $logger->logdie("Transaction aborted because $@" );
+        $logger->logdie("Transaction aborted because $@");
     }
 
     &dbDisconnect;
@@ -739,10 +747,10 @@ sub doUnLoad {
 # Database utilities
 # ------------------------------------------------------------------------------
 sub dbConnect {
-    my $dsn = "dbi:Pg:dbname=$_DBName".($_DBHost ne '' ? ";host=$_DBHost" : "").($_DBPort ne '' ? ";port=$_DBPort" : "");
-    $logger->debug( "DBI connect('$dsn','$_DBUser',...)" );
+    my $dsn = "dbi:Pg:dbname=$_DBName" . ($_DBHost ne '' ? ";host=$_DBHost" : "") . ($_DBPort ne '' ? ";port=$_DBPort" : "");
+    $logger->debug("DBI connect('$dsn','$_DBUser',...)");
 
-    $dbh = DBI->connect( $dsn, $_DBUser, $_DBPass ) || die $DBI::errstr;
+    $dbh = DBI->connect($dsn, $_DBUser, $_DBPass) || die $DBI::errstr;
     $dbh->{AutoCommit} = 1;  # enable transactions
     $dbh->{RaiseError} = 1;
 }
@@ -766,7 +774,9 @@ sub timedeleteCalculate {
     my $back_time = timelocal($sec, $min, $hour, $mday, $mon, $year) - $_ArcDelTimeout;
     my @time = localtime($back_time);
     my $oops = strftime '%Y-%m-%d %H:%M:%S', @time;
-
+#    my @t = localtime();
+#    diag(\@t);
+#    diag($oops);
     return $oops;
 }
 # ------------------------------------------------------------------------------

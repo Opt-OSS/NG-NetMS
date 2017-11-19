@@ -25,7 +25,6 @@ class ObserverOptions
         string  m_LogFileName;
 		string  m_ConfigFileName;
         string  m_DbSettingsFileName;
-        int     m_Interval;
         int     m_Verbose;
 		bool    m_MDef;
 		bool	m_Drop;

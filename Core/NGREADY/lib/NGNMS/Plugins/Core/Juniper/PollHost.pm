@@ -209,7 +209,7 @@ sub parse_logical_interfaces {
             my ($proto) = $proto_text =~ /^Protocol\s(\S+),/;
             #TODO add support for iso and inetv6
             if ($proto eq 'iso' or $proto eq 'inet6' or $proto eq 'mpls'){
-                $self->logger->warning("Protocol '$proto' is not supported, interfase: $if_fullname ")
+                $self->logger->warn("Protocol '$proto' is not supported, interfase: $if_fullname ")
             }
             next if $proto ne 'inet';
             for my $n ($proto_text =~ /^(.*?Local:\s+\d+\.\d+\.\d+\.\d+.*?)$/mg) {

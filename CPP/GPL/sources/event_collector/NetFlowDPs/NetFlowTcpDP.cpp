@@ -2,8 +2,9 @@
 #include <iostream>
 #include <unistd.h>
 
-NetFlowTcpDP::NetFlowTcpDP( int Port ):
+NetFlowTcpDP::NetFlowTcpDP( int Port, string BindIPAddress ):
 m_Port( Port ),
+m_BindIPAddress( BindIPAddress ),
 m_Interrupted(false)
 {
 
@@ -39,7 +40,7 @@ void NetFlowTcpDP::OnTransmitData(int ConnectionId)
 
 bool NetFlowTcpDP::Run( )
 {
-	if( !m_TcpServer.Initialize(m_Port))
+	if( !m_TcpServer.Initialize(m_Port,m_BindIPAddress))
 	{
 	    return false;
 	}

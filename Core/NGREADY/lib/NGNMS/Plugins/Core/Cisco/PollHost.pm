@@ -108,7 +108,7 @@ sub parse_logical_interfaces {
     foreach my $t (@if_texts) {
         chomp $t;
         next if !$t;
-        #        diag ($t);
+#                diag ($t);
         my ($if_fullname, $state, $condition) = $t =~ m/^(\S+)\s+is\s+([^,]+),\s+line protocol is\s+(.*)$/m;
         #        $self->logger->error "Bad interface: ".(split /\n/,$t)[0];
         $self->logger->error( "Bad Logical interface: ".(split /\n/, $t)[0]) and next unless $if_fullname;
@@ -123,7 +123,9 @@ sub parse_logical_interfaces {
 #        diag(\@ip_mask);
         #        diag(\@ip_mask);
         my $ip_count = scalar ( @ip_mask );
-        $self->logger->debug( "No primary address found for $if_fullname")  and next unless $ip_count;
+
+#        $self->logger->debug( "No primary address found for $if_fullname")  and next unless $ip_count;
+        next unless $ip_count;
 
         my $if_alias = 0;
         #process logical

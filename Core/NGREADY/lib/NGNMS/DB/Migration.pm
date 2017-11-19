@@ -51,9 +51,10 @@ sub _build_mirate_handler {
 
 sub migrate() {
     my $self = shift;
-    $self->logger->debug("Migrating DB");
     my $version = int($self->version()||-1);
+    $self->logger->info("Migrating DB ");
     if (defined $self->upgrade){
+        $self->logger->info("Upgrading from  $version to ".$self->upgrade);
         if ($self->upgrade ne 'latest') {
 
             if ($version > $self->upgrade) {
@@ -61,7 +62,7 @@ sub migrate() {
                 return;
             }
             if ($version eq $self->upgrade) {
-                $self->logger->info("Database already at version $version ");
+                $self->logger->warn("Database already at version $version ");
                 return;
             }
             $self->mirate_handler->migrate( $self->upgrade)
@@ -72,12 +73,13 @@ sub migrate() {
 
     }
     if (defined $self->downgrade){
+        $self->logger->info("DOWNgrading from  $version to ".$self->downgrade);
         if ($version < $self->downgrade ){
             $self->logger->error( "Current version is laess than dsired");
             return;
         }
         if ($version eq $self->downgrade ){
-            $self->logger->info( "Database already at version $version ");
+            $self->logger->warn( "Database already at version $version ");
             return;
         }
         $self->mirate_handler->migrate( $self->downgrade )

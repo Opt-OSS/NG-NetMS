@@ -13,9 +13,7 @@ with  "NGNMS::Net::SessionRole";
 my $cache = { };
 
 sub connect {
-    my $self = shift;
-    my $params = shift;
-    my $connect_options = shift;
+    my ($self,$params,$connect_options )= (shift,shift,shift);
     $params->{debug} = $params->{debug} || 'error';
     $self->verbose( uc($params->{verbose} || 'error'));
     #$self->set_logger(ref($self).'.'.$params->{host});

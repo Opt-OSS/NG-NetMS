@@ -17,17 +17,19 @@ use NGNMS::EscapeANSI qw/escape_ansi/;
 #    my Net::Appliance::Session $ssss;
 extends "Net::Appliance::Session";
 with "NGNMS::Log4Role";
-#@returns Net::Appliance::Session
+
+#@returns  Net::Appliance::Session
+has 'jumphost'=>(is=>'ro',predicate=>1);
+#TODO load common promts (ssh_kyegen and JUMPHOST) on BUILD?
 sub BUILDARGS {
     my ( $class, $param ) = @_;
-#    diag \@_;
     #** Extend params **#
-
+#diag $param;
     $param->{ 'add_library' } = $param->{ 'add_library' } || $ENV{NGNMS_HOME}.'/lib/Phrasebook/';
     $param->{'privileged_paging'} = $param->{'privileged_paging'} || 0; # only if using ASA/PIX OS 7+ and there are other behaviour options, see below
-    $param->{'username'} = $param->{'username'} || 'ngnms';
-    $param->{'password'} = $param->{'password'} || 'optoss';
-    $param->{'privileged_password'} = $param->{'privileged_password'} || 'cisco';
+#    $param->{'username'} = $param->{'username'} || 'ngnms';
+#    $param->{'password'} = $param->{'password'} || 'optoss';
+#    $param->{'privileged_password'} = $param->{'privileged_password'} || 'cisco';
     $param->{connect_options}->{opts} = [ ] unless defined $param->{connect_options}->{opts};
     #    diag($param->{connect_options}->{opts});
     if ($param->{'transport'} eq 'SSHv1') {
@@ -40,31 +42,79 @@ sub BUILDARGS {
         push @{$param->{connect_options}->{opts}}, '-2';
     }
     $param->{'debug'} = $param->{'debug'} || 'notice';
+    $param->{'transport'} .= 'JH' if exists $param->{jumphost};
+
+
 
     return $param;
 
 }
 
+
+sub connect_to_jumphost{
+    #we allways connect via SSH jumphost
+    my $self = shift;
+    $self->logger->logdie("No JumpHost given") unless $self->has_jumphost;
+    my $jumphost = $self->jumphost;
+    $self->nci->transport->wrapper_session($jumphost );
+
+    $self->set_global_log_at('error');
+    # !!! Wrapper is allways SSH and requires username !!!
+    $self->logger->logdie("a JumpHost set username is required to connect via JumpHost") unless $jumphost->has_username;
+    $jumphost->nci->transport->connect_options->username( $jumphost->get_username );
+    $self->logger->debug("Connecting  via JUMPHOST ".$self->jumphost->host." with ".$self->jumphost->transport);
+
+    if ($self->nci->transport->is_win32 and $jumphost->has_password) {
+        $jumphost->set_password( $jumphost->get_password.$self->nci->transport->ors );
+    }
+    $self->find_prompt( $self->wake_up );
+    return if $self->prompt_looks_like( 'JUMPHOST' ); #continue if already conneted
+    $self->nci->logger->log('transport', 'notice', '===JUMPHOST==== ');
+    if ($self->do_login and not $self->prompt_looks_like( 'generic' )) {
+
+        if ($jumphost->nci->phrasebook->has_prompt( 'user' )
+            and $self->prompt_looks_like( 'user' )) {
+            die 'a set username is required to connect to this host'
+                if not $jumphost->has_username;
+
+            $self->cmd( $jumphost->get_username, { match => 'pass' } );
+        }
+
+        die 'a JumpHost set password is required to connect via JumpHOst'
+            if not $jumphost->has_password;
+        $self->nci->logger->log('transport', 'notice', 'sending password to jumphost');
+        # DO login to JumpHost and start login to Router
+        $self->say( $jumphost->get_password() );
+    }
+
+}
 # Patched connect to work with HP banners faster
 sub connect {
+
     my $self = shift;
+    $self->set_global_log_at('error');
+
     my $options = Net::Appliance::Session::Transport::ConnectOptions->new( @_ );
     $self->put_debug_key($self->host);
-    $self->logger->debug("Connecting  via ".$self->transport." (".$self->personality.")" );
     foreach my $slot (qw/ username password privileged_password /) {
         my $has = 'has_'.$slot;
         my $set = 'set_'.$slot;
-        $self->$set( $options->$slot ) if $options->$has;
+        $self->$set( $options-> $slot ) if $options->$has;
     }
-
     if ($self->nci->transport->is_win32 and $self->has_password) {
         $self->set_password( $self->get_password.$self->nci->transport->ors );
     }
-
     # SSH transport takes a username if we have one
     $self->nci->transport->connect_options->username( $self->get_username )
         if $self->has_username
             and $self->nci->transport->connect_options->can( 'username' );
+    if  ($self->has_jumphost){
+        $self->connect_to_jumphost() ;
+    };
+    $self->logger->debug("Connecting to router with transport ".$self->transport." (".$self->personality.")" );
+
+    $self->nci->logger->log('transport', 'notice', '===THE HOST==== ');
+
 
     # poke remote device (whether logging in or not)
     $self->find_prompt( $self->wake_up );
@@ -104,7 +154,7 @@ sub connect {
         $self->find_prompt();
     }
     $self->prompt_looks_like( 'generic' )
-        or $self->logger->log_and_die(level=>'warning',message=>'login failed to remote host - prompt does not match');
+        or $self->logger->logdie('login failed to remote host - prompt does not match');
 
     $self->close_called( 0 );
     $self->logged_in( 1 );

@@ -1,7 +1,8 @@
 #include "SyslogTcpDP.h"
 
-SyslogTcpDP::SyslogTcpDP( int Port ):
+SyslogTcpDP::SyslogTcpDP( int Port, string BindIPAddress ):
 m_Port( Port ),
+m_BindIPAddress(BindIPAddress),
 m_Interrupted( false )
 {
 
@@ -17,7 +18,8 @@ bool SyslogTcpDP::Run( )
     try
     {
         boost::asio::io_service io_service;
-        tcp::acceptor acceptor( io_service, tcp::endpoint( tcp::v4(), m_Port ) );
+//        tcp::acceptor acceptor( io_service, tcp::endpoint( tcp::v4(), m_Port ) );
+        tcp::acceptor acceptor( io_service, tcp::endpoint( boost::asio::ip::address::from_string(m_BindIPAddress), m_Port ) );
 
         while( !m_Interrupted )
         {

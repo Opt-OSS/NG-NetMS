@@ -424,7 +424,7 @@ of text, only.
 
 In general, Macros are alternating sequences of commands to send to the
 connected CLI, and regular expressions to match the end of the returned
-response. Macros are useful for issueing commands which have intermediate
+response. Macros are useful for issuing commands which have intermediate
 prompts, or confirmation steps. They also support the I<slurping> of
 additional output when the connected CLI has split the response into pages.
 

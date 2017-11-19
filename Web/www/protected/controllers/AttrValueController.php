@@ -85,8 +85,8 @@ class AttrValueController extends Controller
         else
         {
             $model=new AttrValue;
-            $id_acc = Yii::app()->getRequest()->getParam('id');
-            $id_acc_type = Yii::app()->getRequest()->getParam('id_access_type');
+            $id_acc =(int) Yii::app()->getRequest()->getParam('id');
+            $id_acc_type = (int)Yii::app()->getRequest()->getParam('id_access_type');
             $model->id_access = $id_acc;
             $arr_attrs = AttrAccess::model()->getListAttrByAccType($id_acc_type);
             $amount = count($arr_attrs);
@@ -162,8 +162,8 @@ class AttrValueController extends Controller
         else
         {
             $model=new AttrValue;
-            $id_acc = Yii::app()->getRequest()->getParam('id');
-            $id_acc_type = Yii::app()->getRequest()->getParam('id_access_type');
+            $id_acc =(int) Yii::app()->getRequest()->getParam('id');
+            $id_acc_type =(int) Yii::app()->getRequest()->getParam('id_access_type');
             $model->id_access = $id_acc;
             $arr_attrs = AttrAccess::model()->getListAttrValByAccType($id_acc_type,$id_acc);
             $amount = count($arr_attrs);
@@ -214,7 +214,8 @@ class AttrValueController extends Controller
 	 */
     public function actionIndex()
     {
-        $acc_id = Yii::app()->getRequest()->getParam('id');
+        $acc_id = (int) Yii::app()->getRequest()->getParam('id');
+        $acc_id = (int)$acc_id;
         $attr_val = new AttrValue('search');
         $attr_val->unsetAttributes();
         $attr_val->id_access = $acc_id;

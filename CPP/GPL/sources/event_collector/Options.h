@@ -36,8 +36,10 @@ class Options
         string GetDbSettingsFileName( );
         string GetLogFileName( );
         int GetPort( );
+        string GetBindIPAddress( );
         bool GetOriginalTs();
         bool GetDebug( );
+        bool GetRenewTables( );
 
     private:
         SourceType		m_SourceType;
@@ -46,6 +48,8 @@ class Options
         string          m_RuleFileName;
         string          m_DbSettingsFileName;
         int             m_Port;
+        string          m_BindIPAddress;
         bool 			m_OriginalTs;
         bool            m_Debug;
+        bool			m_RenewTables;
 };

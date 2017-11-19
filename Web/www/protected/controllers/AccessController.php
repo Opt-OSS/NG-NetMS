@@ -163,8 +163,7 @@ class AccessController extends Controller
      */
     public function actionRouterjoin()
     {
-        $acc_type_id = Yii::app()->getRequest()->getParam('id');
-
+        $acc_type_id = (int)Yii::app()->getRequest()->getParam('id');
 
 
         //standard devices

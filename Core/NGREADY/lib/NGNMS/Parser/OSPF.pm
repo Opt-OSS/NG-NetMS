@@ -4,14 +4,13 @@ use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
 use NGNMS::OLD::DB;
-
+use Emsgd qw /diag/;
 
 with "NGNMS::Log4Role" ;
 
 sub parse_ospf_cisco {
     my $self = shift;
     my $ospf_file = shift;
-
     my %host_ips;
     my %links;
     my %areas;      # Map areas to DRs
@@ -19,7 +18,7 @@ sub parse_ospf_cisco {
     my $state = '';
     my $DR = '';
 
-    open( F_OSPFF, "<$ospf_file" ) or return "error - OSPF file $ospf_file: $!";
+    open( F_OSPFF, "<$ospf_file" ) or  $self->logger->warn("Failed to open OSPF file $ospf_file: $!") && return;
 
     # skip header
     while (<F_OSPFF>) {
@@ -36,7 +35,7 @@ sub parse_ospf_cisco {
         }
     }
 
-    return "Empty OSPF topology" if !length( $host );
+    $self->logger->warn("Empty OSPF topology") && return  if !length( $host );
 
     while (<F_OSPFF>) {
         chomp;            # no newline
@@ -84,7 +83,6 @@ sub parse_ospf_cisco {
         }
 
         if (/^\s+\(Link Data\) Router Interface address:\s+(\d+\.\d+\.\d+\.\d+).*/) {
-            # print "link $host $1\n";
             if (($state eq "linkB") and ($DR eq $1)) {
                 if (!defined( $areas{$DR} )) {
                     $areas{$DR} = $host;
@@ -127,7 +125,7 @@ sub parse_ospf_juniper {
     my %areas;      # Map areas to DRs
 
     open(F_OSPFF, "<$ospf_file") or
-        return "error - OSPF file $ospf_file: $!\n";
+          $self->logger->warn("Failed to open OSPF file $ospf_file: $!") && return;
 
     my $host = '';
     my $network = '';
@@ -146,7 +144,7 @@ sub parse_ospf_juniper {
             last;
         }
     }
-    return "Empty OSPF topology" if !length($host);
+    $self->logger->warn("Empty OSPF topology") && return  if !length( $host );
 
 
     while (<F_OSPFF>) {
