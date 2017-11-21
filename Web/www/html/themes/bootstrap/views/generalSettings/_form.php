@@ -1,5 +1,5 @@
 <?php $form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'id'                   => 'general-settings-form',
+    'id' => 'general-settings-form',
     'enableAjaxValidation' => false,
 )); ?>
 
@@ -16,13 +16,18 @@ if ($model->name == 'hostType') {
         'value',
         Yii::app()->params['vendors'],
         array(
-            'empty'  => 'Select vendor for host type', 'class' => 'span5'
+            'empty' => 'Select vendor for host type', 'class' => 'span5'
         )
     );
 } elseif ($model->name == 'type access') {
     echo '<label for="GeneralSettings_value">Value of Attribute</label>';
     echo $form->dropDownList($model, 'value',
         CHtml::listData(AccessType::model()->findAll(), 'name', 'name'),
+        array('empty' => 'Select here...', 'class' => 'span5'));
+} elseif ($model->name == 'default_access_method') {
+    echo '<label for="GeneralSettings_value">Value of Attribute</label>';
+    echo $form->dropDownList($model, 'value',
+        CHtml::listData(Access::model()->findAll(), 'id', 'name'),
         array('empty' => 'Select here...', 'class' => 'span5'));
 } else {
     echo $form->textFieldRow($model, 'value', array('class' => 'span5', 'maxlength' => 255));
@@ -33,8 +38,8 @@ if ($model->name == 'hostType') {
 <div class="form-actions">
     <?php $this->widget('bootstrap.widgets.TbButton', array(
         'buttonType' => 'submit',
-        'type'       => 'primary',
-        'label'      => $model->isNewRecord ? 'Create' : 'Save',
+        'type' => 'primary',
+        'label' => $model->isNewRecord ? 'Create' : 'Save',
     )); ?>
 </div>
 

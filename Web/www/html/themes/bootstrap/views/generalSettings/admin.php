@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var $model GeneralSettings
+ */
 $this->breadcrumbs=array(
 	'General Settings'=>array('admin'),
 	'Manage',

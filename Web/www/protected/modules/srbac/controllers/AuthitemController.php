@@ -454,7 +454,7 @@ class AuthitemController extends SBaseController {
     Yii::app()->user->setState("selectedName", $selectedName);
 
     if (!Yii::app()->request->isAjaxRequest) {
-      Yii::app()->user->setState("currentPage", Yii::app()->request->getParam('page', 0) - 1);
+      Yii::app()->user->setState("currentPage", (int) Yii::app()->request->getParam('page', 0) - 1);
     }
     $criteria = new CDbCriteria;
     $criteria->condition = "1=1";
