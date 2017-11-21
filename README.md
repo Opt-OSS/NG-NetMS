@@ -23,39 +23,63 @@ IMPORTANT: Before proceeding, ensure that you have root permissions and administ
 If in doubt, consult with your network administrator or company management.
 Do not try to discover and manage networks for which you do not have administrative rights. This may result in your IP address being banned or even serious legal consequences.
 
+## POSTGRESQL INSTALL
+As root install PSQL
 
 ### Centos
-```bash
-[ngnms@localhost]$ sudo yum install epel-release  deltarpm
-[ngnms@localhost]$ sudo yum install git cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
-[ngnms@localhost]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection 
-[ngnms@localhost]$ git clone https://github.com/opt-oss/NG-NetMS.git
-[ngnms@localhost]$ cp NG-NetMS/settings.cmake.dist NG-NetMS/settings.cmake
-[ngnms@localhost]$ vi NG-NetMS/settings.cmake
-[ngnms@localhost]$ mkdir build
-[ngnms@localhost]$ cd ./build
-[ngnms@localhost]$ cmake ../NG-NetMS
-[ngnms@localhost]$ make
-[ngnms@localhost]$ sudo mkdir -p /opt/ngnms
-[ngnms@localhost]$ sudo chown ngnms /opt/ngnms
-[ngnms@localhost]$ make install
-```
+Which version of PGSQL you get by default will depend on the version of the distribution.
+You may use PostgreSQL Yum Repository, if the version supplied by your operating system is not the one you want.
+The PostgreSQL Yum repository currently supports many Linux and Unix distributions.
+
+In order to use the PostgreSQL Yum Repository repository, you must first install the repository RPM. 
+For example download the 9.5 RPM from the repository RPM listing, and install it with commands:
+
+`yum install postgresql95-server postgresql95-contrib`
+`sudo /usr/pgsql-9.5/bin/postgresql95-setup initdb`
+
+Enable PostgerSQL 9.5 and start:
+
+`sudo systemctl list-unit-files | grep postgresql`
+`sudo systemctl enable postgresql-9.5.service`
+`sudo systemctl start postgresql-9.5.service`
+
+Check your work:
+
+`service postgresql-9.5 status`
+
+`psql --version`
+
 
 ### Ubuntu
+Quickest way to get PGSQL is to use apt-get utility.
+
+`sudo apt-get update`
+`sudo apt-get install postgresql postgresql-contrib`
+
+In order to install and configure a cluster of PGSQL servers, follow the original documentation on http://postgresql.org
+
+To start, stop or restart PGSQL use the /etc/init.d/postgresql script:
+
+`# /etc/init.d/postgresql start`
+`user@host:/etc/init.d$ sudo ./postgresql start`
+
+Verify PGSQL operation with:
+
+`postgresql status`
+
+## CREATE USER ngnms
+
 ```bash
-[ngnms@localhost]# sudo apt-get update
-[ngnms@localhost]$ sudo apt-get install git cmake make gcc-c++ perl cpanminus nmap pcre-devel libpqxx-devel flex flex-devel net-snmp-devel cryptopp-devel boost-devel postgresql-devel telnet libmcrypt
-[ngnms@localhost]$ sudo cpanm install --no-man-pages --notest Dist::Zilla::Plugin::PodWeaver  Pod::Weaver::Section::GenerateSection
-[ngnms@localhost]$ git clone https://github.com/opt-oss/NG-NetMS.git
-[ngnms@localhost]$ cp NG-NetMS/settings.cmake.dist NG-NetMS/settings.cmake
-[ngnms@localhost]$ vi NG-NetMS/settings.cmake
-[ngnms@localhost]$ mkdir build
-[ngnms@localhost]$ cd ./build
-[ngnms@localhost]$ cmake ../NG-NetMS
-[ngnms@localhost]$ make
-[ngnms@localhost]$ sudo mkdir -p /opt/ngnms
-[ngnms@localhost]$ sudo chown ngnms /opt/ngnms
-[ngnms@localhost]$ make install
+useradd -m ngnms -s /bin/sh
+usermod ngnms -G wheel
+```
+
+switch to ngnms user
+
+```bash
+su -l ngnms 
+check if you ngnms user can do sudo commands
+sudo -l
 ```
 
 ### Centos
@@ -94,10 +118,12 @@ Do not try to discover and manage networks for which you do not have administrat
 
 ### Perl deps
 
-either
+If the ngnms is not installed in /opt/ngnms do this in build directory
 ```shell
 [ngnms@localhost build]$ sudo make perl-install-deps
 ```
+and then install with make install
+
 or (in install dir)
 ```shell
 ngnms@localhost ngnms]$ pwd
@@ -139,21 +165,38 @@ logout and login
 ## Setup Web-Server
 ### HTTPD for default directory config
 use `su` account for operations below
-####SELinux
-setting up of `selinux` permission is out iof this document scope
 
-__dangerous__
+####SELinux
+SELinux prevents symlink references from working if enforced. We use simlinks to simplify installation and operations.
+
+__warning__
 [Disable SELinux](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security-Enhanced_Linux/sect-Security-Enhanced_Linux-Enabling_and_Disabling_SELinux-Disabling_SELinux.html)
+
+Edit vi /etc/selinux/config
+and change the following line to permissive or disabled.
+
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=permissive
+
+Then execute: 
 
 `setenforce 0`
 
-__remove /var/www/html if exists__
-`this will remove all previously installed default server content`
+to check enforcing status. 
+
+If disabling SELinux enforcement is not an option, just copy the /opt/ngnms/www to /var/www and set permissions for ngmns and your apache users accordingly manually.
 
 ```
 [ngnms@localhost build]$ sudo yum install httpd php php-pdo_pgsql php-pgsql php-pear php-mcrypt
 [ngnms@localhost build]$ sudo pear install Net_IPv4
 [ngnms@localhost build]$ sudo systemctl enable httpd.service
+
+__For new install remove /var/www/html __
+`this will remove all previously installed default server content`
+
 [ngnms@localhost build]$ sudo ln -s /opt/ngnms/www/html /var/www/html
 [ngnms@localhost build]$ cp /opt/ngnms/www/custom_config/main.php.example /opt/ngnms/www/custom_config/main.php
 [ngnms@localhost build]$ sudo chown -R ngnms:apache /opt/ngnms/www

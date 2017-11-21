@@ -76,21 +76,27 @@ class GeneralSettings extends CActiveRecord
 
     public static function valueFormated($model)
     {
+        $value = $model->value;
         if($model->name !='chiave' && $model->name !='perioddiscovery' && $model->name !='scanner')
         {
             if (preg_match("/password/i",$model->name) || preg_match("/community/i",$model->name))
             {
-                return trim(Cripto::hidedata($model->value));
+                $value =  trim(Cripto::hidedata($model->value));
             }
             else
             {
-                return  trim(Cripto::decrypt($model->value));
+                $value =  trim(Cripto::decrypt($model->value));
+                if ($model->name == 'default_access_method' ){
+                    if (null !== $method = Access::model()->findByPk($value)){
+                        $value =  $method->name;
+                    };
+
+                }
             }
         }
-        else
-        {
-            return $model->value;
-        }
+
+
+        return $value;
     }
 	/**
 	 * Retrieves a list of models based on the current search/filter conditions.

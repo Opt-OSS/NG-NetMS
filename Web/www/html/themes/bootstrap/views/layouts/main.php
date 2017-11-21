@@ -44,6 +44,8 @@ $this->beginWidget('bootstrap.widgets.TbModal', array('id'=>'gpl3lic','htmlOptio
     <h4 style="text-align: center;">GNU GENERAL PUBLIC LICENSE</h4>
     <h5 style="text-align: center;">Version 3, 29 June 2007</h5>
 </div>
+<?
+/*
 
 <div class="modal-body">
 <p>Copyright &copy; 2007 Free Software Foundation, Inc.
@@ -728,6 +730,8 @@ $this->beginWidget('bootstrap.widgets.TbModal', array('id'=>'gpl3lic','htmlOptio
     &lt;<a href="http://www.gnu.org/philosophy/why-not-lgpl.html">http://www.gnu.org/philosophy/why-not-lgpl.html</a>&gt;.</p>
 </div>
 
+*/
+?>
 <div class="modal-footer">
     <?php $this->widget('bootstrap.widgets.TbButton', array(
         'label'=>'Close',
