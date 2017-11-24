@@ -304,7 +304,6 @@ $seedHosts = getAttrVal($prom_val->[0]);
 $prom_val = DB_getSettings('hostType');
 my $default_host_type = getAttrVal($prom_val->[0]);
 
-
 #$prom_val = DB_getSettings( 'username' );
 #$user = getAttrVal( $prom_val->[0] );
 #$prom_val = DB_getSettings( 'password' );
@@ -335,8 +334,6 @@ $enpasswd = shift @ARGV if $#ARGV >= 0;
 $access = shift @ARGV if $#ARGV >= 0;
 $community = shift @ARGV if $#ARGV >= 0;
 
-
-
 # Determine access type for seed host
 if ($access eq 'SSH') {
     $access = 'SSHv2'
@@ -346,13 +343,11 @@ if ($access eq 'SSH') {
 my @seedHostList = split /,/, $seedHosts;
 
 
-
 $logger->info ("Starting with seed host(s): $seedHosts");
 
 #my $cmd1 = " -D ".$dbname." -U ".$dbuser." -W ".$dbpasswd." -P ".$dbport." -L ".$dbhost;
 
 DB_open($dbname, $dbuser, $dbpasswd, $dbport, $dbhost);
-
 
 #DB_vacuum;
 
@@ -419,7 +414,6 @@ if (!$single_host_only){
     $logger->info("==== end audit :  --seedhost-only option given");
     exit;
 }
-
 
 my $routers_ospf = DB_getRoutersWithProtocol();
 if (scalar($routers_ospf)) {
@@ -994,8 +988,6 @@ sub getBgpCommunity {
 
     return $community_cur;
 }
-
-
 
 sub usage {
     print <<EOF;

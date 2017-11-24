@@ -36,7 +36,6 @@ has crypt => (is => 'lazy', builder => sub{
                 community           => $self->host_community,
                 port                => $self->host_port,
                 timeout                => $self->host_timeout,
-
             );
         });
 # ------------------------------------------------------

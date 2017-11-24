@@ -91,10 +91,13 @@ class GeneralSettings extends CActiveRecord
                         $value =  $method->name;
                     };
 
+<<<<<<< HEAD
                 }elseif ($model->name == 'default_community'){
                     if (null !== $method = SnmpAccess::model()->findByPk($value)){
                         $value =  $method->name;
                     };
+=======
+>>>>>>> 37ce673580fce85fd7ae7014dfd18839a7800601
                 }
             }
         }

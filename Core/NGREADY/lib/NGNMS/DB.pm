@@ -446,7 +446,6 @@ sub setInterface {
 
         my @SQLARGS = ($new_in_id, $rt_id, @$ifc{('ph_int_id', 'name', 'ip', 'mask', 'description')});
         return $self->dbh->do($SQL, undef, @SQLARGS) ? $new_in_id : undef;
-
     }
 
     # hard - update
@@ -530,4 +529,3 @@ sub writeLink {
 1;
 
 # ABSTRACT: This file is part of open source NG-NetMS tool.
-

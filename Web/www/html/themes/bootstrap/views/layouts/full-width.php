@@ -780,6 +780,5 @@ $this->beginWidget('bootstrap.widgets.TbModal', array('id'=>'gpl3lic','htmlOptio
     </div><!-- footer -->
 </div>
 
-
 </body>
 </html>
