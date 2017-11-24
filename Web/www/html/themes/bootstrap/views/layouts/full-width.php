@@ -766,20 +766,20 @@ $this->beginWidget('bootstrap.widgets.TbModal', array('id'=>'gpl3lic','htmlOptio
 	<?php echo $content; ?>
 
 	<div class="clear"></div>
-
-	<div id="footer" style="position: absolute;bottom: 0;">
+<div  style="position: fixed;bottom: 0; width:100%; text-align: center">
+    <div id="footer" class="container">
         <div style="margin-left:10px;float:left">
-            Copyright &copy; <?php echo date('Y'); ?> by Opt/Net
+            Copyright &copy; <?php echo date('Y'); ?> by <a href="https://opt-net.eu">Opt/Net</a>
         </div>
         <div style="margin-left:220px;float:left">
-            NG-NetMS v3.5b
+            NG-NetMS v<?=Yii::app()->params['NGNMS_VERSION']?>
         </div>
         <div id="lic_id" onClick="viewLic()" style="margin-right:69px;float:right">
             Under license GPL-3.0
         </div>
-	</div><!-- footer -->
+    </div><!-- footer -->
+</div>
 
-</div><!-- page -->
 
 </body>
 </html>

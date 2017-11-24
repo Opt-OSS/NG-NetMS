@@ -18,13 +18,4 @@ if (!defined $version){
     print "\n[!]Database is not under version control, run upgrade !\n";
 }
 
-
-print "
---------------------------
-Database is at version $version
-
-";
 $m->migrate;
-print "
---------------------------
-";

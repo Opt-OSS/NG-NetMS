@@ -22,7 +22,7 @@ $local = include dirname(__FILE__).'/../custom_config/main.php';
 require_once($yii);
 $config=array_replace_recursive($base, $local);
 
-$config['params']['NGNMS_VERSION'] = '3.67-custom';
+$config['params']['NGNMS_VERSION'] = '3.62-custom';
 if ($ngnms_version = @include dirname(__FILE__).'/../protected/VERSION.php'){
     $config['params']['NGNMS_VERSION'] = $ngnms_version['NGNMS_VERSION'];
 }

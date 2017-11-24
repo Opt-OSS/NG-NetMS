@@ -34,6 +34,8 @@ has crypt => (is => 'lazy', builder => sub{
                 privileged_password => $self->host_priveleged_password,
                 transport           => $self->host_transport,
                 community           => $self->host_community,
+                port                => $self->host_port,
+                timeout                => $self->host_timeout,
 
             );
         });
@@ -352,6 +354,8 @@ sub setSession {
         personality         => 'ios',
         add_library         => undef,
         transport           => $credentials->{transport} || 'Telnet',
+        port                => $credentials->{port},
+        timeout             => $credentials->{timeout} || 10,
         host                => $self->host,
         requires_privileged => 0,
         debug               => $session_debug, #Net::Cli debug
@@ -360,17 +364,21 @@ sub setSession {
         wake_up             => 0,
         connect_options     => { opts => $credentials->{connect_options} },
 
-        username            => $credentials->{username},
-            password            => $credentials->{password},
-            privileged_password => $credentials->{privileged_password},
+        #        username            => $credentials->{username},
+        #        password            => $credentials->{password},
+        #        privileged_password => $credentials->{privileged_password},
 
     };
     $params = $plugin_module->prepare_connection($params);
     my $sess = $app->session_factory();
+    #    diag $credentials;
     if (exists $credentials->{jumphost}) {
+        push @{ $credentials->{jumphost}{connect_options} },
+            ('-p', $credentials->{jumphost}{port}) if $credentials->{jumphost}{port};
         $params->{jumphost} = Net::Appliance::Session->new(
             transport       => 'SSH',
             personality     => 'bash',
+            timeout            => $credentials->{jumphost}{timeout} || 10,
             host            => $credentials->{jumphost}{host},
             username        => $credentials->{jumphost}{username},
             password        => $credentials->{jumphost}{password},
@@ -378,7 +386,7 @@ sub setSession {
 
         );
     }
-    #        diag($params);
+#            diag($params);
     $self->logger->fatal("Could non create session ") && return 0 unless $sess;
     my $path = ($ENV{'NGNMS_DATA'} || '.') . '/rtconfig/' . $rt_id;
     make_path($path);

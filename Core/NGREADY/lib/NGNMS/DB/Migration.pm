@@ -12,11 +12,13 @@ option debug => (
         default => 1,
         doc     => "Show executed SQL statments 0|1, default 1"
     );
+#@method
 option upgrade => (
         is     => 'ro',
         format => 's',
         doc    => "Version to migrate UP or 'latest' to migrate to latest version "
     );
+
 option downgrade => (
         is     => 'ro',
         format => 'i',
@@ -27,7 +29,7 @@ with "NGNMS::DB::CommandLineOptions"; #Command line options and detauls
 with "NGNMS::Log4Role";
 
 
-
+#@returns DBIx::Migration
 has mirate_handler => (
         is      => 'ro',
         builder => 1,
@@ -35,8 +37,7 @@ has mirate_handler => (
     );
 sub _build_mirate_handler {
     my $self = shift;
-
-    return DBIx::Migration->new(
+    return  DBIx::Migration->new(
         {
             dsn      => 'DBI:Pg:dbname='.$self->dbname.';host='.$self->dbhost.';port='.$self->dbport.'',
             dir      => $ENV{NGNMS_HOME}.'/database/migrations',
@@ -48,6 +49,20 @@ sub _build_mirate_handler {
     );
 }
 
+sub _do_migrate{
+    my ($self,$version) = (shift,shift);
+    my $errors;
+    {
+        open (local *STDOUT, '>', \( $errors));
+        if ($version){
+            $self->mirate_handler->migrate($version);
+        }else{
+            $self->mirate_handler->migrate();
+        }
+
+    }
+    $self->logger->debug($errors) if $errors;
+}
 
 sub migrate() {
     my $self = shift;
@@ -65,27 +80,37 @@ sub migrate() {
                 $self->logger->warn("Database already at version $version ");
                 return;
             }
-            $self->mirate_handler->migrate( $self->upgrade)
+                $self->_do_migrate($self->upgrade);
+
         }else{
-            $self->mirate_handler->migrate( )
+            $self->_do_migrate();
         }
-
-
+        my $new_version = int($self->version());
+        if ($new_version > $version){
+            $self->logger->info("Database Upgraded  to version $new_version ") ;
+        }else{
+            $self->logger->error("Database Upgraded  only to version $new_version, desired version was ".$self->upgrade) ;
+        }
     }
     if (defined $self->downgrade){
         $self->logger->info("DOWNgrading from  $version to ".$self->downgrade);
         if ($version < $self->downgrade ){
-            $self->logger->error( "Current version is laess than dsired");
+            $self->logger->error( "Current version is less than desired");
             return;
         }
         if ($version eq $self->downgrade ){
             $self->logger->warn( "Database already at version $version ");
             return;
         }
-        $self->mirate_handler->migrate( $self->downgrade )
+        $self->_do_migrate( $self->downgrade );
+        my $new_version = int($self->version());
+        if ($new_version > $version){
+            $self->logger->info("Database Downgraded to version $new_version ") ;
+        }else{
+            $self->logger->error("Database Downgraded  to version $new_version, desired version was ".$self->downgrade) ;
+        }
     }
-    $version = int($self->version());
-    $self->logger->info("INFO:Database migrated to version $version ");
+
    ;
 }
 sub version() {

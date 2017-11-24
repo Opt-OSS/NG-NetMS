@@ -483,7 +483,7 @@ sub DB_getHostVendor {
     }
 
     my $rref = $dbh->selectcol_arrayref( $SQL );
-    if (defined( $rref )) {
+    if (defined( $rref ) && defined( $rref->[0] )) {
         return NGNMS::App::Helpers->trim($rref->[0]);
     }
     return undef;
@@ -493,7 +493,7 @@ sub DB_getBgpRouterId {
     my $SQL = "SELECT id FROM bgp_routers WHERE ip_addr = \'$_[0]\'";
     my $rref = $dbh->selectcol_arrayref( $SQL );
     #  print Dumper($rref);
-    if (defined( $rref )) {
+    if (defined( $rref ) && defined( $rref->[0] )) {
         return $rref->[0];
     }
     return undef;
@@ -506,7 +506,7 @@ sub DB_getRouterIpAddr {
     my $SQL = "SELECT ip_addr FROM routers WHERE router_id = \'$_[0]\'";
     my $rref = $dbh->selectcol_arrayref( $SQL );
     #  print Dumper($rref);
-    if (defined( $rref )) {
+    if (defined( $rref ) && defined( $rref->[0] )) {
         return $rref->[0];
     }
     return undef;
@@ -520,7 +520,7 @@ sub DB_getRouterName {
     my $SQL = "SELECT name FROM routers WHERE router_id = \'$_[0]\'";
     my $rref = $dbh->selectcol_arrayref( $SQL );
     #  print Dumper($rref);
-    if (defined( $rref )) {
+    if (defined( $rref ) && defined( $rref->[0] )) {
         return $rref->[0];
     }
     return undef;
@@ -535,7 +535,7 @@ sub DB_getRouterVendor {
     $SQL = "SELECT eq_vendor FROM routers WHERE name = '".$_[0]."'";
     my $rref = $dbh->selectcol_arrayref( $SQL );
     #  print Dumper($rref);
-    if (defined( $rref )) {
+    if (defined( $rref ) && defined( $rref->[0] )) {
         return $rref->[0];
     }
     return undef;
@@ -550,7 +550,7 @@ sub DB_getRouterVendorById {
     $SQL = "SELECT eq_vendor FROM routers WHERE router_id = ".$_[0];
     my $rref = $dbh->selectcol_arrayref( $SQL );
     #  print Dumper($rref);
-    if (defined( $rref )) {
+    if (defined( $rref ) && defined( $rref->[0] )) {
         return $rref->[0];
     }
     return undef;
@@ -1319,7 +1319,7 @@ sub DB_isCommunity($) {
 
     return $rref->[0];
 }
-
+#@deprecated see
 sub DB_isDueCommunity($) {
     my $r_n = $_[0];
     local $dbh->{RaiseError};     # Ignore errors

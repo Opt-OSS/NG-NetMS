@@ -29,17 +29,18 @@ sub diag {
 
     my ($package0, $filename0, $line0, $sub0) = caller(0);
     my ($package, $filename, $line, $sub) = caller(1);
-    print STDERR "\n",GREEN;
+    print  RESET;
+    print  "\n",CYAN;
     my $trace = $backtrace
             ? Carp::longmess
             : sprintf("%-35s %-20s line %i",  $sub, $filename0, $line0);
-    print STDERR "$trace";
-    print STDERR     "\n----------------------------  ".($title || '')." ".ref($text)." -----------------------------------------\n";
-    print STDERR Dumper($text);
+    print  "$trace";
+    print      "\n----------------------------  ".($title || '')." ".ref($text)." -----------------------------------------\n";
+    print  Dumper($text);
 
     #        print "@text";
-    print STDERR     "-----------------------------------------------------------------------\n";
-    print STDERR RESET;
+    print      "-----------------------------------------------------------------------\n";
+    print  RESET,"\n";
     return 1
 }
 sub pp {

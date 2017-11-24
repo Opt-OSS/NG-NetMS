@@ -66,7 +66,22 @@ sub decode_val_from_DB($) {
 }
 =method
 =cut
+sub getCommunityById {
+    my ( $self, $comm_id) = (shift, shift);
+    #@inject PGSQL
+    my $SQL =
+        "
+        SELECT community_ro,community_rw
+          from ngnms.public.snmp_access
+          where id = ?
 
+        ";
+    my $rref = $self->dbh->selectrow_hashref($SQL, { lice => {}  }, ($comm_id));
+    return $rref;
+}
+
+=method
+=cut
 sub getAccessById {
     # href ($id)
     my ( $self, $acc_id) = (shift, shift);
@@ -131,7 +146,6 @@ sub getRouterAccess {
     my %struct = map {$_->{'attr_name'} => $_->{'attr_value'}} @{$rref};
     #    diag \%struct;
     my $res = $self->_processJumpHost(\%struct);
-
     return $res;
 
 }

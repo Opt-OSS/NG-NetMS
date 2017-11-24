@@ -22,6 +22,7 @@ has archive_dir => (is => 'ro', default => ($ENV{NGNMS_DATA} || '.').'/archive')
 has filename => (
         is => 'rw',
     );
+#TODO should be is=>'lazy' !? but now it is rw
 has file_exists => (
         is      => 'rw',
         'lazy'  => 1,

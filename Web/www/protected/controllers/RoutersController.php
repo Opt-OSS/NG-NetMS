@@ -1941,7 +1941,10 @@ class RoutersController extends Controller
 
         if (isset($_POST['Routers'])) {
             $model->attributes = $_POST['Routers'];
+            $model->name =  $_POST['Routers']['ip_addr'];
+//            \NGNMS\Emsgd::p('here');
             if ($model->save()) {
+                \NGNMS\Emsgd::p('here');
                 $this->redirect(array('admin'));
             }
         }

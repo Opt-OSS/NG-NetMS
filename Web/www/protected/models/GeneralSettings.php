@@ -79,7 +79,7 @@ class GeneralSettings extends CActiveRecord
         $value = $model->value;
         if($model->name !='chiave' && $model->name !='perioddiscovery' && $model->name !='scanner')
         {
-            if (preg_match("/password/i",$model->name) || preg_match("/community/i",$model->name))
+            if (preg_match("/password/i",$model->name) )
             {
                 $value =  trim(Cripto::hidedata($model->value));
             }
@@ -91,6 +91,10 @@ class GeneralSettings extends CActiveRecord
                         $value =  $method->name;
                     };
 
+                }elseif ($model->name == 'default_community'){
+                    if (null !== $method = SnmpAccess::model()->findByPk($value)){
+                        $value =  $method->name;
+                    };
                 }
             }
         }

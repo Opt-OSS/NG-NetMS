@@ -98,4 +98,15 @@ class Access extends CActiveRecord
 	{
 		return parent::model($className);
 	}
+
+    public function getWrappableMethods(){
+        $arr_data  = Yii::app()->db->createCommand()
+            ->select('id,name')
+            ->from('access')
+            ->where("id_access_type in (1,2,3)")
+            ->order('name')
+            ->queryAll();
+
+        return $arr_data;
+    }
 }

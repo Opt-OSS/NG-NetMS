@@ -16,7 +16,7 @@ sub TIEHANDLE {
 sub PRINT {
     my $self = shift;
     $Log::Log4perl::caller_depth++;
-    DEBUG @_;
+    for my $str (@_) {$str =~ s/\n/;/; DEBUG $str}
     $Log::Log4perl::caller_depth--;
 }
 1;

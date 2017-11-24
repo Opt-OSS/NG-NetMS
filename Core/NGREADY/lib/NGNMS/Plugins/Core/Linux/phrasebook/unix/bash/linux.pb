@@ -3,11 +3,6 @@
 prompt ssh_key
 	match /[Ee]nter passphrase for key.+: $/
 
-prompt user
-    match /[Uu]sername: $/
-
-prompt pass
-    match /password(?: for \w+)?: $/
 
 #-----------------------------------
 # default:     match /(?:\[)?\w+@.+(?:\])?\$ $/

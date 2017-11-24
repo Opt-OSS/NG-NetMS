@@ -1,7 +1,9 @@
-<?php $form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'id' => 'general-settings-form',
+<?php
+$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
+    'id'                   => 'general-settings-form',
     'enableAjaxValidation' => false,
-)); ?>
+));
+?>
 
 <p class="help-block">Fields with <span class="required">*</span> are required.</p>
 
@@ -29,6 +31,11 @@ if ($model->name == 'hostType') {
     echo $form->dropDownList($model, 'value',
         CHtml::listData(Access::model()->findAll(), 'id', 'name'),
         array('empty' => 'Select here...', 'class' => 'span5'));
+} elseif ($model->name == 'default_community') {
+    echo '<label for="GeneralSettings_value">Value of Attribute</label>';
+    echo $form->dropDownList($model, 'value',
+        CHtml::listData(SnmpAccess::model()->findAll(), 'id', 'name'),
+        array('empty' => 'Select here...', 'class' => 'span5'));
 } else {
     echo $form->textFieldRow($model, 'value', array('class' => 'span5', 'maxlength' => 255));
 }
@@ -38,8 +45,8 @@ if ($model->name == 'hostType') {
 <div class="form-actions">
     <?php $this->widget('bootstrap.widgets.TbButton', array(
         'buttonType' => 'submit',
-        'type' => 'primary',
-        'label' => $model->isNewRecord ? 'Create' : 'Save',
+        'type'       => 'primary',
+        'label'      => $model->isNewRecord ? 'Create' : 'Save',
     )); ?>
 </div>
 

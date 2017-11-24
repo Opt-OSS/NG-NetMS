@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Moo::Role;
 use Log::Log4perl;
+use NGNMS::Log4Trapper;
 
 
 use Emsgd qw/diag/;
@@ -21,6 +22,7 @@ has verbose => (
 sub BUILD {
     Log::Log4perl->init_once($ENV{NGNMS_LOGCONF}||$ENV{NGNMS_HOME}."/bin/log4perl.conf");
     Log::Log4perl::MDC->put('host','') unless Log::Log4perl::MDC->get('host');
+#    tie *STDERR, "NGNMS::Log4Trapper";
 }
 #sub BUILDARGS{
 #    my ($class, @args) = @_;

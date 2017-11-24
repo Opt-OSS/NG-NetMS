@@ -12,7 +12,7 @@
     'htmlOptions'=>array('class'=>'well'),
     )); ?>
 
-<?php echo $form->textFieldRow($model, 'name'); ?>
+<?php echo $form->textFieldRow($model, 'ip_addr'); ?>
 <?php  echo $form->dropDownList(
     $model,
     'eq_vendor',

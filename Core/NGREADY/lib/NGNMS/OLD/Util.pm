@@ -250,7 +250,7 @@ sub decode_val_from_DB{
     return decryptAttrvalue( $criptokey, $val );
 
 }
-
+#@deprecated see  NGNMS::App::Crypt;
 sub decode_snmp_community{
     my ($host, $community) = @_;
     my ($r_id, $t_arr, $last);

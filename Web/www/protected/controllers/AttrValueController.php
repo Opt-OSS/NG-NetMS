@@ -97,7 +97,7 @@ class AttrValueController extends Controller
                     $arr_attrs[$i]['value'] = trim(Cripto::decrypt($arr_attrs[$i]['value']));
                 }
             }
-            $this->render('create',array(
+            $this->render('update',array(
                 'model'=>$model,
                 'arr_attrs'=>$arr_attrs,
                 'id_acc'=>$id_acc,

@@ -1,0 +1,1 @@
+delete from attr where id=10;

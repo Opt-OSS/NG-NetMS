@@ -1,0 +1,2 @@
+delete from general_settings where id in (2,3,4,5,8);
+INSERT INTO general_settings(id,name,value,label,order_view) VALUES (12,'default_community','','Default SNMP access method',10)  ON CONFLICT DO NOTHING;;

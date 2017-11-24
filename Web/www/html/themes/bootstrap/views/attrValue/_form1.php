@@ -2,6 +2,15 @@
 /* @var $this AttrValueController */
 /* @var $model AttrValue */
 /* @var $form CActiveForm */
+$accesses = new Access('search');
+$wrapped=$accesses->getWrappableMethods();
+$amount_arr = count($arr_attrs);
+function getAttrVal($attr){
+//    \NGNMS\Emsgd::pp($arr_attrs);
+
+    return empty($attr['value'])?null:$attr['value'];
+}
+
 ?>
 
 <div class="form">
@@ -18,7 +27,6 @@
     <p class="note">Fields with <span class="required">*</span> are required.</p>
 <?php
 echo $form->errorSummary($model);
-$amount_arr = count($arr_attrs);
 
 for ($i = 0; $i < $amount_arr; $i++) {
 
@@ -33,13 +41,14 @@ for ($i = 0; $i < $amount_arr; $i++) {
         switch($arr_attrs[$i]['name']){
             case 'WrappedAccess':
                 $dp =  CHtml::listData($wrapped,'id','name');
-                echo $form->dropDownList($model, "[$i]value", $dp,['options'=>[$arr_attrs[$i]['value']=>['selected'=>true]]]);
+                echo $form->dropDownList($model, "[$i]value", $dp,['options'=>[getAttrVal($arr_attrs[$i])=>['selected'=>true]]]);
                 break;
             case 'CmdOptions':
-                echo $form->textArea($model, "[$i]value", array('value' => $arr_attrs[$i]['value'], 'rows' => 6, 'cols' => 50));
+                echo $form->textArea($model, "[$i]value", array('value' => getAttrVal($arr_attrs[$i]), 'rows' => 6, 'cols' => 50));
                 break;
             default:
-                echo $form->textField($model, "[$i]value", array('value' => $arr_attrs[$i]['value']));
+                echo $form->textField($model, "[$i]value",
+                    array('value' => getAttrVal($arr_attrs[$i])));
         }
         echo $form->error($model, 'value');
         ?>

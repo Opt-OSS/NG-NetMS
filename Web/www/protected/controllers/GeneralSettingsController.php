@@ -257,7 +257,7 @@ class GeneralSettingsController extends Controller
         if ($model === null)
             throw new CHttpException(404, 'The requested page does not exist.');
         if ($model->name != 'chiave' && $model->name != 'perioddiscovery' && $model->name != 'scanner') {
-            if (preg_match("/password/i", $model->name) || preg_match("/community/i", $model->name)) {
+            if (preg_match("/password/i", $model->name) ) {
                 $model->value = trim(Cripto::hidedata($model->value));
             } else {
                 $model->value = trim(Cripto::decrypt($model->value));

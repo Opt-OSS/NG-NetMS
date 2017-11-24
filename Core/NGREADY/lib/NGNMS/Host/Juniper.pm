@@ -76,9 +76,11 @@ sub juniper_create_session {
     $connect_params->{wake_up} = 0;
     $connect_params->{connect_options} = { opts => $connect_params->{connect_options} } ;
     if (exists $connect_params->{jumphost}) {
+        push @{ $connect_params->{jumphost}{connect_options} } ,('-p',$connect_params->{jumphost}{port}) if $connect_params->{jumphost}{port};
         $connect_params->{jumphost} = Net::Appliance::Session->new(
         transport       => 'SSH',
             personality     => 'bash',
+            timeout         => $connect_params->{jumphost}{timeout} || 10,
             host            => $connect_params->{jumphost}{host},
             username        => $connect_params->{jumphost}{username},
             password        => $connect_params->{jumphost}{password},

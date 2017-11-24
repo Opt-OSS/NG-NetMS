@@ -40,12 +40,14 @@ class Routers extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('name,eq_vendor', 'required'),
+			array('name,eq_vendor', 'required','message'=>'required field'),
 			array('name', 'length', 'max'=>32),
 			array('eq_type, eq_vendor', 'length', 'max'=>50),
 			array('location', 'length', 'max'=>255),
 			array('status, icon_color', 'length', 'max'=>20),
-			array('ip_addr', 'safe'),
+//            array('ip_addr', 'length','min'=>'10/', 'message'=>'Tags can only contain word characters.'),
+			array('ip_addr', 'match','pattern'=>'/^\d+\.\d+\.\d+\.\d+$/', 'message'=>'Tags can only contain valid IPv4 address.'),
+
 			// The following rule is used by search().
 			array('router_id, name, ip_addr, eq_type, eq_vendor, location, status, icon_color, layer', 'safe', 'on'=>'search'),
 		);
