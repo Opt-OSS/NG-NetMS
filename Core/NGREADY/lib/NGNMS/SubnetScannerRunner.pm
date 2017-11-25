@@ -143,7 +143,7 @@ sub run{
     } );
 
     $pm->run_on_wait( sub {
-            $self->logger->debug  ( "** Have to wait for one children ..." );
+            $self->logger->debug  ( "** Waiting for a child process to finish ..." );
         },
         5
     );
@@ -159,7 +159,7 @@ sub run{
         $pm->finish( $child ); # pass an exit code to finish
     }
 
-    $self->logger->debug  ( "Waiting for Children...\n" );
+    $self->logger->debug  ( "Waiting for all children processes to complete...\n" );
     $pm->wait_all_children;
     $self->logger->info ( "Everybody is out of the pool!\n" );
     #TODO connection could be closed by timeout. Should check and reopen

@@ -207,12 +207,12 @@ sub credentials_override($$) {
 #=cut
 sub decode_router_access_method {
     my ($self, $host, $credentials) = (shift, shift, shift);
-    $self->logger->debug("Checking if roter specific access exists");
+    $self->logger->debug("Checking if host-specific access exists");
 
     my $r_id = $self->DB->getRouterId($host);
 
     if (!defined $r_id) {
-        $self->logger->debug("Router ID not found, using defauls access");
+        $self->logger->debug("Router ID not found, using default access");
         #        diag $credentials;
         return $credentials;
     }
@@ -228,7 +228,7 @@ sub decode_router_access_method {
     #    diag($encrypted);
     if (!scalar %{ $encrypted }) {
 
-        $self->logger->debug("Roter specific access not found, router ID $r_id, using default access");
+        $self->logger->debug("Host-specific access not found, router ID $r_id, using default access");
         return $credentials;
     }
 
