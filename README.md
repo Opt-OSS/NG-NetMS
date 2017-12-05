@@ -174,12 +174,13 @@ __warning__
 
 Edit vi /etc/selinux/config
 and change the following line to permissive or disabled.
-
+```shell
 # SELINUX= can take one of these three values:
 #     enforcing - SELinux security policy is enforced.
 #     permissive - SELinux prints warnings instead of enforcing.
 #     disabled - No SELinux policy is loaded.
 SELINUX=permissive
+```
 
 Then execute: 
 
