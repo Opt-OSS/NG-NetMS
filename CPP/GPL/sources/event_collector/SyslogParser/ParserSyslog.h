@@ -1,8 +1,9 @@
 #pragma once
 
-#include "IParser.h"
-#include <string>
 #include <map>
+#include <string>
+
+#include "IParser.h"
 #include "JunosFacilityGroups.h"
 
 using namespace std;
@@ -44,36 +45,34 @@ class TimestampRFC3164Parser;
 class JunosStructuredTimestampParser;
 class UnknownTimestampParser;
 
-class ParserSyslog: public IParser
+class ParserSyslog : public IParser
 {
+public:
+	ParserSyslog();
+	virtual ~ParserSyslog();
+	bool Parse(string Message, bool HasSourceIp, string SourceIP);
+	bool ProcessEndOfData();
+	void SourceAttached(string IpAddress);
+	void SourceDetached(string IpAddress);
+	void RegisterListener(ParserListener& Listener);
+	void UnregisterListener(ParserListener& Listener);
 
-    public:
-        ParserSyslog();
-        virtual ~ParserSyslog();
-        bool Parse( string Message, bool HasSourceIp, string SourceIP);
-        bool ProcessEndOfData( );
-        void SourceAttached( string IpAddress );
-        void SourceDetached( string IpAddress );
-        void RegisterListener( ParserListener &Listener );
-        void UnregisterListener( ParserListener &Listener );
+private:
+	bool IsNetscreenFormat(string& Text);
+	string Time2String(time_t time);
+	string GetTimestamp();
+	int GetCurrentYear();
+	string GetTimeZone();
+	string CreateTimestamp(int Year, int Month, int Day, int Hours, int Minutes, int Seconds);
+	string GetTimestamp(JunosStructuredTimestampParser& TimestampParser);
+	string GetTimestamp(TimestampRFC3164Parser& TimestampParser);
+	string GetTimestamp(UnknownTimestampParser& TimestampParser);
+	string GetTimestamp(CiscoTimestampParser& TimestampParser);
+	string GetPriority(string Message, string& Priority);
+	string GetNumberString(string Text, string& Number);
+	string GetString(string Text, string& String);
+	string DropWhitespace(string Text);
 
-    private:
-        bool   IsNetscreenFormat( string& Text );
-        string Time2String( time_t time );
-        string GetTimestamp( );
-        int    GetCurrentYear( );
-        string GetTimeZone( );
-        string CreateTimestamp( int Year, int Month, int Day, int Hours, int Minutes, int Seconds );
-        string GetTimestamp( JunosStructuredTimestampParser& TimestampParser );
-        string GetTimestamp( TimestampRFC3164Parser& TimestampParser );
-        string GetTimestamp( UnknownTimestampParser& TimestampParser );
-        string GetTimestamp( CiscoTimestampParser& TimestampParser );
-        string GetPriority( string Message, string& Priority );
-        string GetNumberString( string Text, string& Number );
-        string GetString( string Text, string& String );
-        string DropWhitespace( string Text );
-
-    private:
-        Notifier<ParserListener, Event> m_Notifier;
+private:
+	Notifier<ParserListener, Event> m_Notifier;
 };
-

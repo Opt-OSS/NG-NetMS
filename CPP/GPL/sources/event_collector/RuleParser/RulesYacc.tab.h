@@ -31,10 +31,10 @@
    version 2.2 of Bison.  */
 
 #ifndef YY_YY_RULESYACC_TAB_H_INCLUDED
-# define YY_YY_RULESYACC_TAB_H_INCLUDED
+#define YY_YY_RULESYACC_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+	#define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -42,42 +42,41 @@ extern int yydebug;
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    EVENT = 258,
-    CONDITION = 259,
-    PROTOCOL = 260,
-    SYSLOG = 261,
-    SNMP = 262,
-    NETFLOW = 263,
-    APACHE = 264,
-    CUSTOM1 = 265,
-    CUSTOM2 = 266,
-    SEVERITY = 267,
-    ACTION = 268,
-    DISCARD = 269,
-    NUM = 270,
-    IDENTIFIER = 271,
-    STRING = 272,
-    VARIABLE = 273,
-    AND = 274,
-    OR = 275,
-    NOT = 276,
-    MATCH = 277
-  };
+	#define YYTOKENTYPE
+enum yytokentype
+{
+	EVENT = 258,
+	CONDITION = 259,
+	PROTOCOL = 260,
+	SYSLOG = 261,
+	SNMP = 262,
+	NETFLOW = 263,
+	APACHE = 264,
+	CUSTOM1 = 265,
+	CUSTOM2 = 266,
+	SEVERITY = 267,
+	ACTION = 268,
+	DISCARD = 269,
+	NUM = 270,
+	IDENTIFIER = 271,
+	STRING = 272,
+	VARIABLE = 273,
+	AND = 274,
+	OR = 275,
+	NOT = 276,
+	MATCH = 277
+};
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if !defined YYSTYPE && !defined YYSTYPE_IS_DECLARED
 typedef int YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+	#define YYSTYPE_IS_TRIVIAL 1
+	#define YYSTYPE_IS_DECLARED 1
 #endif
-
 
 extern YYSTYPE yylval;
 
-int yyparse (void);
+int yyparse(void);
 
 #endif /* !YY_YY_RULESYACC_TAB_H_INCLUDED  */

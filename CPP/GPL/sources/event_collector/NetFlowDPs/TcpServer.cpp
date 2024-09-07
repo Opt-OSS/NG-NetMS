@@ -1,29 +1,24 @@
 #include "TcpServer.h"
 
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include<fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <vector>
 
 using namespace std;
 
-TcpServer::TcpServer():
-m_ListenSocket(0),
-m_Initialized(false),
-m_Handlers(nullptr)
+TcpServer::TcpServer(): m_ListenSocket(0), m_Initialized(false), m_Handlers(nullptr)
 {
-
 }
 
 TcpServer::~TcpServer()
 {
-
 }
 
 bool TcpServer::Initialize(int Port, string BindIPAddress)
@@ -42,11 +37,11 @@ bool TcpServer::Initialize(int Port, string BindIPAddress)
 	struct sockaddr_in sa_serv;
 	memset(&sa_serv, '\0', sizeof(sa_serv));
 	sa_serv.sin_family = AF_INET;
-//	sa_serv.sin_addr.s_addr = INADDR_ANY;
+	//	sa_serv.sin_addr.s_addr = INADDR_ANY;
 	sa_serv.sin_addr.s_addr = inet_addr(BindIPAddress.c_str());
 	sa_serv.sin_port = htons(Port);
 
-	int status = bind(m_ListenSocket, (struct sockaddr*) &sa_serv, sizeof (sa_serv));
+	int status = bind(m_ListenSocket, (struct sockaddr*)&sa_serv, sizeof(sa_serv));
 	if (status < 0)
 	{
 		close(m_ListenSocket);
@@ -61,12 +56,11 @@ bool TcpServer::Initialize(int Port, string BindIPAddress)
 	}
 
 	// Set non-blocking
-	if(fcntl(m_ListenSocket, F_SETFL, fcntl(m_ListenSocket, F_GETFL) | O_NONBLOCK) < 0)
+	if (fcntl(m_ListenSocket, F_SETFL, fcntl(m_ListenSocket, F_GETFL) | O_NONBLOCK) < 0)
 	{
 		close(m_ListenSocket);
 		return false;
 	}
-
 
 	m_Initialized = true;
 
@@ -123,7 +117,7 @@ bool TcpServer::RXData(int Socket)
 		else if (sel > 0)
 		{
 			// client has performed some activity (sent data or disconnected?)
-			char rx_buffer[4096] = { 0 };
+			char rx_buffer[4096] = {0};
 
 			int bytes = recv(Socket, rx_buffer, sizeof(rx_buffer), 0);
 			if (bytes > 0)
@@ -147,7 +141,7 @@ bool TcpServer::RXData(int Socket)
 		}
 		else if (sel < 0)
 		{
-			return false; // grave error occurred.
+			return false;  // grave error occurred.
 		}
 	}
 
@@ -208,7 +202,7 @@ void TcpServer::Process()
 	// Check for new connections
 	struct sockaddr_in sa_cli;
 	socklen_t client_len = sizeof(sa_cli);
-	int new_conn_fd = accept(m_ListenSocket, (struct sockaddr*) &sa_cli, &client_len);
+	int new_conn_fd = accept(m_ListenSocket, (struct sockaddr*)&sa_cli, &client_len);
 	if (new_conn_fd > 0)
 	{
 		char ip_address[INET_ADDRSTRLEN];
@@ -274,4 +268,3 @@ void TcpServer::Process()
 
 	RemoveDisconnectedClients(disconnectedClients);
 }
-

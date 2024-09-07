@@ -1,15 +1,15 @@
 #pragma once 
+#include <string>
 
-
-static string BUILD_DATE        = "@BUILD_DATE@";
-static string BUILD_TIME        = "@BUILD_TIME@";
-static string VERSION_MAJOR     = "@VERSION_MAJOR@";
-static string VERSION_MINOR     = "@VERSION_MINOR@";
-static string DB_CFG_FILE_NAME  = "@DB_CFG_FILE_NAME@";
-static string DB_HOST           = "@DB_HOST@";
+static std::string BUILD_DATE        = "@BUILD_DATE@";
+static std::string BUILD_TIME        = "@BUILD_TIME@";
+static std::string VERSION_MAJOR     = "@VERSION_MAJOR@";
+static std::string VERSION_MINOR     = "@VERSION_MINOR@";
+static std::string DB_CFG_FILE_NAME  = "@DB_CFG_FILE_NAME@";
+static std::string DB_HOST           = "@DB_HOST@";
 static int    DB_PORT           =  @DB_PORT@;
-static string DB_NAME           = "@DB_NAME@";
-static string DB_USER           = "@DB_USER@";
-static string DB_PASSWORD       = "@DB_PASSWORD@";
+static std::string DB_NAME           = "@DB_NAME@";
+static std::string DB_USER           = "@DB_USER@";
+static std::string DB_PASSWORD       = "@DB_PASSWORD@";
 static int    DB_TIMEOUT        =  @DB_TIMEOUT@;
-static string HOME_ENV          = "@HOME_ENV@";
+static std::string HOME_ENV          = "@HOME_ENV@";
