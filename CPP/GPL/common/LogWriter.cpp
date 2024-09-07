@@ -6,38 +6,36 @@
  */
 
 #include "LogWriter.h"
-
-#include <time.h>
-
-#include <condition_variable>
-#include <fstream>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <time.h>
+#include <condition_variable>
+#include <iostream>
+#include <random>
+#include <thread>
 #include <mutex>
 #include <queue>
-#include <random>
-#include <sstream>
-#include <thread>
 
-std::mutex g_lockprint;
-std::mutex g_lockqueue;
+std::mutex              g_lockprint;
+std::mutex              g_lockqueue;
 std::condition_variable g_queuecheck;
 std::queue<std::string> g_messages;
-bool g_done;
-bool g_notified;
+bool                    g_done;
+bool                    g_notified;
 
 namespace ngnms
 {
+	using std::ofstream;
+	using std::fstream;
+	using std::stringstream;
 	using std::cout;
 	using std::endl;
-	using std::fstream;
-	using std::ofstream;
-	using std::stringstream;
 
-	const std::string currentDateTime()
-	{
-		time_t now = time(0);
-		struct tm tstruct;
-		char buf[80];
+	const std::string currentDateTime() {
+		time_t     now = time(0);
+		struct tm  tstruct;
+		char       buf[80];
 		tstruct = *localtime(&now);
 		// Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
 		// for more information about date/time format
@@ -49,17 +47,17 @@ namespace ngnms
 	class FileLogFileWriter
 	{
 	public:
-		FileLogFileWriter(string FileName, string Message)
+		FileLogFileWriter( string FileName, string Message )
 		{
-			if (0 == FileName.length())
+			if( 0 == FileName.length( ) )
 			{
 				return;
 			}
 			try
 			{
 				ofstream logfile;
-				logfile.open(FileName.c_str(), fstream::app);
-				if (!logfile.is_open())
+				logfile.open ( FileName.c_str( ), fstream::app );
+				if( !logfile.is_open() )
 				{
 					return;
 				}
@@ -67,18 +65,20 @@ namespace ngnms
 				logfile << "[" << currentDateTime() << "] " << Message;
 				logfile.close();
 			}
-			catch (...)
+			catch( ... )
 			{
 				// Don't care!
 			}
 		}
 	};
 
-	LogWriter::LogWriter(): _logLevel(LogLevel::ERROR)
+	
+	LogWriter::LogWriter() :
+		_logLevel(LogLevel::ERROR)
 	{
 	}
-
-	void LogWriter::SetLogFileName(string& LogFile)
+	
+	void LogWriter::SetLogFileName( string& LogFile )
 	{
 		_logFile = LogFile;
 	}
@@ -87,15 +87,15 @@ namespace ngnms
 	{
 		if (lvl < LogLevel::ERROR || lvl > LogLevel::INFO)
 			return;
-
+		
 		_logLevel = LogLevel(lvl);
 	}
-
+	
 	void LogWriter::LogInfo(const string& mess, const string& detail)
 	{
 		if (_logLevel < LogLevel::INFO)
 			return;
-
+			
 		stringstream ss;
 		ss << mess << endl;
 		FileLogFileWriter logger(_logFile, ss.str());
@@ -106,14 +106,14 @@ namespace ngnms
 	{
 		if (_logLevel < LogLevel::WARNING)
 			return;
-
+		
 		stringstream ss;
 		ss << "Warning: " << mess;
 		if (_logLevel > LogLevel::ERROR)
-			ss << detail;
-
+			ss << detail;			
+		
 		ss << endl;
-		FileLogFileWriter logger(_logFile, ss.str());
+		FileLogFileWriter logger( _logFile, ss.str() );
 		cout << ss.str();
 	}
 
@@ -123,9 +123,9 @@ namespace ngnms
 		ss << "Error: " << mess;
 		if (_logLevel > LogLevel::ERROR)
 			ss << detail;
-
+		
 		ss << endl;
-		FileLogFileWriter logger(_logFile, ss.str());
+		FileLogFileWriter logger( _logFile, ss.str() );
 		cout << ss.str();
 	}
 
@@ -133,18 +133,18 @@ namespace ngnms
 	{
 		if (_logLevel < lvl)
 			return;
-
-		switch (lvl)
+		
+		switch(lvl)
 		{
-		case LogLevel::INFO:
-			LogInfo(mess, detail);
-			break;
-		case LogLevel::WARNING:
-			LogWarning(mess, detail);  //TODO
-			break;
-		case LogLevel::ERROR:
-			LogError(mess, detail);
-			break;
+			case LogLevel::INFO:
+				LogInfo(mess, detail);
+				break;
+			case LogLevel::WARNING:
+				LogWarning(mess, detail);	//TODO
+				break;
+			case LogLevel::ERROR:
+				LogError(mess, detail);
+				break;
 		}
 	}
 }

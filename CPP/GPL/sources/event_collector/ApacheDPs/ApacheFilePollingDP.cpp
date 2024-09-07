@@ -1,38 +1,36 @@
 #include "ApacheFilePollingDP.h"
-
-#include <unistd.h>
-
 #include <fstream>
-#include <iostream>
 #include <sstream>
+#include <iostream>
+#include <unistd.h>
 
 using namespace std;
 
-ApacheFilePollingDP::ApacheFilePollingDP(string FileName, std::shared_ptr<Logger> Logger): m_Logger(Logger)
+ApacheFilePollingDP::ApacheFilePollingDP( string FileName , std::shared_ptr<Logger> Logger):
+		m_Logger(Logger)
 {
 	m_FilePollReader.SetFileName(FileName);
 	m_FilePollReader.RegisterHandlers(this);
 	m_FilePollReader.SetLogger(Logger);
 }
 
-ApacheFilePollingDP::~ApacheFilePollingDP()
+ApacheFilePollingDP::~ApacheFilePollingDP( )
 {
+
 }
 
-void ApacheFilePollingDP::OnReadLine(const std::string &Line)
+void ApacheFilePollingDP::OnReadLine( const std::string& Line )
 {
-	DataProviderListener::DataProviderEvent event(DataProviderListener::DataProviderEvent::Event::DATA, Line);
-	m_Notifier.Notify(event);
+	 DataProviderListener::DataProviderEvent event( DataProviderListener::DataProviderEvent::Event::DATA, Line );
+	 m_Notifier.Notify( event );
 }
 
-bool ApacheFilePollingDP::Run()
+bool ApacheFilePollingDP::Run( )
 {
 	m_Logger->LogInfo("Start ApacheFilePollingDP");
-	for (;;)
-	{
+	for (;;) {
 		//restart polling in case file moved| deleted| truncated
-		if (m_FilePollReader.Run())
-		{
+		if (m_FilePollReader.Run()) {
 			break;
 		}
 		m_Logger->LogDebug("Restarting....");
@@ -42,18 +40,19 @@ bool ApacheFilePollingDP::Run()
 	return true;
 }
 
-bool ApacheFilePollingDP::Stop()
+bool ApacheFilePollingDP::Stop( )
 {
 	m_FilePollReader.Stop();
-	return true;
+    return true;
 }
 
-void ApacheFilePollingDP::RegisterListener(DataProviderListener &Listener)
+void ApacheFilePollingDP::RegisterListener( DataProviderListener &Listener )
 {
-	m_Notifier.Register(Listener);
+    m_Notifier.Register( Listener );
 }
 
-void ApacheFilePollingDP::UnregisterListener(DataProviderListener &Listener)
+void ApacheFilePollingDP::UnregisterListener( DataProviderListener &Listener )
 {
-	m_Notifier.Unregister(Listener);
+    m_Notifier.Unregister( Listener );
 }
+

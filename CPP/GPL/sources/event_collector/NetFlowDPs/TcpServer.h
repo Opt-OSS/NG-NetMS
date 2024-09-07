@@ -1,13 +1,13 @@
 #pragma once
 
 #include <map>
-#include <string>
 #include <vector>
+#include <string>
 
 class ITcpServerHandlers
 {
 public:
-	virtual ~ITcpServerHandlers() {}
+	virtual ~ITcpServerHandlers(){}
 	virtual void OnConnected(int ConnectionId, std::string IpAddress) = 0;
 	virtual void OnDisconnected(int ConnectionId, std::string IpAddress) = 0;
 	virtual void OnReceiveData(int ConnectionId, const std::string& Data) = 0;
@@ -22,12 +22,11 @@ class TcpServer
 		std::string m_RxBuffer;
 		std::string m_TxBuffer;
 	};
-
 public:
-	TcpServer();
+	TcpServer( );
 	~TcpServer();
-	bool Initialize(int Port, std::string BindIPAddress);
-	std::pair<bool, std::string> GetIpAddress(int ConnectionId);
+	bool Initialize(int Port, std::string BindIPAddress );
+	std::pair<bool,std::string> GetIpAddress(int ConnectionId);
 	bool SendData(int ConnectionId, const std::string& Data);
 	void RegisterHandler(ITcpServerHandlers& Handlers);
 	void Process();
@@ -38,8 +37,8 @@ private:
 	void RemoveDisconnectedClients(std::vector<int>& Sockets);
 
 private:
-	int m_ListenSocket;
-	bool m_Initialized;
-	ITcpServerHandlers* m_Handlers;
+	int						   m_ListenSocket;
+	bool					   m_Initialized;
+	ITcpServerHandlers*		   m_Handlers;
 	std::map<int, ClientData> m_IpAddresses;
 };
