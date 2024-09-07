@@ -55,6 +55,10 @@ IClassifier::ResultCodes Classifier::Initialize( string RuleFile )
                 {
                     return "NETFLOW";
                 }
+                else if( EventProtocol::CAN_BUS == protocol )
+                {
+                    return "CAN_BUS";
+                }
                 else
                 {
                     return "";

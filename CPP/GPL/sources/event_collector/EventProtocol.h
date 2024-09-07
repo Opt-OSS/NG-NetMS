@@ -12,7 +12,8 @@ enum class EventProtocol
     NETFLOW = 2,
     APACHE  = 3,
     CUSTOM1 = 4,
-    CUSTOM2 = 5
+    CUSTOM2 = 5,
+	CAN_BUS = 6
 };
 
 static map<EventProtocol, string>& GetProtocolToStringMapping( )
@@ -25,6 +26,7 @@ static map<EventProtocol, string>& GetProtocolToStringMapping( )
 			{ EventProtocol::APACHE, "apache" },
 			{ EventProtocol::CUSTOM1, "custom1" },
 			{ EventProtocol::CUSTOM2, "custom2" },
+			{ EventProtocol::CAN_BUS, "can_bus" },
 	};
 
 	return protocols;

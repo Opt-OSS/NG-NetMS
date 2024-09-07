@@ -10,6 +10,7 @@
 #include <chrono>
 #include <iostream>
 #include <unistd.h>
+#include <vector>
 
 class TokenParser
 {
@@ -74,7 +75,7 @@ class TokenParser
     protected:
         string          m_Output;
         bool            m_Found;
-        static   vector<string>  m_Months;
+        static   std::vector<string>  m_Months;
 };
 
 // Format 2017-05-25 20:21:19:464912:

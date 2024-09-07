@@ -1,9 +1,0 @@
-CompileFlags:
-  Add:
-    - "-stdlib=libstdc++"
-    - "-std=c++23"
----
-If:
-  PathMatch: (.*external/.*|.*third_party/.*)
-Index:
-  Background: Skip

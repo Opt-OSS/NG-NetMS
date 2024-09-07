@@ -31,6 +31,7 @@ D           [0-9]
 "apache"    { yylval = strdup(yytext); return APACHE; }
 "custom1"   { yylval = strdup(yytext); return CUSTOM1; }
 "custom2"   { yylval = strdup(yytext); return CUSTOM2; }
+"can_bus"   { yylval = strdup(yytext); return CAN_BUS; }
 "severity"  { return SEVERITY; }
 "action"    { return ACTION; }
 "discard"   { return DISCARD; }

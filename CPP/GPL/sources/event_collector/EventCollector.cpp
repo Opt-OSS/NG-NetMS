@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include "CANParser/CANParser.h"
 #include "EventType.h"
 #include "Triggers.h"
 #include "Database.h"
@@ -27,6 +28,7 @@
 #include "ApacheParser.h"
 #include "Custom1Parser.h"
 #include "Custom2Parser.h"
+#include "CANParser.h"
 
 // Logger
 #include "Logger.h"
@@ -149,6 +151,8 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
     				case Options::SourceType::APACHE_FILE_POLLING:
     				case Options::SourceType::CUSTOM1_FILE:
     				case Options::SourceType::CUSTOM1_FILE_POLLING:
+                    case Options::SourceType::CAN_BUS_FILE:
+    				case Options::SourceType::CAN_BUS_FILE_POLLING:
         				m_Logger->LogError( "Can't open input file!" );
         			break;
 
@@ -299,6 +303,12 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 				case Options::SourceType::CUSTOM2_FILE_POLLING:
 					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) , m_Logger ) );
 				break;
+                case Options::SourceType::CAN_BUS_FILE:
+					m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::CAN_BUS_FILE_POLLING:
+					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) , m_Logger ) );
+				break;
             }
 
             m_DataProvider->RegisterListener( *this );
@@ -336,6 +346,10 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 				case Options::SourceType::CUSTOM2_FILE:
 				case Options::SourceType::CUSTOM2_FILE_POLLING:
 					m_Parser = shared_ptr<IParser>( new Custom2Parser( ) );
+				break;
+                case Options::SourceType::CAN_BUS_FILE:
+				case Options::SourceType::CAN_BUS_FILE_POLLING:
+					m_Parser = shared_ptr<IParser>( new CANParser( ) );
 				break;
 			}
 
