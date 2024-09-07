@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "CANParser/CANParser.h"
 #include "EventType.h"
 #include "Triggers.h"
 #include "Database.h"
