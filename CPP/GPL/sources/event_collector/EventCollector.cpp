@@ -241,7 +241,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             ss << "Rule File = " << RuleFileName;
             m_Logger->LogInfo( ss.str( ) );
 
-            m_Classifier = std::make_shared<IClassifier>(Options.GetDebug( ) );
+            m_Classifier = shared_ptr<IClassifier>(new Classifier(Options.GetDebug( ), m_EventDecorator ));
 
             switch( m_Classifier->Initialize( RuleFileName ) )
             {
@@ -415,10 +415,10 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 
             return m_Database->CreateTables();
         }
-        
+
         void CreateEventDecorator()
         {
-            m_EventDecorator = make_shared<EventDecorator>(m_Database)
+            m_EventDecorator = make_shared<EventDecorator>(m_Database);
         }
 
         void Notify( ClassifierEvent& event )

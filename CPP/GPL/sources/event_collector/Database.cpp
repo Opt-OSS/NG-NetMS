@@ -200,6 +200,10 @@ void Database::WritterThread( Database* This )
             }
             catch( const exception &e )
             {
+                if( m_Debug )
+                {
+                cerr << "WritterThread query = " << multipleQueries << endl;
+                }
                 cerr << "WritterThread exception = " << e.what( ) << endl;
             }
             catch( ... )
