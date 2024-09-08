@@ -85,6 +85,7 @@ sources/event_collector/SyslogDPs/
 sources/event_collector/NetFlowDPs/ 
 sources/event_collector/ApacheDPs/
 sources/event_collector/SnmpParser/
+sources/event_collector/CANParser/
 sources/event_collector/SyslogParser/
 sources/event_collector/RuleParser/
 sources/event_collector/NetFlowParser/
@@ -101,6 +102,8 @@ sources/event_collector/SyslogDPs/SyslogUdpDP.cpp
 sources/event_collector/SyslogParser/JunosFacilityGroups.cpp
 sources/event_collector/SyslogParser/ParserSyslog.cpp
 sources/event_collector/SnmpParser/SnmpParser.cpp
+sources/event_collector/CANParser/CANParser.cpp
+sources/event_collector/CANParser/CANGlobalsParser.hpp
 sources/event_collector/NetFlowDPs/TcpServer.cpp
 sources/event_collector/NetFlowDPs/NetFlowTcpDP.cpp
 sources/event_collector/NetFlowDPs/NetFlowUdpDP.cpp
@@ -117,6 +120,7 @@ sources/event_collector/RuleParser/lex.yy.c
 sources/event_collector/Options.cpp
 sources/event_collector/Triggers.cpp
 sources/event_collector/Classifier.cpp
+sources/event_collector/EventDecorator.hpp
 sources/event_collector/Database.cpp
 sources/event_collector/EventCollector.cpp
 sources/event_collector/Logger.cpp

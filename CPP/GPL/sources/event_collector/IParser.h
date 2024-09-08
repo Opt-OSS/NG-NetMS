@@ -3,6 +3,16 @@
 #include <string>
 #include "Notifier.h"
 #include "Event.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include <chrono>
+#include <vector>
+#include <iomanip>
 
 using namespace std;
 

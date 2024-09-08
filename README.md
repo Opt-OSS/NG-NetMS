@@ -166,7 +166,7 @@ logout and login
 ### HTTPD for default directory config
 use `su` account for operations below
 
-####SELinux
+#### SELinux
 SELinux prevents symlink references from working if enforced. We use simlinks to simplify installation and operations.
 
 __warning__
@@ -256,7 +256,7 @@ This should create all symlinks in /etc/rcX.d directories.
 [ngnms@localhost ~]$ sudo cp /opt/ngnms/nmap.sudo /etc/sudoers.d/nmap
 ```
 
-###collector
+### collector
 
 ```shell
 [ngnms@localhost bin]$ cd /opt/ngnms/bin

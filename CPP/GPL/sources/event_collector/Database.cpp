@@ -1,5 +1,6 @@
 #include "Database.h"
 #include "EventProtocol.h"
+#include <ostream>
 #include <sstream>
 #include <map>
 #include <algorithm>
@@ -99,8 +100,95 @@ bool Database::CreateTables( )
 		PerformQuery(query);
 	}
 
+    if(!CreateCANGlobalVarsTable())
+    {
+        return false;
+    }
+
 	return true;
 }
+
+bool Database::CreateCANGlobalVarsTable() {
+    std::string query = R"(
+        CREATE TABLE IF NOT EXISTS can_global_variables (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            can_id INT NOT NULL,
+            description TEXT
+        );
+    )";
+    if( PerformQuery(query).IsFail())
+	{
+		return false;
+	}
+
+    // Create function to check if can_id exists and skip insertion
+    std::string checkFunctionQuery = R"(
+            CREATE OR REPLACE FUNCTION can_global_variable_insert_trigger()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM can_global_variables WHERE can_id = NEW.can_id) THEN
+                    RAISE NOTICE 'CAN ID already exists: %', NEW.can_id;
+                    RETURN NULL;
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        )";
+
+    if (PerformQuery(checkFunctionQuery).IsFail()) 
+    {
+        return false;
+    }
+
+    // Create trigger that calls the function before insert on can_global_variables
+    std::string checkTriggerQuery = R"(
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'can_global_variables_trigger') THEN
+                    CREATE TRIGGER can_global_variables_trigger
+                    BEFORE INSERT ON can_global_variables
+                    FOR EACH ROW
+                    EXECUTE FUNCTION can_global_variable_insert_trigger();
+                END IF;
+            END
+            $$;
+        )";
+
+    if (PerformQuery(checkTriggerQuery).IsFail()) 
+    {
+        return false;
+    }
+
+    CANGlobalsParser staticsParser("globals.rgf");
+    staticsParser.Parse();
+    for (const auto& entry : staticsParser.GetParsedEntries()) {
+        if(!InsertCanGlobalVariable(entry.name, entry.can_id, entry.description))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Database::InsertCanGlobalVariable(const std::string& name, int can_id, const std::string& description) {
+    try {
+        std::string query = "INSERT INTO can_global_variables (name, can_id, description) VALUES ('" + 
+                            EscapeString(name) + "', '" + std::to_string(can_id) + "', '" + EscapeString(description) + "');";
+        auto status = PerformQuery(query);
+        if (status.IsFail()) {
+            cerr << status.GetDetails() << endl;
+            return false;
+        }
+
+        return true; 
+    } 
+    catch (const std::exception& e) {
+        std::cerr << "Exception occurred while inserting CAN global variable: " << e.what() << std::endl;
+        return false;
+    }
+}
+
 
 bool Database::Connect( const DbSettings& Settings  )
 {
@@ -316,6 +404,28 @@ DbReturnCode Database::WriteEvent( const Event& event )
 
     PushQueryToQueue( queryInsertEvent );
     return DbReturnCode( DbReturnCode::Code::OK );
+}
+
+bool Database::GetCANDescription(int canId, std::string& canDescription, std::string& canName)
+{
+    pqxx::result result;
+
+    std::string query = "SELECT name, description FROM can_global_variables WHERE can_id = " + std::to_string(canId) + ";";
+
+    DbReturnCode returnCode = PerformQuery(query, result);
+
+    if (returnCode.IsFail()) {
+        std::cerr << "Failed to execute query for CANid: " << canId << std::endl;
+        return false;
+    }
+
+    if (!result.empty()) {
+        canName = result[0][0].as<std::string>(); // First column for the name
+        canDescription = result[0][1].as<std::string>(); // Second column for the description
+        return true;
+    }
+
+    return false;
 }
 
 DbReturnCode Database::PerformQuery( const string& Query )

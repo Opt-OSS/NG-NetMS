@@ -32,7 +32,10 @@ static map<string, Options::SourceType> sourceType =
 	{ "custom1-file",		Options::SourceType::CUSTOM1_FILE },
 	{ "custom1-polling",	Options::SourceType::CUSTOM1_FILE_POLLING },
 	{ "custom2-file",		Options::SourceType::CUSTOM2_FILE },
-	{ "custom2-polling",	Options::SourceType::CUSTOM2_FILE_POLLING }
+	{ "custom2-polling",	Options::SourceType::CUSTOM2_FILE_POLLING },
+	{ "can-bus-file",		Options::SourceType::CAN_BUS_FILE },
+	{ "can-bus-polling",	Options::SourceType::CAN_BUS_FILE_POLLING },
+
 };
 
 Options::Options( ):
@@ -60,7 +63,7 @@ bool Options::Parse(  int argc, char * argv[] )
 		desc.add_options()
 					   ( "help,h",     "This help message")
 					   ( "drop,D",										    "Create/renew collector database tables, if verbose option > 0 then tables created with debug fields")
-					   ( "source,s",  value<string>(&dataSource),           "syslog-file,\nsyslog-polling,\nsyslog-udp,\nsyslog-tcp,\nsnmp-file,\nsnmp-polling,\nnetflow-udp,\nnetflow-tcp,\napache-file,\napache-polling,\ncustom1-file,\ncustom1-polling,\ncustom2-file,\ncustom2-polling" )
+					   ( "source,s",  value<string>(&dataSource),           "syslog-file,\nsyslog-polling,\nsyslog-udp,\nsyslog-tcp,\nsnmp-file,\nsnmp-polling,\nnetflow-udp,\nnetflow-tcp,\napache-file,\napache-polling,\ncustom1-file,\ncustom1-polling,\ncustom2-file,\ncustom2-polling,\ncan-bus-file,\ncan-bus-polling" )
 					   ( "conf_db,c", value<string>(&m_DbSettingsFileName), "Configuration file with encrypted data base options. Default is ./db.cfg" )
 					   ( "file,f",    value<string>(&m_FileName),           "File location. Default is /var/log/syslog" )
 					   ( "port,p",    value<int>(&m_Port),                  "Port for UDP/TCP 0-65535. Default is 514" )

@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <pqxx/pqxx>
+#include "CANParser/CANGlobalsParser.hpp"
 
 #include <thread>
 #include <mutex>
@@ -17,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <optional>
 
 using namespace std;
 
@@ -34,10 +36,11 @@ class Database
         ~Database( );
     	bool DeleteTables();
     	bool CreateTables();
-
+        bool CreateCANGlobalVarsTable();
+        bool InsertCanGlobalVariable(const std::string& name, int can_id, const std::string& description);
         bool Connect( const DbSettings& Settings  );
         DbReturnCode WriteEvent( const Event& event );
-
+        bool GetCANDescription(int canId, std::string& canDescription, string& canName);
     private:
         string EscapeString( const string &Text );
         int RouterIdQuery( const string Query, const string &Hostname );

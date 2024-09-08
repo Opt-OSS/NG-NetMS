@@ -27,6 +27,7 @@
 #include "ApacheParser.h"
 #include "Custom1Parser.h"
 #include "Custom2Parser.h"
+#include "CANParser.h"
 
 // Logger
 #include "Logger.h"
@@ -84,6 +85,9 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             {
                 return -3;
             }
+
+            CreateEventDecorator( );
+           
 
             if( !CreateClassifier( options ))
             {
@@ -149,6 +153,8 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
     				case Options::SourceType::APACHE_FILE_POLLING:
     				case Options::SourceType::CUSTOM1_FILE:
     				case Options::SourceType::CUSTOM1_FILE_POLLING:
+                    case Options::SourceType::CAN_BUS_FILE:
+    				case Options::SourceType::CAN_BUS_FILE_POLLING:
         				m_Logger->LogError( "Can't open input file!" );
         			break;
 
@@ -235,7 +241,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             ss << "Rule File = " << RuleFileName;
             m_Logger->LogInfo( ss.str( ) );
 
-            m_Classifier = shared_ptr<IClassifier>( new Classifier( Options.GetDebug( ) ));
+            m_Classifier = shared_ptr<IClassifier>(new Classifier(Options.GetDebug( ), m_EventDecorator ));
 
             switch( m_Classifier->Initialize( RuleFileName ) )
             {
@@ -299,6 +305,12 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 				case Options::SourceType::CUSTOM2_FILE_POLLING:
 					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) , m_Logger ) );
 				break;
+                case Options::SourceType::CAN_BUS_FILE:
+					m_DataProvider = shared_ptr<IDataProvider>( new ApacheFileDP( Options.GetFileName( ) ) );
+				break;
+				case Options::SourceType::CAN_BUS_FILE_POLLING:
+					m_DataProvider =  shared_ptr<IDataProvider>( new ApacheFilePollingDP( Options.GetFileName( ) , m_Logger ) );
+				break;
             }
 
             m_DataProvider->RegisterListener( *this );
@@ -336,6 +348,10 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 				case Options::SourceType::CUSTOM2_FILE:
 				case Options::SourceType::CUSTOM2_FILE_POLLING:
 					m_Parser = shared_ptr<IParser>( new Custom2Parser( ) );
+				break;
+                case Options::SourceType::CAN_BUS_FILE:
+				case Options::SourceType::CAN_BUS_FILE_POLLING:
+					m_Parser = shared_ptr<IParser>( new CANParser( ) );
 				break;
 			}
 
@@ -400,13 +416,18 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             return m_Database->CreateTables();
         }
 
+        void CreateEventDecorator()
+        {
+            m_EventDecorator = make_shared<EventDecorator>(m_Database);
+        }
+
         void Notify( ClassifierEvent& event )
         {
             if( event.GetDiscard() )
             {
                 return;
             }
-
+            
             DbReturnCode rc = m_Database->WriteEvent( event.GetEvent( ) );
             if( rc.IsFail( ) )
             {
@@ -504,14 +525,15 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
         }
 
     private:
-        shared_ptr<IClassifier>   m_Classifier;
-        shared_ptr<IDataProvider> m_DataProvider;
-        shared_ptr<IParser>       m_Parser;
-        shared_ptr<Database>      m_Database;
-        shared_ptr<Logger>        m_Logger;
-        bool                      m_OriginalTimeStamps;
-        bool                      m_Debug;
-        string                    m_NgnmsHomePath;
+        shared_ptr<EventDecorator>  m_EventDecorator;
+        shared_ptr<IClassifier>     m_Classifier;
+        shared_ptr<IDataProvider>   m_DataProvider;
+        shared_ptr<IParser>         m_Parser;
+        shared_ptr<Database>        m_Database;
+        shared_ptr<Logger>          m_Logger;
+        bool                        m_OriginalTimeStamps;
+        bool                        m_Debug;
+        string                      m_NgnmsHomePath;
 };
 
 int main( int argc, char * argv[] )

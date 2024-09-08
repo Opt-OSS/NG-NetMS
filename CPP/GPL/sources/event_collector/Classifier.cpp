@@ -6,8 +6,9 @@
 
 using namespace std;
 
-Classifier::Classifier( bool Debug ):
-m_Debug( Debug )
+Classifier::Classifier( bool Debug, std::shared_ptr<EventDecorator>& decorator):
+m_Debug( Debug ),
+m_decorator(decorator)
 {
 
 }
@@ -55,6 +56,10 @@ IClassifier::ResultCodes Classifier::Initialize( string RuleFile )
                 {
                     return "NETFLOW";
                 }
+                else if( EventProtocol::CAN_BUS == protocol )
+                {
+                    return "CAN_BUS";
+                }
                 else
                 {
                     return "";
@@ -87,18 +92,19 @@ IClassifier::ResultCodes Classifier::Initialize( string RuleFile )
 
 bool Classifier::Classify( Event& event )
 {
+     Event decoratedEvent = m_decorator->decoratedEvent(event); //if decoration is not needed return same event
      for( auto& eventType : RulesFileParser::GetEventTypeMap( ) )
      {
          shared_ptr<EventType> pEventType = eventType.second;
-         if( pEventType->getProtocol() != event.getProtocol() )
+         if( pEventType->getProtocol() != decoratedEvent.getProtocol() )
          {
              continue;
          }
-
+         
          bool process_event = false;
          if( pEventType->getCondition() )
          {
-             process_event = pEventType->getCondition()->Calculate( &event );
+             process_event = pEventType->getCondition()->Calculate( &decoratedEvent );
          }
          else
          {
@@ -109,21 +115,21 @@ bool Classifier::Classify( Event& event )
          {
              if( eventType.second->discard( ) )
              {
-                 ClassifierListener::ClassifierEvent c_event( event, eventType.second->getTriggerAction( ), true );
+                 ClassifierListener::ClassifierEvent c_event( decoratedEvent, eventType.second->getTriggerAction( ), true );
                  m_Notifier.Notify( c_event );
                  return true;
              }
 
-             Event db_event( event.getProtocol(),
-                 event.getPriority(),
-                 event.getTs(),
-                 event.getOrign_Ts(),
-                 event.getOrigin(),
-                 event.getFacility( ),
-                 event.getCode( ),
-                 event.getDescr(),
-                 event.GetOriginalMessage( ),
-                 event.getRouterId(),
+             Event db_event( decoratedEvent.getProtocol(),
+                 decoratedEvent.getPriority(),
+                 decoratedEvent.getTs(),
+                 decoratedEvent.getOrign_Ts(),
+                 decoratedEvent.getOrigin(),
+                 decoratedEvent.getFacility( ),
+                 decoratedEvent.getCode( ),
+                 decoratedEvent.getDescr(),
+                 decoratedEvent.GetOriginalMessage( ),
+                 decoratedEvent.getRouterId(),
                  eventType.second->getSeverity( ) );
 
              ClassifierListener::ClassifierEvent c_event( db_event, eventType.second->getTriggerAction( ), false );
@@ -133,7 +139,7 @@ bool Classifier::Classify( Event& event )
          }
      }
 
-     ClassifierListener::ClassifierEvent c_event( event, "", false );
+     ClassifierListener::ClassifierEvent c_event( decoratedEvent, "", false );
      m_Notifier.Notify( c_event );
      return true;
 }
