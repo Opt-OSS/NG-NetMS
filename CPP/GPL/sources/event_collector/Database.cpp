@@ -121,7 +121,6 @@ bool Database::CreateCANGlobalVarsTable() {
 	{
 		return false;
 	}
-    cerr << "Success Create CreateCANGlobalVarsTable" << endl;
 
     // Create function to check if can_id exists and skip insertion
     std::string checkFunctionQuery = R"(
@@ -136,13 +135,11 @@ bool Database::CreateCANGlobalVarsTable() {
             END;
             $$ LANGUAGE plpgsql;
         )";
-    cerr << PerformQuery(checkFunctionQuery).GetDetails() << endl;
+
     if (PerformQuery(checkFunctionQuery).IsFail()) 
     {
-        
         return false;
     }
-    cerr << "Success Create checkFunctionQuery" << endl;
 
     // Create trigger that calls the function before insert on can_global_variables
     std::string checkTriggerQuery = R"(
@@ -163,15 +160,11 @@ bool Database::CreateCANGlobalVarsTable() {
         return false;
     }
 
-    cerr << "Success Create checkTriggerQuery" << endl;
     CANGlobalsParser staticsParser("globals.rgf");
     staticsParser.Parse();
-    cerr << "Success staticsParser" << endl;
     for (const auto& entry : staticsParser.GetParsedEntries()) {
-        cerr << "entry = " << entry.can_id << endl;
         if(!InsertCanGlobalVariable(entry.name, entry.can_id, entry.description))
         {
-            cerr << " InsertCanGlobalVariable return false;" << endl;
             return false;
         }
     }
