@@ -99,8 +99,43 @@ bool Database::CreateTables( )
 		PerformQuery(query);
 	}
 
+    if(!CreateCANGlobalVarsTable())
+    {
+        return false;
+    }
+
 	return true;
 }
+
+bool Database::CreateCANGlobalVarsTable() {
+    std::string query = R"(
+        CREATE TABLE IF NOT EXISTS can_global_variables (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            can_id INT NOT NULL,
+            description TEXT
+        );
+    )";
+    if( PerformQuery(query).IsFail())
+	{
+		return false;
+	}
+    CANGlobalsParser staticsParser("globals.rgf");
+    for (const auto& entry : staticsParser.GetParsedEntries()) {
+        if(!InsertCanGlobalVariable(entry.name, entry.can_id, entry.description))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Database::InsertCanGlobalVariable(const std::string& name, int can_id, const std::string& description) {
+    std::string query = "INSERT INTO can_global_variables (name, can_id, description) VALUES ('" + 
+                        name + "', '" + std::to_string(can_id) + "', '" + description + "');";
+    return PerformQuery(query).IsFail(); 
+}
+
 
 bool Database::Connect( const DbSettings& Settings  )
 {
@@ -316,6 +351,27 @@ DbReturnCode Database::WriteEvent( const Event& event )
 
     PushQueryToQueue( queryInsertEvent );
     return DbReturnCode( DbReturnCode::Code::OK );
+}
+
+bool Database::GetCANDescription(int canId, std::string& canDescription)
+{
+    pqxx::result result;
+
+    std::string query = "SELECT description FROM can_global_variables WHERE can_id = " + std::to_string(canId) + ";";
+
+    DbReturnCode returnCode = PerformQuery(query, result);
+
+    if (returnCode.IsFail()) {
+        std::cerr << "Failed to execute query for CANid: " << canId << std::endl;
+        return false;
+    }
+
+    if (!result.empty()) {
+        canDescription = result[0][0].as<std::string>();
+        return true;
+    }
+
+    return false;
 }
 
 DbReturnCode Database::PerformQuery( const string& Query )

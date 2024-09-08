@@ -24,8 +24,11 @@ public:
 	void RegisterListener(ParserListener &Listener) override;
 	void UnregisterListener(ParserListener &Listener) override;
 
+private:
 	CANLogEntry ParseCANLogLine(const std::string& line);
+	std::string GetCurrentTimestamp();
 
 private:
 	Notifier<ParserListener, Event> m_Notifier;
+	CANLogEntry m_currentCANEntry;
 };

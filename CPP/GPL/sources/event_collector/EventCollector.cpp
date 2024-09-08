@@ -86,6 +86,9 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
                 return -3;
             }
 
+            CreateEventDecorator( );
+           
+
             if( !CreateClassifier( options ))
             {
                 return -4;
@@ -238,7 +241,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             ss << "Rule File = " << RuleFileName;
             m_Logger->LogInfo( ss.str( ) );
 
-            m_Classifier = shared_ptr<IClassifier>( new Classifier( Options.GetDebug( ) ));
+            m_Classifier = std::make_shared<IClassifier>(Options.GetDebug( ) );
 
             switch( m_Classifier->Initialize( RuleFileName ) )
             {
@@ -412,6 +415,11 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
 
             return m_Database->CreateTables();
         }
+        
+        void CreateEventDecorator()
+        {
+            m_EventDecorator = make_shared<EventDecorator>(m_Database)
+        }
 
         void Notify( ClassifierEvent& event )
         {
@@ -419,7 +427,7 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
             {
                 return;
             }
-
+            
             DbReturnCode rc = m_Database->WriteEvent( event.GetEvent( ) );
             if( rc.IsFail( ) )
             {
@@ -517,14 +525,15 @@ class EventCollector: public ClassifierListener, public DataProviderListener, pu
         }
 
     private:
-        shared_ptr<IClassifier>   m_Classifier;
-        shared_ptr<IDataProvider> m_DataProvider;
-        shared_ptr<IParser>       m_Parser;
-        shared_ptr<Database>      m_Database;
-        shared_ptr<Logger>        m_Logger;
-        bool                      m_OriginalTimeStamps;
-        bool                      m_Debug;
-        string                    m_NgnmsHomePath;
+        shared_ptr<EventDecorator>  m_EventDecorator;
+        shared_ptr<IClassifier>     m_Classifier;
+        shared_ptr<IDataProvider>   m_DataProvider;
+        shared_ptr<IParser>         m_Parser;
+        shared_ptr<Database>        m_Database;
+        shared_ptr<Logger>          m_Logger;
+        bool                        m_OriginalTimeStamps;
+        bool                        m_Debug;
+        string                      m_NgnmsHomePath;
 };
 
 int main( int argc, char * argv[] )

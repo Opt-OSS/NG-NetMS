@@ -5,14 +5,15 @@
 #include "EventType.h"
 #include "Notifier.h"
 #include "IClassifier.h"
+#include "EventDecorator.hpp"
 
 using namespace std;
 
 class Classifier: public IClassifier
 {
     public:
-        Classifier( bool Debug );
-        virtual ~Classifier();
+        Classifier( bool Debug, std::shared_ptr<EventDecorator>& decorator);
+        ~Classifier();
         IClassifier::ResultCodes Initialize( string RuleFile ) override;
         bool Classify( Event& event ) override;
         void RegisterListener( ClassifierListener &Listener ) override;
@@ -21,4 +22,5 @@ class Classifier: public IClassifier
     private:
         bool m_Debug;
         Notifier<ClassifierListener, ClassifierListener::ClassifierEvent&> m_Notifier;
+        std::shared_ptr<EventDecorator> m_decorator;
 };
