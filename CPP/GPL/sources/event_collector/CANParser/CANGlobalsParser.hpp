@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <regex>
+#include <iostream>
 
 struct ParsedEntry {
     std::string name;
@@ -14,7 +15,9 @@ struct ParsedEntry {
 
 class CANGlobalsParser {
 public:
-    CANGlobalsParser(std::string  filePath) : m_filePath(std::move(filePath)) {}
+    CANGlobalsParser(std::string  filePath) : m_filePath(std::move(filePath)) {
+        std::cerr << "CANGlobalsParser created" << std::endl;
+    }
 
     bool Parse() {
         std::ifstream file(m_filePath);
@@ -27,7 +30,6 @@ public:
         std::string line;
         std::regex line_regex(R"(^([^=]+)=\d+\|(\d+)\|\d+\|\d+\|\d+\|\d+\|?(.*)?)");
         std::smatch match;
-
         while (std::getline(file, line)) {
             // Skip lines that don't contain variables
             if (line.empty() || line[0] == '[') {
@@ -43,7 +45,6 @@ public:
                 m_parsedEntries.push_back(entry);
             }
         }
-
         file.close();
         return true;
     }
