@@ -16,7 +16,6 @@ struct ParsedEntry {
 class CANGlobalsParser {
 public:
     CANGlobalsParser(std::string  filePath) : m_filePath(std::move(filePath)) {
-        std::cerr << "CANGlobalsParser created" << std::endl;
     }
 
     bool Parse() {

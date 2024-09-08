@@ -23,7 +23,9 @@ public:
         case EventProtocol::CAN_BUS:
         {
             std::string canDescription;
-            if (m_Database->GetCANDescription(std::stoi(event.getCode()), canDescription)) {
+            std::string canName;
+
+            if (m_Database->GetCANDescription(std::stoi(event.getCode()), canDescription, canName)) {
                 Event decoratedEvent(   event.getProtocol(),
                                         event.getPriority(),
                                         event.getTs(),
@@ -31,7 +33,7 @@ public:
                                         event.getOrigin(),
                                         event.getFacility( ),
                                         event.getCode( ),
-                                        canDescription,
+                                        "[" + canName + "] " + canDescription,
                                         event.GetOriginalMessage( ),
                                         event.getRouterId(),
                                         event.getSeverity()

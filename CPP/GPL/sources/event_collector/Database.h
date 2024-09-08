@@ -40,7 +40,7 @@ class Database
         bool InsertCanGlobalVariable(const std::string& name, int can_id, const std::string& description);
         bool Connect( const DbSettings& Settings  );
         DbReturnCode WriteEvent( const Event& event );
-        bool GetCANDescription(int canId, std::string& canDescription);
+        bool GetCANDescription(int canId, std::string& canDescription, string& canName);
     private:
         string EscapeString( const string &Text );
         int RouterIdQuery( const string Query, const string &Hostname );

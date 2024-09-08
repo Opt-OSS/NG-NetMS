@@ -406,11 +406,11 @@ DbReturnCode Database::WriteEvent( const Event& event )
     return DbReturnCode( DbReturnCode::Code::OK );
 }
 
-bool Database::GetCANDescription(int canId, std::string& canDescription)
+bool Database::GetCANDescription(int canId, std::string& canDescription, std::string& canName)
 {
     pqxx::result result;
 
-    std::string query = "SELECT description FROM can_global_variables WHERE can_id = " + std::to_string(canId) + ";";
+    std::string query = "SELECT name, description FROM can_global_variables WHERE can_id = " + std::to_string(canId) + ";";
 
     DbReturnCode returnCode = PerformQuery(query, result);
 
@@ -420,7 +420,8 @@ bool Database::GetCANDescription(int canId, std::string& canDescription)
     }
 
     if (!result.empty()) {
-        canDescription = result[0][0].as<std::string>();
+        canName = result[0][0].as<std::string>(); // First column for the name
+        canDescription = result[0][1].as<std::string>(); // Second column for the description
         return true;
     }
 
